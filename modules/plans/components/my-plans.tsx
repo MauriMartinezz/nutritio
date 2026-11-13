@@ -10,13 +10,14 @@ export async function MyPlans() {
     return <p className="text-sm text-zinc-500">Your nutritionists have not assigned you a plan yet.</p>;
   }
 
-  const byNutritionist = Map.groupBy(plans, (plan) => plan.nutritionistName);
+  // Grouped by id: two nutritionists may share a name.
+  const byNutritionist = Map.groupBy(plans, (plan) => plan.nutritionist.id);
 
   return (
     <div className="flex flex-col gap-10">
-      {[...byNutritionist].map(([nutritionistName, nutritionistPlans]) => (
-        <section key={nutritionistName} className="flex flex-col gap-6">
-          <h2 className="text-lg font-semibold">From {nutritionistName}</h2>
+      {[...byNutritionist].map(([nutritionistId, nutritionistPlans]) => (
+        <section key={nutritionistId} className="flex flex-col gap-6">
+          <h2 className="text-lg font-semibold">From {nutritionistPlans[0].nutritionist.name}</h2>
           {nutritionistPlans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}

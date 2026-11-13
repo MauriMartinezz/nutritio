@@ -64,7 +64,7 @@ async function loadPlan(where: PlanQuery) {
       clientId: true,
       updatedAt: true,
       client: { select: { id: true, name: true } },
-      nutritionist: { select: { name: true } },
+      nutritionist: { select: { id: true, name: true } },
       meals: {
         orderBy: { position: "asc" },
         select: {
@@ -126,7 +126,7 @@ async function loadPlan(where: PlanQuery) {
     notes: plan.notes,
     updatedAt: plan.updatedAt,
     client: plan.client,
-    nutritionistName: plan.nutritionist.name,
+    nutritionist: plan.nutritionist,
     meals,
     totals: sumTotals(meals.map((meal) => meal.totals)),
   };
