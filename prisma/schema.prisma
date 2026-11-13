@@ -74,6 +74,12 @@ model User {
   role               Role                 @default(CLIENT)
   /// Only set for nutritionists. Changed exclusively by admins.
   nutritionistStatus NutritionistStatus?  @map("nutritionist_status")
+  /// Nutritionist profile (null for other roles). Set at sign-up, then admin-only.
+  dni                String?              @unique @db.VarChar(8)
+  licenseNumber      String?              @map("license_number") @db.VarChar(30)
+  birthDate          DateTime?            @map("birth_date") @db.Date
+  phone              String?              @db.VarChar(20)
+  specialty          String?              @db.VarChar(100)
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
   sessions           Session[]

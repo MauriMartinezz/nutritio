@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { ProfileFields } from "@/modules/nutritionists/components/profile-fields";
 
 type Mode = "sign-in" | "sign-up";
 
@@ -14,6 +15,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [role, setRole] = useState<"CLIENT" | "NUTRITIONIST">("CLIENT");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,7 +32,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
             name: String(form.get("name")),
             email,
             password,
-            role: form.get("role") === "NUTRITIONIST" ? "NUTRITIONIST" : "CLIENT",
+            role,
+            ...(role === "NUTRITIONIST" && {
+              dni: String(form.get("dni")),
+              licenseNumber: String(form.get("licenseNumber")),
+              birthDate: new Date(`${String(form.get("birthDate"))}T00:00:00.000Z`),
+              phone: String(form.get("phone")),
+              specialty: String(form.get("specialty")),
+            }),
           })
         : await authClient.signIn.email({ email, password });
 
@@ -58,13 +67,28 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <fieldset className="flex flex-col gap-2 text-sm">
             <legend className="mb-1">I am a…</legend>
             <label className="flex items-center gap-2">
-              <input type="radio" name="role" value="CLIENT" defaultChecked /> Client
+              <input
+                type="radio"
+                name="role"
+                value="CLIENT"
+                checked={role === "CLIENT"}
+                onChange={() => setRole("CLIENT")}
+              />{" "}
+              Client
             </label>
             <label className="flex items-center gap-2">
-              <input type="radio" name="role" value="NUTRITIONIST" /> Nutritionist
+              <input
+                type="radio"
+                name="role"
+                value="NUTRITIONIST"
+                checked={role === "NUTRITIONIST"}
+                onChange={() => setRole("NUTRITIONIST")}
+              />{" "}
+              Nutritionist
               <span className="text-zinc-500">(requires admin verification)</span>
             </label>
           </fieldset>
+          {role === "NUTRITIONIST" && <ProfileFields />}
         </>
       )}
 
