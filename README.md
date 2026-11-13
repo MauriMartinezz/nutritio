@@ -66,6 +66,8 @@ pnpm db:generate   # generate the client into generated/prisma
 pnpm db:studio     # browse data with Prisma Studio
 ```
 
+Restart `pnpm dev` after `pnpm db:generate`: the dev server keeps the previous Prisma client in memory.
+
 ## Authentication and roles
 
 [Better Auth](https://www.better-auth.com) handles email + password accounts (`lib/auth.ts`, mounted at `/api/auth/*`).
@@ -74,6 +76,8 @@ pnpm db:studio     # browse data with Prisma Studio
 - Nutritionists start **pending** until an admin verifies them.
 - Role and verification status cannot be changed through the auth API (`/api/auth/update-user` returns 403).
 - Create the first admin from an existing account: `pnpm admin:promote <email>`. Admins verify nutritionists at `/admin`.
+- Clients find verified nutritionists at `/nutritionists` and request to work with them; a client can work with several nutritionists at once.
+- Nutritionists accept or decline requests at `/clients`. A nutritionist reads a client's data only while their link is accepted (`modules/coaching/dal.ts` → `requireClientAccess`).
 - Server code reads the user through `modules/identity/dal.ts` (`getCurrentUser`, `requireUser`, `requireRole`).
 
 ## Food catalog (USDA FoodData Central)

@@ -23,9 +23,9 @@ Out of scope (not requested yet): ending a relationship, visibility between nutr
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
 | T0 | — | inline | done | 02b6484 (prior DB/USDA setup) |
-| T1 | S1, S2 | inline | pending | |
-| T2 | S3 | inline | pending | |
-| T3 | S4, S5, S6 | inline | pending | |
+| T1 | S1, S2 | inline | done | 0fc9add |
+| T2 | S3 | inline | done | 6996958 |
+| T3 | S4, S5, S6 | inline | done | (this commit) |
 
 Route evidence: one sequential feature, no parallel units → no writer trigger. Risk: item 2 (auth/permissions) on T1–T3 → one independent verifier at feature end.
 
@@ -36,3 +36,7 @@ Route evidence: one sequential feature, no parallel units → no writer trigger.
 - **L3** (2026-11-13) — "Me parece bien lo del administrador" (admin verifies nutritionists before they appear in the directory).
 - **L4** (2026-11-13) — "Vamos con better auth". Better Auth 1.7.x stable; Auth.js v5 still beta.
 - **L5** — Next 16 notes: `cacheComponents: true` → session reads go inside `<Suspense>`; authorization re-verified in every Server Action (DAL pattern); Proxy only for optimistic redirects.
+- **L6** — T1: better-auth pinned to 1.7.21 (1.7.23 was newer than pnpm's minimumReleaseAge; pnpm had added policy exclusions, reverted). HTTP checks: ADMIN sign-up 400, self-approve 400, role update 403, status update 400, name update 200.
+- **L7** — RDD: assess = high (item 2). Preflight blocked at `intended_untracked_selection_required` for `.atl/` (selection JSON shape undocumented) → native review unavailable; independent verifier at feature end instead.
+- **L8** — T2: client calling approve action → redirect, status unchanged; admin approve → APPROVED; second approve → error, unchanged.
+- **L9** — T3: 18/18 end-to-end checks (directory, multiple requests, duplicates, forged ids, cross-nutritionist answers, access 404 unless ACCEPTED, re-request after rejection).

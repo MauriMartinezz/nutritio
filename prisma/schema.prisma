@@ -52,18 +52,22 @@ enum NutritionistStatus {
 // ---------------------------------------------------------------------------
 
 model User {
-  id                 String              @id
-  name               String              @db.VarChar(255)
-  email              String              @unique @db.VarChar(255)
-  emailVerified      Boolean             @default(false) @map("email_verified")
-  image              String?             @db.Text
-  role               Role                @default(CLIENT)
+  id                 String               @id
+  name               String               @db.VarChar(255)
+  email              String               @unique @db.VarChar(255)
+  emailVerified      Boolean              @default(false) @map("email_verified")
+  image              String?              @db.Text
+  role               Role                 @default(CLIENT)
   /// Only set for nutritionists. Changed exclusively by admins.
-  nutritionistStatus NutritionistStatus? @map("nutritionist_status")
-  createdAt          DateTime            @default(now()) @map("created_at")
-  updatedAt          DateTime            @updatedAt @map("updated_at")
+  nutritionistStatus NutritionistStatus?  @map("nutritionist_status")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
   sessions           Session[]
   accounts           Account[]
+  /// Links where this user is the nutritionist.
+  clientLinks        NutritionistClient[] @relation("NutritionistLinks")
+  /// Links where this user is the client.
+  nutritionistLinks  NutritionistClient[] @relation("ClientLinks")
 
   @@index([role, nutritionistStatus])
   @@map("users")
@@ -114,4 +118,29 @@ model Verification {
 
   @@index([identifier])
   @@map("verifications")
+}
+
+enum LinkStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+/// Working relationship requested by a client and answered by a nutritionist.
+/// A client may have several nutritionists; one row per pair.
+model NutritionistClient {
+  id             String     @id @default(cuid())
+  nutritionistId String     @map("nutritionist_id")
+  nutritionist   User       @relation("NutritionistLinks", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  clientId       String     @map("client_id")
+  client         User       @relation("ClientLinks", fields: [clientId], references: [id], onDelete: Cascade)
+  status         LinkStatus @default(PENDING)
+  requestedAt    DateTime   @default(now()) @map("requested_at")
+  respondedAt    DateTime?  @map("responded_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@unique([nutritionistId, clientId])
+  @@index([clientId, status])
+  @@index([nutritionistId, status])
+  @@map("nutritionist_clients")
 }

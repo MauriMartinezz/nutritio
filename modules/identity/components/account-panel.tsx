@@ -41,6 +41,16 @@ export async function AccountPanel() {
           {STATUS_MESSAGES[user.nutritionistStatus]}
         </p>
       )}
+      {user.role === "CLIENT" && (
+        <Link href="/nutritionists" className="text-sm underline">
+          Find a nutritionist
+        </Link>
+      )}
+      {user.nutritionistStatus === "APPROVED" && (
+        <Link href="/clients" className="text-sm underline">
+          My clients and requests
+        </Link>
+      )}
       {user.role === "ADMIN" && (
         <Link href="/admin" className="text-sm underline">
           Verify nutritionists
