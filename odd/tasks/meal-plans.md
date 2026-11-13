@@ -19,9 +19,9 @@ Out of scope: food alternatives/equivalences, recipes, per-weekday plans, PDF ex
 
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
-| T1 | S3, S4, S5 | inline | done | (T1 commit) |
-| T2 | S1, S2, S3, S4, S5 | inline | pending | |
-| T3 | S6 | inline | pending | |
+| T1 | S3, S4, S5 | inline | done | 74d5a8c |
+| T2 | S1, S2, S3, S4, S5 | inline | done | f67e8ef |
+| T3 | S6 | inline | done | c374a43 |
 
 T1: schema + migration (meal_plans, meals, meal_items) and pure rules (default meals, grams, macros, variant switch, template copy).
 T2: nutritionist side — plan access guard, server actions, client plans list, template list, plan editor with food search and raw/cooked toggle.
@@ -36,3 +36,4 @@ Risk: item 2 (plan access guards) → independent verifier at feature end. The m
 - **L3** (2026-11-13) — "No puedes trabajar con ambas tareas en paralelo?" → meal plans run in this worktree while admin nutritionist management runs in the main checkout.
 - **L4** (2026-11-13) — "Perfecto, empieza con los planes de comida". Admin feature finished, so no parallel unit remains: worktree removed, work continues inline in the main checkout on `feat/meal-plans` fast-forwarded to e38e1ed (needs the T3 revocation guard in `canAccessClient`).
 - **L5** (2026-11-13) — T1: data check showed every food group has at most one RAW and one COOKED variant, so the toggle is unambiguous. Migration `meal_plans` adds meal_plans, meals, meal_items (grams stored as whole numbers). Rules RED 1 suite → GREEN 55/55; tsc, lint clean.
+- **L6** (2026-11-13) — T2/T3: access rule `canEditPlan` (author + APPROVED + accepted link for client plans) added with tests (59/59); written together with its tests, so RED was not observed separately. Build OK. E2E against `next dev` with no-JS form posts: 28/28 (sign-up with ISO birth date, link, create plan, default meals, search + add, toggle keeps grams, grams 5000 rejected, rename/move/add meal, template copy independent of template, client view grouped, other nutritionist gets not-found and cannot post tampered bound ids, revoked → not-found, delete cascades). Test users removed. Notes: `notFound()` inside Suspense streams with status 200; prod `next start` needs BETTER_AUTH_SECRET; after a MySQL restart the mariadb driver fails (RSA public key) until caching_sha2 is warmed — `allowPublicKeyRetrieval=true` in DATABASE_URL would fix it.
