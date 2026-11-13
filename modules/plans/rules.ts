@@ -1,6 +1,9 @@
 // Meal plan rules: a single daily plan made of ordered meals, each with food items.
 // Pure functions; access control lives in ./dal.ts and ./actions.ts.
 
+import { canAccessClient, type LinkStatus } from "@/modules/coaching/links";
+import type { NutritionistStatus } from "@/modules/identity/roles";
+
 export const DEFAULT_MEALS = ["Breakfast", "Lunch", "Snack", "Dinner"] as const;
 
 export const MAX_GRAMS = 2000;
@@ -140,4 +143,18 @@ export function copyPlanForClient(template: PlanContent, clientId: string) {
           .map(({ foodId, grams, note, position }) => ({ foodId, grams, note, position })),
       })),
   };
+}
+
+/**
+ * A plan is edited only by its approved author. A client plan additionally needs
+ * the accepted link with that client (same rule as reading the client's data).
+ */
+export function canEditPlan(
+  nutritionist: { id: string; nutritionistStatus: NutritionistStatus | null },
+  plan: { nutritionistId: string; clientId: string | null },
+  link: { status: LinkStatus } | null,
+): boolean {
+  if (nutritionist.nutritionistStatus !== "APPROVED") return false;
+  if (plan.nutritionistId !== nutritionist.id) return false;
+  return plan.clientId === null || canAccessClient(nutritionist.nutritionistStatus, link);
 }

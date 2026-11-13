@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { ClientProfile } from "@/modules/coaching/components/client-profile";
+import { ClientPlans } from "@/modules/plans/components/client-plans";
 
 export const metadata: Metadata = { title: "Client · Nutritio" };
 
@@ -13,6 +14,7 @@ export default function Page({ params }: PageProps<"/clients/[clientId]">) {
       </Link>
       <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
         <ClientProfile params={params} />
+        <ClientPlans params={params} />
       </Suspense>
     </main>
   );

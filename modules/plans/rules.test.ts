@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_MEALS,
   PlanRuleError,
+  canEditPlan,
   copyPlanForClient,
   itemTotals,
   moveInOrder,
@@ -104,4 +105,32 @@ test("using a template copies its meals and items for one client", () => {
       { name: "Lunch", position: 1, items: [{ foodId: 7, grams: 150, note: null, position: 0 }] },
     ],
   });
+});
+
+const author = { id: "n1", nutritionistStatus: "APPROVED" } as const;
+
+test("an approved nutritionist edits their own templates", () => {
+  assert.equal(canEditPlan(author, { nutritionistId: "n1", clientId: null }, null), true);
+});
+
+test("a client plan is editable only while the link with that client is accepted", () => {
+  const plan = { nutritionistId: "n1", clientId: "c1" };
+  assert.equal(canEditPlan(author, plan, { status: "ACCEPTED" }), true);
+  assert.equal(canEditPlan(author, plan, { status: "PENDING" }), false);
+  assert.equal(canEditPlan(author, plan, { status: "REJECTED" }), false);
+  assert.equal(canEditPlan(author, plan, null), false);
+});
+
+test("nobody edits another nutritionist's plans or templates", () => {
+  const other = { id: "n2", nutritionistStatus: "APPROVED" } as const;
+  assert.equal(canEditPlan(other, { nutritionistId: "n1", clientId: null }, null), false);
+  assert.equal(canEditPlan(other, { nutritionistId: "n1", clientId: "c1" }, { status: "ACCEPTED" }), false);
+});
+
+test("a nutritionist who is not approved cannot edit plans", () => {
+  for (const nutritionistStatus of ["PENDING", "REJECTED", null] as const) {
+    const user = { id: "n1", nutritionistStatus };
+    assert.equal(canEditPlan(user, { nutritionistId: "n1", clientId: null }, null), false);
+    assert.equal(canEditPlan(user, { nutritionistId: "n1", clientId: "c1" }, { status: "ACCEPTED" }), false);
+  }
 });
