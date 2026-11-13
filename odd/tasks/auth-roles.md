@@ -15,6 +15,7 @@ Branch: `feat/auth-roles` · Delivery: `ask-on-risk` · Test runner: `pnpm test`
   - Assumption: a client may request again after a rejection.
 - **S5** — A client can have several nutritionists at the same time. User words: "Un asesorado puede tener más de un nutricionista a la vez, piensa en deportistas que tienen un equipo de nutrición".
 - **S6** — A nutritionist can access a client's data only while their link is ACCEPTED (enforced server-side, close to the data).
+  - Exception decided by the user (L11): pending requests show the requester's name (primary) and email (secondary) to the nutritionist.
 
 Out of scope (not requested yet): ending a relationship, visibility between nutritionists of the same client, social login, email verification, Spanish UI copy.
 
@@ -25,7 +26,7 @@ Out of scope (not requested yet): ending a relationship, visibility between nutr
 | T0 | — | inline | done | 02b6484 (prior DB/USDA setup) |
 | T1 | S1, S2 | inline | done | 0fc9add |
 | T2 | S3 | inline | done | 6996958 |
-| T3 | S4, S5, S6 | inline | done | (this commit) |
+| T3 | S4, S5, S6 | inline | done | 2e2a72a |
 
 Route evidence: one sequential feature, no parallel units → no writer trigger. Risk: item 2 (auth/permissions) on T1–T3 → one independent verifier at feature end.
 
@@ -40,3 +41,5 @@ Route evidence: one sequential feature, no parallel units → no writer trigger.
 - **L7** — RDD: assess = high (item 2). Preflight blocked at `intended_untracked_selection_required` for `.atl/` (selection JSON shape undocumented) → native review unavailable; independent verifier at feature end instead.
 - **L8** — T2: client calling approve action → redirect, status unchanged; admin approve → APPROVED; second approve → error, unchanged.
 - **L9** — T3: 18/18 end-to-end checks (directory, multiple requests, duplicates, forged ids, cross-nutritionist answers, access 404 unless ACCEPTED, re-request after rejection).
+- **L10** — Independent verifier: no blockers; S1–S6 met. Advisories: pending requester email visible, unlimited re-requests, generic 500 on action errors, secret via env.
+- **L11** (2026-11-13) — User decision on advisory 1: "Me gustaría que el nutricionista vea el Email y el nombre, el nombre es más importante, el email una confirmación de quién se trate". Current UI already shows the name (bold) and the email (secondary); no code change.
