@@ -19,7 +19,7 @@ Out of scope: the toggle UI itself (plan editor does not exist yet), extra cooki
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
 | T1 | S2, S3 | inline | done | see git log (feat(foods)) |
-| T2 | S1, S2 | delegated (writer: parallel unit, disjoint file) | done — pending user review | see git log (feat(foods): add) |
+| T2 | S1, S2 | delegated (writer: parallel unit, disjoint file) | done — reviewed by user | see git log (feat(foods): add) |
 
 ## Log
 
@@ -27,3 +27,4 @@ Out of scope: the toggle UI itself (plan editor does not exist yet), extra cooki
 - **L2** (2026-11-13) — "Perfecto. avanza con el diseño y la lista"
 - **L3** — T2 writer: 218 entries / 296 variants, 0 missing or repeated fdcIds, 0 null macros; 78 raw+cooked pairs. Meats use "separable lean only"; ground beef común/especial/magra = 80/20, 90/10, 95/5. No USDA hake (Merluza → whiting), dulce de leche, yerba mate.
 - **L4** — Parent check: applied (idempotent, ran twice), spot pairs OK (arroz 370→130 kcal, pechuga 120→165), 296 variants intact after `pnpm usda:import`. Risk: none (additive columns, seed data). RDD: not escalated.
+- **L5** (2026-11-13) — User review: "1) Está bien, no hace falta que sea 100% preciso, es una aplicación para mi portfolio. 2) Si, está bien. 3) Está bien. 4) está bien. 5) no hay problema. 6) no hace falta entrar tan a detalle. 7) no hay problemas". All mappings accepted; feature closed.
