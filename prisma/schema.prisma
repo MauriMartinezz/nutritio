@@ -7,6 +7,11 @@ datasource db {
   provider = "mysql"
 }
 
+enum FoodPreparation {
+  RAW
+  COOKED
+}
+
 enum FoodSource {
   USDA_FOUNDATION
   USDA_SR_LEGACY
@@ -14,23 +19,32 @@ enum FoodSource {
 
 /// Shared food catalog. Nutrient values are per 100 g of edible portion.
 model Food {
-  id        Int        @id @default(autoincrement())
-  source    FoodSource
+  id                Int              @id @default(autoincrement())
+  source            FoodSource
   /// USDA FoodData Central id. Nullable so non-USDA foods can be added later.
-  fdcId     Int?       @unique @map("fdc_id")
-  nameEn    String     @map("name_en") @db.VarChar(255)
-  /// Spanish display name, curated on top of the USDA data.
-  nameEs    String?    @map("name_es") @db.VarChar(255)
-  category  String?    @db.VarChar(100)
-  kcal      Decimal?   @db.Decimal(7, 2)
-  proteinG  Decimal?   @map("protein_g") @db.Decimal(6, 2)
-  carbsG    Decimal?   @map("carbs_g") @db.Decimal(6, 2)
-  fatG      Decimal?   @map("fat_g") @db.Decimal(6, 2)
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  fdcId             Int?             @unique @map("fdc_id")
+  nameEn            String           @map("name_en") @db.VarChar(255)
+  /// Spanish display name, curated on top of the USDA data (prisma/seed/food-names-es.json).
+  nameEs            String?          @map("name_es") @db.VarChar(255)
+  category          String?          @db.VarChar(100)
+  /// Spanish category from the curated list.
+  categoryEs        String?          @map("category_es") @db.VarChar(100)
+  /// Groups the raw/cooked variants of the same food (powers the raw/cooked toggle).
+  groupKey          String?          @map("group_key") @db.VarChar(100)
+  /// RAW or COOKED; null for foods used as they are (fruit, yogurt, oil...).
+  preparation       FoodPreparation?
+  /// Cooking method of a COOKED variant, in Spanish (e.g. "hervido", "asada").
+  preparationNoteEs String?          @map("preparation_note_es") @db.VarChar(50)
+  kcal              Decimal?         @db.Decimal(7, 2)
+  proteinG          Decimal?         @map("protein_g") @db.Decimal(6, 2)
+  carbsG            Decimal?         @map("carbs_g") @db.Decimal(6, 2)
+  fatG              Decimal?         @map("fat_g") @db.Decimal(6, 2)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
 
   @@index([nameEs])
   @@index([category])
+  @@index([groupKey])
   @@map("foods")
 }
 

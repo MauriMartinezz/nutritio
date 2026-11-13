@@ -13,7 +13,8 @@
     "db:studio": "prisma studio",
     "usda:download": "bash scripts/usda/download.sh",
     "usda:import": "tsx scripts/usda/import.ts",
-    "admin:promote": "tsx scripts/admin/promote.ts"
+    "admin:promote": "tsx scripts/admin/promote.ts",
+    "foods:names-es": "tsx scripts/foods/apply-spanish-names.ts"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "7.10.1",

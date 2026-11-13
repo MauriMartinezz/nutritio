@@ -93,6 +93,22 @@ pnpm usda:import     # upsert ~8,200 foods; never overwrites name_es
 Energy falls back from `Energy` to Atwater specific/general factors; carbohydrates fall back
 from "by difference" to "by summation". Missing values stay `NULL`.
 
+### Spanish names and raw/cooked variants
+
+`prisma/seed/food-names-es.json` is a curated list of common foods with Argentine Spanish names.
+Each entry groups a food's USDA variants so the plan editor can offer a raw/cooked toggle:
+
+```json
+{ "key": "chicken-breast", "nameEs": "Pechuga de pollo", "category": "Carnes y aves", "raw": 171077, "cooked": 171477, "cookedMethodEs": "asada" }
+{ "key": "avocado", "nameEs": "Palta", "category": "Frutas", "asIs": 171705 }
+```
+
+```bash
+pnpm foods:names-es   # validate the file and apply it (name_es, category_es, group_key, preparation)
+```
+
+The file is the source of truth: removing an entry clears its Spanish data. Re-running `pnpm usda:import` keeps it.
+
 ## Tests
 
 ```bash
