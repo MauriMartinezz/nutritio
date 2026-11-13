@@ -53,7 +53,7 @@ export async function AccountPanel() {
       )}
       {user.role === "ADMIN" && (
         <Link href="/admin" className="text-sm underline">
-          Verify nutritionists
+          Manage nutritionists
         </Link>
       )}
       <SignOutButton />
