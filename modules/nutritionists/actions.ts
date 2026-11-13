@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { uniqueViolationIndex } from "@/lib/prisma-errors";
 import { requireRole } from "@/modules/identity/dal";
 import {
   InvalidAdminUpdateError,
@@ -72,10 +72,10 @@ export async function updateNutritionist(
       },
     });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const target = String(error.meta?.target ?? "");
+    const index = uniqueViolationIndex(error);
+    if (index !== null) {
       return {
-        problems: target.includes("dni")
+        problems: index.includes("dni")
           ? { dni: "DNI is already registered" }
           : { email: "Email is already in use" },
       };

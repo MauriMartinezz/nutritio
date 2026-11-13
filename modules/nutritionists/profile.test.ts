@@ -71,3 +71,14 @@ test("phone accepts 6 to 20 digits, spaces, +, - and parentheses", () => {
   assert.ok(problemsOf({ ...valid, phone: "12345" }).phone);
   assert.equal(parseNutritionistProfile({ ...valid, phone: "(011) 4555-1234" }, today).phone, "(011) 4555-1234");
 });
+
+test("phone is at most 20 characters, the size of its column", () => {
+  assert.ok(problemsOf({ ...valid, phone: "+54 (011) 15-1234-5678" }).phone);
+  assert.equal(parseNutritionistProfile({ ...valid, phone: "+54 9 11 5555-123456" }, today).phone.length, 20);
+});
+
+test("accepts the full ISO string the sign-up client sends for a birth date", () => {
+  const profile = parseNutritionistProfile({ ...valid, birthDate: "1990-05-20T00:00:00.000Z" }, today);
+  assert.deepEqual(profile.birthDate, new Date("1990-05-20T00:00:00.000Z"));
+  assert.ok(problemsOf({ ...valid, birthDate: "1990-05-20T15:30:00.000Z" }).birthDate);
+});

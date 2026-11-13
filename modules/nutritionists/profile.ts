@@ -19,7 +19,8 @@ export class InvalidProfileError extends Error {
 }
 
 const DNI = /^\d{7,8}$/;
-const PHONE = /^(?=(?:\D*\d){6,20}\D*$)[\d\s+()-]+$/;
+// 6+ digits; at most 20 characters in total, the size of the column.
+const PHONE = /^(?=(?:\D*\d){6})[\d\s+()-]{6,20}$/;
 const MIN_AGE = 18;
 const MAX_AGE = 100;
 
@@ -27,9 +28,12 @@ const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
 
 function parseDate(value: unknown): Date | null {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-  const date = new Date(`${value}T00:00:00.000Z`);
-  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
+  if (typeof value !== "string") return null;
+  // The sign-up client sends a Date, which arrives as a full ISO string at midnight UTC.
+  const day = value.endsWith("T00:00:00.000Z") ? value.slice(0, 10) : value;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const date = new Date(`${day}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== day ? null : date;
 }
 
 function ageOn(birthDate: Date, today: Date): number {
@@ -67,7 +71,7 @@ export function parseNutritionistProfile(
   }
 
   const phone = text(input.phone);
-  if (!PHONE.test(phone)) problems.phone = "Phone must have 6 to 20 digits";
+  if (!PHONE.test(phone)) problems.phone = "Phone must have at least 6 digits and at most 20 characters";
 
   const specialty = text(input.specialty);
   if (specialty.length > 100) problems.specialty = "Specialty must be at most 100 characters";

@@ -54,6 +54,7 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
           type="tel"
           required
           autoComplete="tel"
+          maxLength={20}
           defaultValue={values.phone ?? ""}
           className={inputClass}
         />
