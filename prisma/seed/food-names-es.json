@@ -1,0 +1,1467 @@
+[
+  {
+    "key": "canola-oil",
+    "nameEs": "Aceite de canola",
+    "category": "Aceites y grasas",
+    "asIs": 172336
+  },
+  {
+    "key": "coconut-oil",
+    "nameEs": "Aceite de coco",
+    "category": "Aceites y grasas",
+    "asIs": 330458
+  },
+  {
+    "key": "sunflower-oil",
+    "nameEs": "Aceite de girasol",
+    "category": "Aceites y grasas",
+    "asIs": 171025
+  },
+  {
+    "key": "high-oleic-sunflower-oil",
+    "nameEs": "Aceite de girasol alto oleico",
+    "category": "Aceites y grasas",
+    "asIs": 172338
+  },
+  {
+    "key": "olive-oil",
+    "nameEs": "Aceite de oliva",
+    "category": "Aceites y grasas",
+    "asIs": 171413
+  },
+  {
+    "key": "butter",
+    "nameEs": "Manteca",
+    "category": "Aceites y grasas",
+    "asIs": 173430
+  },
+  {
+    "key": "margarine",
+    "nameEs": "Margarina",
+    "category": "Aceites y grasas",
+    "asIs": 171040
+  },
+  {
+    "key": "mayonnaise",
+    "nameEs": "Mayonesa",
+    "category": "Aceites y grasas",
+    "asIs": 171009
+  },
+  {
+    "key": "mayonnaise-light",
+    "nameEs": "Mayonesa light",
+    "category": "Aceites y grasas",
+    "asIs": 168094
+  },
+  {
+    "key": "sugar",
+    "nameEs": "Azúcar",
+    "category": "Azúcares y dulces",
+    "asIs": 746784
+  },
+  {
+    "key": "cocoa-powder",
+    "nameEs": "Cacao amargo en polvo",
+    "category": "Azúcares y dulces",
+    "asIs": 169593
+  },
+  {
+    "key": "dark-chocolate",
+    "nameEs": "Chocolate amargo",
+    "category": "Azúcares y dulces",
+    "asIs": 170273
+  },
+  {
+    "key": "milk-chocolate",
+    "nameEs": "Chocolate con leche",
+    "category": "Azúcares y dulces",
+    "asIs": 167587
+  },
+  {
+    "key": "gelatin-dessert-light",
+    "nameEs": "Gelatina light preparada",
+    "category": "Azúcares y dulces",
+    "asIs": 169598
+  },
+  {
+    "key": "condensed-milk",
+    "nameEs": "Leche condensada",
+    "category": "Azúcares y dulces",
+    "asIs": 171275
+  },
+  {
+    "key": "jam",
+    "nameEs": "Mermelada",
+    "category": "Azúcares y dulces",
+    "asIs": 169641
+  },
+  {
+    "key": "jam-no-sugar",
+    "nameEs": "Mermelada sin azúcar",
+    "category": "Azúcares y dulces",
+    "asIs": 169058
+  },
+  {
+    "key": "honey",
+    "nameEs": "Miel",
+    "category": "Azúcares y dulces",
+    "asIs": 169640
+  },
+  {
+    "key": "water",
+    "nameEs": "Agua",
+    "category": "Bebidas",
+    "asIs": 173647
+  },
+  {
+    "key": "almond-drink",
+    "nameEs": "Bebida de almendras",
+    "category": "Bebidas",
+    "asIs": 174832
+  },
+  {
+    "key": "soy-drink",
+    "nameEs": "Bebida de soja",
+    "category": "Bebidas",
+    "asIs": 1999630
+  },
+  {
+    "key": "coffee",
+    "nameEs": "Café",
+    "category": "Bebidas",
+    "asIs": 171890
+  },
+  {
+    "key": "beer",
+    "nameEs": "Cerveza",
+    "category": "Bebidas",
+    "asIs": 168746
+  },
+  {
+    "key": "diet-soda",
+    "nameEs": "Gaseosa light",
+    "category": "Bebidas",
+    "asIs": 171876
+  },
+  {
+    "key": "orange-juice",
+    "nameEs": "Jugo de naranja exprimido",
+    "category": "Bebidas",
+    "asIs": 169098
+  },
+  {
+    "key": "herbal-tea",
+    "nameEs": "Té de hierbas",
+    "category": "Bebidas",
+    "asIs": 173232
+  },
+  {
+    "key": "black-tea",
+    "nameEs": "Té negro",
+    "category": "Bebidas",
+    "asIs": 173227
+  },
+  {
+    "key": "green-tea",
+    "nameEs": "Té verde",
+    "category": "Bebidas",
+    "asIs": 171917
+  },
+  {
+    "key": "red-wine",
+    "nameEs": "Vino tinto",
+    "category": "Bebidas",
+    "asIs": 173190
+  },
+  {
+    "key": "beef-strip-loin",
+    "nameEs": "Bife de chorizo",
+    "category": "Carnes y aves",
+    "raw": 171766,
+    "cooked": 168632,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "beef-tip-round",
+    "nameEs": "Bola de lomo",
+    "category": "Carnes y aves",
+    "raw": 173125,
+    "cooked": 170233,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "pork-shoulder",
+    "nameEs": "Bondiola",
+    "category": "Carnes y aves",
+    "raw": 167845,
+    "cooked": 167846,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "ground-beef-regular",
+    "nameEs": "Carne picada común",
+    "category": "Carnes y aves",
+    "raw": 2514744,
+    "cooked": 171798,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "ground-chicken",
+    "nameEs": "Carne picada de pollo",
+    "category": "Carnes y aves",
+    "raw": 171116,
+    "cooked": 171117,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "ground-beef-lean",
+    "nameEs": "Carne picada especial",
+    "category": "Carnes y aves",
+    "raw": 2514743,
+    "cooked": 171793,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "ground-beef-extra-lean",
+    "nameEs": "Carne picada magra",
+    "category": "Carnes y aves",
+    "raw": 171790,
+    "cooked": 171792,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "pork-loin-chop",
+    "nameEs": "Carré de cerdo",
+    "category": "Carnes y aves",
+    "raw": 168263,
+    "cooked": 168285,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "pork-chorizo",
+    "nameEs": "Chorizo",
+    "category": "Carnes y aves",
+    "raw": 173859,
+    "cooked": 746781,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "beef-top-sirloin",
+    "nameEs": "Cuadril",
+    "category": "Carnes y aves",
+    "raw": 173053,
+    "cooked": 174693,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "beef-skirt",
+    "nameEs": "Entraña",
+    "category": "Carnes y aves",
+    "raw": 173376,
+    "cooked": 172140,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "beef-liver",
+    "nameEs": "Hígado vacuno",
+    "category": "Carnes y aves",
+    "raw": 169451,
+    "cooked": 168627,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "cooked-ham",
+    "nameEs": "Jamón cocido",
+    "category": "Carnes y aves",
+    "asIs": 332397
+  },
+  {
+    "key": "turkey-ham",
+    "nameEs": "Jamón de pavo",
+    "category": "Carnes y aves",
+    "asIs": 168092
+  },
+  {
+    "key": "beef-tenderloin",
+    "nameEs": "Lomo",
+    "category": "Carnes y aves",
+    "raw": 171765,
+    "cooked": 746758,
+    "cookedMethodEs": "asado"
+  },
+  {
+    "key": "chicken-thigh",
+    "nameEs": "Muslo de pollo",
+    "category": "Carnes y aves",
+    "raw": 173627,
+    "cooked": 172388,
+    "cookedMethodEs": "asado"
+  },
+  {
+    "key": "beef-top-round",
+    "nameEs": "Nalga",
+    "category": "Carnes y aves",
+    "raw": 746761,
+    "cooked": 168649,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "veal-leg",
+    "nameEs": "Nalga de ternera",
+    "category": "Carnes y aves",
+    "raw": 175269,
+    "cooked": 173822,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "beef-shank",
+    "nameEs": "Osobuco",
+    "category": "Carnes y aves",
+    "raw": 169441,
+    "cooked": 169442,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "chicken-drumstick",
+    "nameEs": "Pata de pollo",
+    "category": "Carnes y aves",
+    "raw": 173614,
+    "cooked": 172376,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "beef-eye-of-round",
+    "nameEs": "Peceto",
+    "category": "Carnes y aves",
+    "raw": 746760,
+    "cooked": 170633,
+    "cookedMethodEs": "asado"
+  },
+  {
+    "key": "turkey-breast",
+    "nameEs": "Pechuga de pavo",
+    "category": "Carnes y aves",
+    "raw": 171098,
+    "cooked": 171496,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "chicken-breast",
+    "nameEs": "Pechuga de pollo",
+    "category": "Carnes y aves",
+    "raw": 171077,
+    "cooked": 171477,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "lamb-leg",
+    "nameEs": "Pierna de cordero",
+    "category": "Carnes y aves",
+    "raw": 172486,
+    "cooked": 172487,
+    "cookedMethodEs": "asada"
+  },
+  {
+    "key": "frankfurter",
+    "nameEs": "Salchicha",
+    "category": "Carnes y aves",
+    "asIs": 323121
+  },
+  {
+    "key": "pork-tenderloin",
+    "nameEs": "Solomillo de cerdo",
+    "category": "Carnes y aves",
+    "raw": 168249,
+    "cooked": 168250,
+    "cookedMethodEs": "asado"
+  },
+  {
+    "key": "beef-flank",
+    "nameEs": "Vacío",
+    "category": "Carnes y aves",
+    "raw": 174776,
+    "cooked": 174774,
+    "cookedMethodEs": "asado"
+  },
+  {
+    "key": "white-rice",
+    "nameEs": "Arroz blanco",
+    "category": "Cereales y derivados",
+    "raw": 2512381,
+    "cooked": 168878,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "brown-rice",
+    "nameEs": "Arroz integral",
+    "category": "Cereales y derivados",
+    "raw": 2512380,
+    "cooked": 169704,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "parboiled-rice",
+    "nameEs": "Arroz parboil",
+    "category": "Cereales y derivados",
+    "raw": 169707,
+    "cooked": 169708,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "rolled-oats",
+    "nameEs": "Avena arrollada",
+    "category": "Cereales y derivados",
+    "asIs": 2346396
+  },
+  {
+    "key": "pearl-barley",
+    "nameEs": "Cebada perlada",
+    "category": "Cereales y derivados",
+    "raw": 170284,
+    "cooked": 170285,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "couscous",
+    "nameEs": "Cuscús",
+    "category": "Cereales y derivados",
+    "raw": 169699,
+    "cooked": 169700,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "pasta",
+    "nameEs": "Fideos",
+    "category": "Cereales y derivados",
+    "raw": 2758998,
+    "cooked": 168928,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "whole-wheat-pasta",
+    "nameEs": "Fideos integrales",
+    "category": "Cereales y derivados",
+    "raw": 2759000,
+    "cooked": 168910,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "wheat-flour",
+    "nameEs": "Harina de trigo",
+    "category": "Cereales y derivados",
+    "asIs": 789890
+  },
+  {
+    "key": "whole-wheat-flour",
+    "nameEs": "Harina integral",
+    "category": "Cereales y derivados",
+    "asIs": 790085
+  },
+  {
+    "key": "polenta",
+    "nameEs": "Polenta",
+    "category": "Cereales y derivados",
+    "raw": 171654,
+    "cooked": 171655,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "quinoa",
+    "nameEs": "Quinoa",
+    "category": "Cereales y derivados",
+    "raw": 168874,
+    "cooked": 168917,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "oat-bran",
+    "nameEs": "Salvado de avena",
+    "category": "Cereales y derivados",
+    "asIs": 168872
+  },
+  {
+    "key": "pineapple",
+    "nameEs": "Ananá",
+    "category": "Frutas",
+    "asIs": 2346398
+  },
+  {
+    "key": "blueberries",
+    "nameEs": "Arándanos",
+    "category": "Frutas",
+    "asIs": 2346411
+  },
+  {
+    "key": "banana",
+    "nameEs": "Banana",
+    "category": "Frutas",
+    "asIs": 1105314
+  },
+  {
+    "key": "cherries",
+    "nameEs": "Cerezas",
+    "category": "Frutas",
+    "asIs": 2346399
+  },
+  {
+    "key": "plum",
+    "nameEs": "Ciruela",
+    "category": "Frutas",
+    "asIs": 2710837
+  },
+  {
+    "key": "prunes",
+    "nameEs": "Ciruelas pasas",
+    "category": "Frutas",
+    "asIs": 168162
+  },
+  {
+    "key": "apricot",
+    "nameEs": "Damasco",
+    "category": "Frutas",
+    "asIs": 2710815
+  },
+  {
+    "key": "peach",
+    "nameEs": "Durazno",
+    "category": "Frutas",
+    "asIs": 325430
+  },
+  {
+    "key": "strawberries",
+    "nameEs": "Frutillas",
+    "category": "Frutas",
+    "asIs": 2346409
+  },
+  {
+    "key": "fig",
+    "nameEs": "Higo",
+    "category": "Frutas",
+    "asIs": 173021
+  },
+  {
+    "key": "dried-figs",
+    "nameEs": "Higos secos",
+    "category": "Frutas",
+    "asIs": 746768
+  },
+  {
+    "key": "kiwi",
+    "nameEs": "Kiwi",
+    "category": "Frutas",
+    "asIs": 327046
+  },
+  {
+    "key": "lemon",
+    "nameEs": "Limón",
+    "category": "Frutas",
+    "asIs": 167746
+  },
+  {
+    "key": "papaya",
+    "nameEs": "Mamón",
+    "category": "Frutas",
+    "asIs": 169926
+  },
+  {
+    "key": "mandarin",
+    "nameEs": "Mandarina",
+    "category": "Frutas",
+    "asIs": 2710832
+  },
+  {
+    "key": "mango",
+    "nameEs": "Mango",
+    "category": "Frutas",
+    "asIs": 2710833
+  },
+  {
+    "key": "red-apple",
+    "nameEs": "Manzana roja",
+    "category": "Frutas",
+    "asIs": 1750339
+  },
+  {
+    "key": "green-apple",
+    "nameEs": "Manzana verde",
+    "category": "Frutas",
+    "asIs": 1750342
+  },
+  {
+    "key": "cantaloupe",
+    "nameEs": "Melón",
+    "category": "Frutas",
+    "asIs": 746770
+  },
+  {
+    "key": "orange",
+    "nameEs": "Naranja",
+    "category": "Frutas",
+    "asIs": 746771
+  },
+  {
+    "key": "dried-apricots",
+    "nameEs": "Orejones de damasco",
+    "category": "Frutas",
+    "asIs": 173941
+  },
+  {
+    "key": "avocado",
+    "nameEs": "Palta",
+    "category": "Frutas",
+    "asIs": 2710824
+  },
+  {
+    "key": "raisins",
+    "nameEs": "Pasas de uva",
+    "category": "Frutas",
+    "asIs": 168165
+  },
+  {
+    "key": "pear",
+    "nameEs": "Pera",
+    "category": "Frutas",
+    "asIs": 746773
+  },
+  {
+    "key": "grapefruit",
+    "nameEs": "Pomelo",
+    "category": "Frutas",
+    "asIs": 173033
+  },
+  {
+    "key": "watermelon",
+    "nameEs": "Sandía",
+    "category": "Frutas",
+    "asIs": 167765
+  },
+  {
+    "key": "grapes",
+    "nameEs": "Uvas",
+    "category": "Frutas",
+    "asIs": 2346412
+  },
+  {
+    "key": "almonds",
+    "nameEs": "Almendras",
+    "category": "Frutos secos y semillas",
+    "asIs": 2346393
+  },
+  {
+    "key": "hazelnuts",
+    "nameEs": "Avellanas",
+    "category": "Frutos secos y semillas",
+    "asIs": 2515375
+  },
+  {
+    "key": "cashews",
+    "nameEs": "Castañas de cajú",
+    "category": "Frutos secos y semillas",
+    "asIs": 2515374
+  },
+  {
+    "key": "desiccated-coconut",
+    "nameEs": "Coco rallado",
+    "category": "Frutos secos y semillas",
+    "asIs": 170170
+  },
+  {
+    "key": "peanuts",
+    "nameEs": "Maní",
+    "category": "Frutos secos y semillas",
+    "asIs": 2515376
+  },
+  {
+    "key": "roasted-peanuts",
+    "nameEs": "Maní tostado sin sal",
+    "category": "Frutos secos y semillas",
+    "asIs": 173806
+  },
+  {
+    "key": "walnuts",
+    "nameEs": "Nueces",
+    "category": "Frutos secos y semillas",
+    "asIs": 2346394
+  },
+  {
+    "key": "peanut-butter",
+    "nameEs": "Pasta de maní",
+    "category": "Frutos secos y semillas",
+    "asIs": 2262072
+  },
+  {
+    "key": "pistachios",
+    "nameEs": "Pistachos",
+    "category": "Frutos secos y semillas",
+    "asIs": 2515379
+  },
+  {
+    "key": "chia-seeds",
+    "nameEs": "Semillas de chía",
+    "category": "Frutos secos y semillas",
+    "asIs": 170554
+  },
+  {
+    "key": "sunflower-seeds",
+    "nameEs": "Semillas de girasol",
+    "category": "Frutos secos y semillas",
+    "asIs": 2515381
+  },
+  {
+    "key": "flaxseed",
+    "nameEs": "Semillas de lino",
+    "category": "Frutos secos y semillas",
+    "asIs": 169414
+  },
+  {
+    "key": "sesame-seeds",
+    "nameEs": "Semillas de sésamo",
+    "category": "Frutos secos y semillas",
+    "asIs": 170150
+  },
+  {
+    "key": "pumpkin-seeds",
+    "nameEs": "Semillas de zapallo",
+    "category": "Frutos secos y semillas",
+    "asIs": 2515380
+  },
+  {
+    "key": "tahini",
+    "nameEs": "Tahini",
+    "category": "Frutos secos y semillas",
+    "asIs": 2262073
+  },
+  {
+    "key": "egg-white",
+    "nameEs": "Clara de huevo",
+    "category": "Huevos",
+    "raw": 172183
+  },
+  {
+    "key": "egg",
+    "nameEs": "Huevo",
+    "category": "Huevos",
+    "raw": 171287,
+    "cooked": 173424,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "quail-egg",
+    "nameEs": "Huevo de codorniz",
+    "category": "Huevos",
+    "raw": 172191
+  },
+  {
+    "key": "egg-yolk",
+    "nameEs": "Yema de huevo",
+    "category": "Huevos",
+    "raw": 172184
+  },
+  {
+    "key": "heavy-cream",
+    "nameEs": "Crema de leche",
+    "category": "Lácteos",
+    "asIs": 170859
+  },
+  {
+    "key": "skim-milk",
+    "nameEs": "Leche descremada",
+    "category": "Lácteos",
+    "asIs": 746776
+  },
+  {
+    "key": "whole-milk",
+    "nameEs": "Leche entera",
+    "category": "Lácteos",
+    "asIs": 746782
+  },
+  {
+    "key": "low-fat-milk",
+    "nameEs": "Leche parcialmente descremada",
+    "category": "Lácteos",
+    "asIs": 746772
+  },
+  {
+    "key": "cottage-cheese",
+    "nameEs": "Queso cottage",
+    "category": "Lácteos",
+    "asIs": 328841
+  },
+  {
+    "key": "cream-cheese",
+    "nameEs": "Queso crema",
+    "category": "Lácteos",
+    "asIs": 173418
+  },
+  {
+    "key": "fresh-cheese",
+    "nameEs": "Queso cremoso",
+    "category": "Lácteos",
+    "asIs": 2647442
+  },
+  {
+    "key": "semi-hard-cheese",
+    "nameEs": "Queso de máquina",
+    "category": "Lácteos",
+    "asIs": 171241
+  },
+  {
+    "key": "mozzarella",
+    "nameEs": "Queso mozzarella",
+    "category": "Lácteos",
+    "asIs": 170845
+  },
+  {
+    "key": "port-salut",
+    "nameEs": "Queso port salut",
+    "category": "Lácteos",
+    "asIs": 170849
+  },
+  {
+    "key": "grated-cheese",
+    "nameEs": "Queso rallado",
+    "category": "Lácteos",
+    "asIs": 325036
+  },
+  {
+    "key": "ricotta-part-skim",
+    "nameEs": "Ricota descremada",
+    "category": "Lácteos",
+    "asIs": 171248
+  },
+  {
+    "key": "ricotta-whole",
+    "nameEs": "Ricota entera",
+    "category": "Lácteos",
+    "asIs": 746766
+  },
+  {
+    "key": "greek-yogurt-nonfat",
+    "nameEs": "Yogur griego descremado",
+    "category": "Lácteos",
+    "asIs": 330137
+  },
+  {
+    "key": "greek-yogurt-whole",
+    "nameEs": "Yogur griego natural",
+    "category": "Lácteos",
+    "asIs": 2259794
+  },
+  {
+    "key": "plain-yogurt-nonfat",
+    "nameEs": "Yogur natural descremado",
+    "category": "Lácteos",
+    "asIs": 2647437
+  },
+  {
+    "key": "plain-yogurt-whole",
+    "nameEs": "Yogur natural entero",
+    "category": "Lácteos",
+    "asIs": 2259793
+  },
+  {
+    "key": "split-peas",
+    "nameEs": "Arvejas secas partidas",
+    "category": "Legumbres",
+    "cooked": 172429,
+    "cookedMethodEs": "hervidas"
+  },
+  {
+    "key": "chickpeas",
+    "nameEs": "Garbanzos",
+    "category": "Legumbres",
+    "raw": 2644282,
+    "cooked": 173757,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "canned-chickpeas",
+    "nameEs": "Garbanzos en lata",
+    "category": "Legumbres",
+    "asIs": 2644288
+  },
+  {
+    "key": "hummus",
+    "nameEs": "Hummus",
+    "category": "Legumbres",
+    "asIs": 321358
+  },
+  {
+    "key": "lentils",
+    "nameEs": "Lentejas",
+    "category": "Legumbres",
+    "raw": 2644283,
+    "cooked": 172421,
+    "cookedMethodEs": "hervidas"
+  },
+  {
+    "key": "white-beans",
+    "nameEs": "Porotos blancos",
+    "category": "Legumbres",
+    "raw": 175202,
+    "cooked": 175203,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "red-kidney-beans",
+    "nameEs": "Porotos colorados",
+    "category": "Legumbres",
+    "raw": 173744,
+    "cooked": 175194,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "soybeans",
+    "nameEs": "Porotos de soja",
+    "category": "Legumbres",
+    "raw": 174270,
+    "cooked": 174299,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "black-beans",
+    "nameEs": "Porotos negros",
+    "category": "Legumbres",
+    "raw": 173734,
+    "cooked": 173735,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "textured-soy",
+    "nameEs": "Soja texturizada",
+    "category": "Legumbres",
+    "asIs": 1104705
+  },
+  {
+    "key": "tofu",
+    "nameEs": "Tofu",
+    "category": "Legumbres",
+    "asIs": 172475
+  },
+  {
+    "key": "balsamic-vinegar",
+    "nameEs": "Aceto balsámico",
+    "category": "Otros",
+    "asIs": 172241
+  },
+  {
+    "key": "unflavored-gelatin",
+    "nameEs": "Gelatina sin sabor",
+    "category": "Otros",
+    "asIs": 169599
+  },
+  {
+    "key": "ketchup",
+    "nameEs": "Kétchup",
+    "category": "Otros",
+    "asIs": 168556
+  },
+  {
+    "key": "mustard",
+    "nameEs": "Mostaza",
+    "category": "Otros",
+    "asIs": 326698
+  },
+  {
+    "key": "whey-protein",
+    "nameEs": "Proteína de suero",
+    "category": "Otros",
+    "asIs": 173177
+  },
+  {
+    "key": "soy-sauce",
+    "nameEs": "Salsa de soja",
+    "category": "Otros",
+    "asIs": 174277
+  },
+  {
+    "key": "tomato-sauce",
+    "nameEs": "Salsa de tomate",
+    "category": "Otros",
+    "asIs": 170054
+  },
+  {
+    "key": "white-vinegar",
+    "nameEs": "Vinagre de alcohol",
+    "category": "Otros",
+    "asIs": 172237
+  },
+  {
+    "key": "sponge-cake",
+    "nameEs": "Bizcochuelo",
+    "category": "Panificados",
+    "asIs": 172707
+  },
+  {
+    "key": "rice-cakes",
+    "nameEs": "Galletas de arroz",
+    "category": "Panificados",
+    "asIs": 170250
+  },
+  {
+    "key": "saltine-crackers",
+    "nameEs": "Galletitas de agua",
+    "category": "Panificados",
+    "asIs": 172746
+  },
+  {
+    "key": "whole-wheat-crackers",
+    "nameEs": "Galletitas integrales",
+    "category": "Panificados",
+    "asIs": 172749
+  },
+  {
+    "key": "marie-biscuits",
+    "nameEs": "Galletitas María",
+    "category": "Panificados",
+    "asIs": 171867
+  },
+  {
+    "key": "hamburger-bun",
+    "nameEs": "Pan de hamburguesa",
+    "category": "Panificados",
+    "asIs": 172796
+  },
+  {
+    "key": "white-sandwich-bread",
+    "nameEs": "Pan de molde blanco",
+    "category": "Panificados",
+    "asIs": 2758993
+  },
+  {
+    "key": "french-bread",
+    "nameEs": "Pan francés",
+    "category": "Panificados",
+    "asIs": 172675
+  },
+  {
+    "key": "whole-wheat-bread",
+    "nameEs": "Pan integral",
+    "category": "Panificados",
+    "asIs": 172688
+  },
+  {
+    "key": "multigrain-bread",
+    "nameEs": "Pan multicereal",
+    "category": "Panificados",
+    "asIs": 168013
+  },
+  {
+    "key": "breadcrumbs",
+    "nameEs": "Pan rallado",
+    "category": "Panificados",
+    "asIs": 172806
+  },
+  {
+    "key": "flour-tortilla",
+    "nameEs": "Rapiditas",
+    "category": "Panificados",
+    "asIs": 2758996
+  },
+  {
+    "key": "pollock",
+    "nameEs": "Abadejo",
+    "category": "Pescados y mariscos",
+    "raw": 175129,
+    "cooked": 174237,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "tuna-canned-water",
+    "nameEs": "Atún al natural",
+    "category": "Pescados y mariscos",
+    "asIs": 334194
+  },
+  {
+    "key": "tuna-canned-oil",
+    "nameEs": "Atún en aceite",
+    "category": "Pescados y mariscos",
+    "asIs": 173708
+  },
+  {
+    "key": "tuna-fresh",
+    "nameEs": "Atún fresco",
+    "category": "Pescados y mariscos",
+    "raw": 175159,
+    "cooked": 172006,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "cod",
+    "nameEs": "Bacalao",
+    "category": "Pescados y mariscos",
+    "raw": 2684444,
+    "cooked": 171956,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "mackerel",
+    "nameEs": "Caballa",
+    "category": "Pescados y mariscos",
+    "raw": 175119,
+    "cooked": 175120,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "squid",
+    "nameEs": "Calamar",
+    "category": "Pescados y mariscos",
+    "raw": 174223
+  },
+  {
+    "key": "shrimp",
+    "nameEs": "Langostinos",
+    "category": "Pescados y mariscos",
+    "raw": 2684443,
+    "cooked": 171971,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "sole",
+    "nameEs": "Lenguado",
+    "category": "Pescados y mariscos",
+    "raw": 174196,
+    "cooked": 174197,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "mussels",
+    "nameEs": "Mejillones",
+    "category": "Pescados y mariscos",
+    "raw": 174216,
+    "cooked": 174217,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "hake",
+    "nameEs": "Merluza",
+    "category": "Pescados y mariscos",
+    "raw": 173713,
+    "cooked": 175161,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "salmon-atlantic",
+    "nameEs": "Salmón rojo",
+    "category": "Pescados y mariscos",
+    "raw": 175167,
+    "cooked": 175168,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "salmon-pink",
+    "nameEs": "Salmón rosado",
+    "category": "Pescados y mariscos",
+    "raw": 175138,
+    "cooked": 172001,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "sardines-canned-oil",
+    "nameEs": "Sardinas en aceite",
+    "category": "Pescados y mariscos",
+    "asIs": 175139
+  },
+  {
+    "key": "tilapia",
+    "nameEs": "Tilapia",
+    "category": "Pescados y mariscos",
+    "raw": 2684442,
+    "cooked": 175177,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "trout",
+    "nameEs": "Trucha",
+    "category": "Pescados y mariscos",
+    "raw": 173717,
+    "cooked": 173718,
+    "cookedMethodEs": "a la plancha"
+  },
+  {
+    "key": "green-olives",
+    "nameEs": "Aceitunas verdes",
+    "category": "Verduras",
+    "asIs": 332791
+  },
+  {
+    "key": "swiss-chard",
+    "nameEs": "Acelga",
+    "category": "Verduras",
+    "raw": 169991,
+    "cooked": 170401,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "garlic",
+    "nameEs": "Ajo",
+    "category": "Verduras",
+    "asIs": 1104647
+  },
+  {
+    "key": "artichoke",
+    "nameEs": "Alcaucil",
+    "category": "Verduras",
+    "raw": 169205,
+    "cooked": 168386,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "celery",
+    "nameEs": "Apio",
+    "category": "Verduras",
+    "raw": 2346405,
+    "cooked": 169989,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "green-peas",
+    "nameEs": "Arvejas frescas",
+    "category": "Verduras",
+    "raw": 170419,
+    "cooked": 170420,
+    "cookedMethodEs": "hervidas"
+  },
+  {
+    "key": "sweet-potato",
+    "nameEs": "Batata",
+    "category": "Verduras",
+    "raw": 2346404,
+    "cooked": 168484,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "eggplant",
+    "nameEs": "Berenjena",
+    "category": "Verduras",
+    "raw": 2685577,
+    "cooked": 169229,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "broccoli",
+    "nameEs": "Brócoli",
+    "category": "Verduras",
+    "raw": 747447,
+    "cooked": 169967,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "pumpkin",
+    "nameEs": "Calabaza",
+    "category": "Verduras",
+    "raw": 2727578,
+    "cooked": 168449,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "onion",
+    "nameEs": "Cebolla",
+    "category": "Verduras",
+    "raw": 1104962,
+    "cooked": 170001,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "green-onion",
+    "nameEs": "Cebolla de verdeo",
+    "category": "Verduras",
+    "raw": 170005
+  },
+  {
+    "key": "white-mushroom",
+    "nameEs": "Champiñones",
+    "category": "Verduras",
+    "raw": 1999629,
+    "cooked": 169252,
+    "cookedMethodEs": "hervidos"
+  },
+  {
+    "key": "green-beans",
+    "nameEs": "Chaucha",
+    "category": "Verduras",
+    "raw": 2346400,
+    "cooked": 169141,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "sweet-corn",
+    "nameEs": "Choclo",
+    "category": "Verduras",
+    "raw": 2710826,
+    "cooked": 169999,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "cauliflower",
+    "nameEs": "Coliflor",
+    "category": "Verduras",
+    "raw": 2685573,
+    "cooked": 170397,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "asparagus",
+    "nameEs": "Espárrago",
+    "category": "Verduras",
+    "raw": 2710823,
+    "cooked": 168390,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "spinach",
+    "nameEs": "Espinaca",
+    "category": "Verduras",
+    "raw": 1999633,
+    "cooked": 168463,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "leaf-lettuce",
+    "nameEs": "Lechuga",
+    "category": "Verduras",
+    "asIs": 2346391
+  },
+  {
+    "key": "romaine-lettuce",
+    "nameEs": "Lechuga romana",
+    "category": "Verduras",
+    "asIs": 2346389
+  },
+  {
+    "key": "cassava",
+    "nameEs": "Mandioca",
+    "category": "Verduras",
+    "raw": 169985
+  },
+  {
+    "key": "red-bell-pepper",
+    "nameEs": "Morrón rojo",
+    "category": "Verduras",
+    "raw": 2258590,
+    "cooked": 170110,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "green-bell-pepper",
+    "nameEs": "Morrón verde",
+    "category": "Verduras",
+    "raw": 2258588,
+    "cooked": 170428,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "hearts-of-palm",
+    "nameEs": "Palmitos",
+    "category": "Verduras",
+    "asIs": 168569
+  },
+  {
+    "key": "potato",
+    "nameEs": "Papa",
+    "category": "Verduras",
+    "raw": 2346401,
+    "cooked": 170440,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "cucumber",
+    "nameEs": "Pepino",
+    "category": "Verduras",
+    "asIs": 2346406
+  },
+  {
+    "key": "leek",
+    "nameEs": "Puerro",
+    "category": "Verduras",
+    "raw": 169246,
+    "cooked": 168426,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "tomato-puree",
+    "nameEs": "Puré de tomate",
+    "category": "Verduras",
+    "asIs": 2685582
+  },
+  {
+    "key": "radish",
+    "nameEs": "Rabanito",
+    "category": "Verduras",
+    "asIs": 2747665
+  },
+  {
+    "key": "chicory-greens",
+    "nameEs": "Radicheta",
+    "category": "Verduras",
+    "asIs": 169992
+  },
+  {
+    "key": "beet",
+    "nameEs": "Remolacha",
+    "category": "Verduras",
+    "raw": 2685576,
+    "cooked": 169146,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "cabbage",
+    "nameEs": "Repollo",
+    "category": "Verduras",
+    "raw": 2346407,
+    "cooked": 169976,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "arugula",
+    "nameEs": "Rúcula",
+    "category": "Verduras",
+    "asIs": 2710822
+  },
+  {
+    "key": "tomato",
+    "nameEs": "Tomate",
+    "category": "Verduras",
+    "raw": 170457,
+    "cooked": 170050,
+    "cookedMethodEs": "cocido"
+  },
+  {
+    "key": "cherry-tomato",
+    "nameEs": "Tomate cherry",
+    "category": "Verduras",
+    "asIs": 321360
+  },
+  {
+    "key": "carrot",
+    "nameEs": "Zanahoria",
+    "category": "Verduras",
+    "raw": 2258586,
+    "cooked": 170394,
+    "cookedMethodEs": "hervida"
+  },
+  {
+    "key": "summer-squash",
+    "nameEs": "Zapallito",
+    "category": "Verduras",
+    "raw": 170487,
+    "cooked": 170488,
+    "cookedMethodEs": "hervido"
+  },
+  {
+    "key": "butternut-squash",
+    "nameEs": "Zapallo anco",
+    "category": "Verduras",
+    "raw": 2685570,
+    "cooked": 169296,
+    "cookedMethodEs": "al horno"
+  },
+  {
+    "key": "zucchini",
+    "nameEs": "Zucchini",
+    "category": "Verduras",
+    "raw": 2685568,
+    "cooked": 169292,
+    "cookedMethodEs": "hervido"
+  }
+]
