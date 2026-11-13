@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum FoodSource {
+  USDA_FOUNDATION
+  USDA_SR_LEGACY
+}
+
+/// Shared food catalog. Nutrient values are per 100 g of edible portion.
+model Food {
+  id        Int        @id @default(autoincrement())
+  source    FoodSource
+  /// USDA FoodData Central id. Nullable so non-USDA foods can be added later.
+  fdcId     Int?       @unique @map("fdc_id")
+  nameEn    String     @map("name_en") @db.VarChar(255)
+  /// Spanish display name, curated on top of the USDA data.
+  nameEs    String?    @map("name_es") @db.VarChar(255)
+  category  String?    @db.VarChar(100)
+  kcal      Decimal?   @db.Decimal(7, 2)
+  proteinG  Decimal?   @map("protein_g") @db.Decimal(6, 2)
+  carbsG    Decimal?   @map("carbs_g") @db.Decimal(6, 2)
+  fatG      Decimal?   @map("fat_g") @db.Decimal(6, 2)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@index([nameEs])
+  @@index([category])
+  @@map("foods")
+}

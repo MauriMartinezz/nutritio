@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local data downloads (USDA datasets)
+/data
+
+# prisma generated client
+/generated
