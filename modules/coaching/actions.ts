@@ -58,7 +58,7 @@ async function respond(linkId: string, response: LinkResponse) {
   });
   if (!link) throw new LinkRuleError("Request not found");
 
-  const status = respondToLinkRequest(link, response);
+  const status = respondToLinkRequest(nutritionist.nutritionistStatus, link, response);
   const { count } = await prisma.nutritionistClient.updateMany({
     where: { id: linkId, nutritionistId: nutritionist.id, status: "PENDING" },
     data: { status, respondedAt: new Date() },

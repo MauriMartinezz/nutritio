@@ -15,7 +15,7 @@ export async function requireClientAccess(clientId: string) {
     where: { nutritionistId_clientId: { nutritionistId: nutritionist.id, clientId } },
     select: { status: true, respondedAt: true },
   });
-  if (!canAccessClient(link)) notFound();
+  if (!canAccessClient(nutritionist.nutritionistStatus, link)) notFound();
 
   return { nutritionist, workingSince: link?.respondedAt ?? null };
 }

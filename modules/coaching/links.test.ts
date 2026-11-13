@@ -42,18 +42,30 @@ test("a client may request again after a rejection", () => {
 });
 
 test("a nutritionist accepts or rejects a pending request", () => {
-  assert.equal(respondToLinkRequest({ status: "PENDING" }, "ACCEPT"), "ACCEPTED");
-  assert.equal(respondToLinkRequest({ status: "PENDING" }, "REJECT"), "REJECTED");
+  assert.equal(respondToLinkRequest("APPROVED", { status: "PENDING" }, "ACCEPT"), "ACCEPTED");
+  assert.equal(respondToLinkRequest("APPROVED", { status: "PENDING" }, "REJECT"), "REJECTED");
+});
+
+test("a nutritionist who is not approved cannot answer requests", () => {
+  for (const status of ["PENDING", "REJECTED"] as const) {
+    assert.throws(() => respondToLinkRequest(status, { status: "PENDING" }, "ACCEPT"), LinkRuleError);
+  }
 });
 
 test("only pending requests can be answered", () => {
-  assert.throws(() => respondToLinkRequest({ status: "ACCEPTED" }, "REJECT"), LinkRuleError);
-  assert.throws(() => respondToLinkRequest({ status: "REJECTED" }, "ACCEPT"), LinkRuleError);
+  assert.throws(() => respondToLinkRequest("APPROVED", { status: "ACCEPTED" }, "REJECT"), LinkRuleError);
+  assert.throws(() => respondToLinkRequest("APPROVED", { status: "REJECTED" }, "ACCEPT"), LinkRuleError);
 });
 
 test("a nutritionist accesses client data only through an accepted link", () => {
-  assert.equal(canAccessClient({ status: "ACCEPTED" }), true);
-  assert.equal(canAccessClient({ status: "PENDING" }), false);
-  assert.equal(canAccessClient({ status: "REJECTED" }), false);
-  assert.equal(canAccessClient(null), false);
+  assert.equal(canAccessClient("APPROVED", { status: "ACCEPTED" }), true);
+  assert.equal(canAccessClient("APPROVED", { status: "PENDING" }), false);
+  assert.equal(canAccessClient("APPROVED", { status: "REJECTED" }), false);
+  assert.equal(canAccessClient("APPROVED", null), false);
+});
+
+test("a revoked or unverified nutritionist loses access but keeps the link", () => {
+  for (const status of ["PENDING", "REJECTED", null] as const) {
+    assert.equal(canAccessClient(status, { status: "ACCEPTED" }), false);
+  }
 });

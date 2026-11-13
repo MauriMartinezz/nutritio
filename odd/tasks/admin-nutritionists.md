@@ -19,9 +19,9 @@ Out of scope: audit log of admin changes, editing clients, deleting users.
 
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
-| T1 | S3 | inline | pending | |
-| T2 | S1, S2 | inline | pending | |
-| T3 | S4 | inline | pending | |
+| T1 | S3 | inline | done | f4d9ec6 |
+| T2 | S1, S2 | inline | done | d42b3f3 |
+| T3 | S4 | inline | done | (this commit) |
 
 Risk: item 2 (permissions) → independent verifier at feature end.
 
@@ -30,3 +30,5 @@ Risk: item 2 (permissions) → independent verifier at feature end.
 - **L1** (2026-11-13) — "Bien, me gustaría que el administrador pueda gestionar y ver los nutricionistas verificados, los pendientes, los rechazados. Que los puedan editar su estado o sus valores (nombre, mail, dni, etc)"
 - **L2** (2026-11-13) — "No puedes trabajar con ambas tareas en paralelo?" → parallel writer for meal plans was denied by the permission classifier; user did not choose, so work proceeds sequentially (admin first, meal plans after; spec ready in worktree `nutritio-worktrees/meal-plans`).
 - **L3** (2026-11-13) — "Los datos que quiero del nutricionista son nombre, dni, mail, matricupa profesional, fecha de nacimiento, telefono de contacto, especialidad y creo que por ahora nada mas"
+- **L4** (2026-11-13) — Session resumed after the terminal closed. T2 was written but uncommitted; checks green (38 tests, tsc, lint), committed as d42b3f3.
+- **L5** (2026-11-13) — T3: found two S4 gaps — `canAccessClient` ignored the nutritionist status and `respond()` let a non-approved nutritionist answer requests. RED 2 failing → GREEN 40/40; tsc and lint clean. Status is read from the DB per request, so revocation is immediate.
