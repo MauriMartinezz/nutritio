@@ -56,6 +56,8 @@ Create a `.env` file (git-ignored):
 
 ```bash
 DATABASE_URL="mysql://nutritio:nutritio@localhost:3306/nutritio"
+BETTER_AUTH_SECRET="<generate with: openssl rand -base64 32>"
+BETTER_AUTH_URL="http://localhost:3000"
 ```
 
 ```bash
@@ -63,6 +65,15 @@ pnpm db:migrate    # apply migrations (prisma migrate dev)
 pnpm db:generate   # generate the client into generated/prisma
 pnpm db:studio     # browse data with Prisma Studio
 ```
+
+## Authentication and roles
+
+[Better Auth](https://www.better-auth.com) handles email + password accounts (`lib/auth.ts`, mounted at `/api/auth/*`).
+
+- At sign-up a person chooses **Client** or **Nutritionist**. `ADMIN` can never be chosen at sign-up.
+- Nutritionists start **pending** until an admin verifies them.
+- Role and verification status cannot be changed through the auth API (`/api/auth/update-user` returns 403).
+- Server code reads the user through `modules/identity/dal.ts` (`getCurrentUser`, `requireUser`, `requireRole`).
 
 ## Food catalog (USDA FoodData Central)
 
