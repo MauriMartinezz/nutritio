@@ -73,6 +73,7 @@ pnpm db:studio     # browse data with Prisma Studio
 - At sign-up a person chooses **Client** or **Nutritionist**. `ADMIN` can never be chosen at sign-up.
 - Nutritionists start **pending** until an admin verifies them.
 - Role and verification status cannot be changed through the auth API (`/api/auth/update-user` returns 403).
+- Create the first admin from an existing account: `pnpm admin:promote <email>`. Admins verify nutritionists at `/admin`.
 - Server code reads the user through `modules/identity/dal.ts` (`getCurrentUser`, `requireUser`, `requireRole`).
 
 ## Food catalog (USDA FoodData Central)

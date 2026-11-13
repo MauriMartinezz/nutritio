@@ -12,7 +12,8 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "usda:download": "bash scripts/usda/download.sh",
-    "usda:import": "tsx scripts/usda/import.ts"
+    "usda:import": "tsx scripts/usda/import.ts",
+    "admin:promote": "tsx scripts/admin/promote.ts"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "7.10.1",
