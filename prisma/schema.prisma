@@ -41,6 +41,7 @@ model Food {
   fatG              Decimal?         @map("fat_g") @db.Decimal(6, 2)
   createdAt         DateTime         @default(now()) @map("created_at")
   updatedAt         DateTime         @updatedAt @map("updated_at")
+  mealItems         MealItem[]
 
   @@index([nameEs])
   @@index([category])
@@ -88,6 +89,10 @@ model User {
   clientLinks        NutritionistClient[] @relation("NutritionistLinks")
   /// Links where this user is the client.
   nutritionistLinks  NutritionistClient[] @relation("ClientLinks")
+  /// Plans and templates written by this nutritionist.
+  authoredPlans      MealPlan[]           @relation("PlanAuthor")
+  /// Plans assigned to this client.
+  assignedPlans      MealPlan[]           @relation("PlanClient")
 
   @@index([role, nutritionistStatus])
   @@map("users")
@@ -163,4 +168,50 @@ model NutritionistClient {
   @@index([clientId, status])
   @@index([nutritionistId, status])
   @@map("nutritionist_clients")
+}
+
+/// A daily meal plan. Without a client it is a reusable template of its nutritionist.
+model MealPlan {
+  id             String   @id @default(cuid())
+  nutritionistId String   @map("nutritionist_id")
+  nutritionist   User     @relation("PlanAuthor", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  clientId       String?  @map("client_id")
+  client         User?    @relation("PlanClient", fields: [clientId], references: [id], onDelete: Cascade)
+  name           String   @db.VarChar(120)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  meals          Meal[]
+
+  @@index([nutritionistId, clientId])
+  @@index([clientId, createdAt])
+  @@map("meal_plans")
+}
+
+/// One meal of a daily plan (Breakfast, Lunch...), ordered by position.
+model Meal {
+  id       String     @id @default(cuid())
+  planId   String     @map("plan_id")
+  plan     MealPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  name     String     @db.VarChar(60)
+  position Int
+  items    MealItem[]
+
+  @@index([planId, position])
+  @@map("meals")
+}
+
+/// A food and its amount inside a meal. Macros are derived from the food (per 100 g).
+model MealItem {
+  id       String  @id @default(cuid())
+  mealId   String  @map("meal_id")
+  meal     Meal    @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  foodId   Int     @map("food_id")
+  food     Food    @relation(fields: [foodId], references: [id])
+  grams    Int
+  note     String? @db.VarChar(200)
+  position Int
+
+  @@index([mealId, position])
+  @@map("meal_items")
 }
