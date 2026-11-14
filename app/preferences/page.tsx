@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { PreferencesForm } from "@/modules/clients/components/preferences-form";
 import { getOwnPreferences } from "@/modules/clients/dal";
+import { ThemeToggle } from "@/modules/theme/theme-toggle";
 
 export const metadata: Metadata = { title: "My preferences · Nutritio" };
 
@@ -19,6 +20,7 @@ export default function Page() {
         ← Back
       </Link>
       <h1 className="text-2xl font-semibold">My preferences</h1>
+      <ThemeToggle />
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         Only the nutritionists you work with can see this.
       </p>
