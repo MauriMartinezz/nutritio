@@ -145,6 +145,12 @@ model Verification {
   @@map("verifications")
 }
 
+enum AccessUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
 enum LinkStatus {
   PENDING
   ACCEPTED
@@ -162,6 +168,13 @@ model NutritionistClient {
   status         LinkStatus @default(PENDING)
   requestedAt    DateTime   @default(now()) @map("requested_at")
   respondedAt    DateTime?  @map("responded_at")
+  /// Access period chosen by the nutritionist; also the default for renewals and auto-renewal.
+  accessAmount   Int        @default(1) @map("access_amount")
+  accessUnit     AccessUnit @default(MONTH) @map("access_unit")
+  /// End of the client's access. Null until the request is accepted.
+  accessUntil    DateTime?  @map("access_until")
+  /// When on, an expired end date rolls forward by the period automatically.
+  autoRenew      Boolean    @default(false) @map("auto_renew")
   updatedAt      DateTime   @updatedAt @map("updated_at")
 
   @@unique([nutritionistId, clientId])
