@@ -3,6 +3,7 @@ import { toDateInputValue } from "../rules";
 import { ActivityForm } from "./activity-form";
 import { ActivityList } from "./activity-list";
 import { ActivitySummary } from "./activity-summary";
+import { card, h2 } from "@/modules/ui/classes";
 
 /** The signed-in client's activity log. Render inside <Suspense>. */
 export async function MyActivities() {
@@ -11,11 +12,13 @@ export async function MyActivities() {
   earliest.setFullYear(earliest.getFullYear() - 1);
 
   return (
-    <div className="flex flex-col gap-8">
-      <ActivityForm today={toDateInputValue(now)} earliest={toDateInputValue(earliest)} />
+    <div className="flex flex-col gap-6">
+      <div className={card}>
+        <ActivityForm today={toDateInputValue(now)} earliest={toDateInputValue(earliest)} />
+      </div>
       <ActivitySummary summary={summary} />
-      <section className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold">Last 30 days</h2>
+      <section className={card}>
+        <h2 className={h2}>Last 30 days</h2>
         <ActivityList activities={activities} deletable />
       </section>
     </div>

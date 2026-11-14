@@ -3,6 +3,7 @@ import { describeCheckInStatus } from "../rules";
 import { CheckInForm } from "./check-in-form";
 import { CheckInHistory } from "./check-in-history";
 import { WeightChart } from "./weight-chart";
+import { callout, card, h2, h3, muted } from "@/modules/ui/classes";
 
 /** The signed-in client's check-ins, per nutritionist. Render inside <Suspense>. */
 export async function MyCheckIns() {
@@ -10,30 +11,30 @@ export async function MyCheckIns() {
 
   if (links.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">
-        You have no active nutritionist to send check-ins to.
-      </p>
+      <p className={muted}>You have no active nutritionist to send check-ins to.</p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-8">
       {links.map(({ linkId, nutritionistName, checkIns, due, ...status }) => (
         <section key={linkId} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold">{nutritionistName}</h2>
+          <div className="flex flex-col gap-2">
+            <h2 className={h2}>{nutritionistName}</h2>
             <p
               className={
-                status.state === "DUE" ? "text-sm font-medium text-amber-600" : "text-sm text-zinc-500"
+                status.state === "DUE" ? `${callout("warning")} font-medium` : muted
               }
             >
               {describeCheckInStatus(status)}
               {due && status.state === "UPCOMING" && ` (${due.toLocaleDateString()})`}
             </p>
           </div>
-          <CheckInForm linkId={linkId} />
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold">History</h3>
+          <div className={card}>
+            <CheckInForm linkId={linkId} />
+          </div>
+          <div className={card}>
+            <h3 className={h3}>History</h3>
             <WeightChart
               series={checkIns
                 .map((checkIn) => ({ date: checkIn.createdAt, weightKg: checkIn.weightKg }))

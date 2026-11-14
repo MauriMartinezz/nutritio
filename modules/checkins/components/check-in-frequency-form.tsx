@@ -1,4 +1,4 @@
-import { inputClass } from "@/modules/nutritionists/components/profile-fields";
+import { buttonSecondary, input, label } from "@/modules/ui/classes";
 import { setCheckInFrequency } from "../actions";
 import { CHECK_IN_LIMITS, FREQUENCY_PRESETS } from "../rules";
 
@@ -11,8 +11,8 @@ export function CheckInFrequencyForm({
   checkInEveryDays: number | null;
 }) {
   return (
-    <form action={setCheckInFrequency.bind(null, clientId)} className="flex flex-wrap items-end gap-2">
-      <label className="flex flex-col gap-1 text-sm">
+    <form action={setCheckInFrequency.bind(null, clientId)} className="flex flex-wrap items-end gap-3">
+      <label className={label}>
         Check-in every (days)
         <input
           type="number"
@@ -24,7 +24,7 @@ export function CheckInFrequencyForm({
           list="check-in-presets"
           defaultValue={checkInEveryDays ?? ""}
           placeholder="e.g. 7"
-          className={`${inputClass} w-32`}
+          className={`${input} w-32 font-mono tabular-nums`}
         />
         <datalist id="check-in-presets">
           {FREQUENCY_PRESETS.map((days) => (
@@ -32,7 +32,7 @@ export function CheckInFrequencyForm({
           ))}
         </datalist>
       </label>
-      <button className="rounded-md border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900">
+      <button className={buttonSecondary}>
         Save frequency
       </button>
     </form>

@@ -34,21 +34,25 @@ export function ThemeToggle() {
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="text-sm font-medium">Theme</legend>
-      <div role="group" aria-label="Theme" className="flex w-fit rounded-md border border-zinc-300 p-0.5 dark:border-zinc-700">
+      <legend className="mb-2 text-sm font-semibold">Theme</legend>
+      <div
+        role="group"
+        aria-label="Theme"
+        className="flex w-fit gap-0.5 rounded-control border border-line-strong bg-surface-muted p-0.5"
+      >
         {OPTIONS.map((option) => (
           <button
             key={option.value}
             type="button"
             aria-pressed={theme === option.value}
             onClick={() => setTheme(option.value)}
-            className="rounded px-3 py-1.5 text-sm aria-pressed:bg-zinc-900 aria-pressed:text-white dark:aria-pressed:bg-zinc-100 dark:aria-pressed:text-zinc-900"
+            className="min-h-10 min-w-20 rounded-badge px-4 text-sm font-semibold text-secondary hover:text-ink aria-pressed:bg-surface aria-pressed:text-ink aria-pressed:ring-1 aria-pressed:ring-line-strong"
           >
             {option.label}
           </button>
         ))}
       </div>
-      <p className="text-xs text-zinc-500">Saved in this browser.</p>
+      <p className="text-xs text-secondary">Saved in this browser.</p>
     </fieldset>
   );
 }

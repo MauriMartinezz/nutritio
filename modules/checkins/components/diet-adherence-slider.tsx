@@ -8,10 +8,10 @@ export function DietAdherenceSlider({ defaultValue = 50 }: { defaultValue?: numb
   const [value, setValue] = useState(defaultValue);
 
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="flex items-baseline justify-between">
+    <label className="flex flex-col gap-2 text-sm font-medium">
+      <span className="flex items-baseline justify-between gap-3">
         How much of the diet could you follow?
-        <output htmlFor="dietAdherence" className="font-medium tabular-nums">
+        <output htmlFor="dietAdherence" className="font-mono text-base font-semibold tabular-nums text-accent">
           {value}%
         </output>
       </span>
@@ -25,9 +25,9 @@ export function DietAdherenceSlider({ defaultValue = 50 }: { defaultValue?: numb
         value={value}
         onChange={(event) => setValue(Number(event.target.value))}
         aria-valuetext={`${value}%`}
-        className="w-full accent-emerald-600"
+        className="h-11 w-full cursor-pointer accent-[var(--accent)]"
       />
-      <span className="flex justify-between text-xs text-zinc-500">
+      <span className="flex justify-between font-mono text-xs font-normal text-secondary">
         <span>0%</span>
         <span>100%</span>
       </span>

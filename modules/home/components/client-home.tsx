@@ -4,10 +4,10 @@ import { getClientHome, type ClientHomeLink } from "@/modules/checkins/dal";
 import { describeCheckInStatus } from "@/modules/checkins/rules";
 import { WeightChart } from "@/modules/checkins/components/weight-chart";
 import { formatKg, formatWeightChange, weightChange } from "@/modules/checkins/weight-chart";
+import { buttonPrimary, callout, card, eyebrow, h2, kpi, muted } from "@/modules/ui/classes";
 import { accessDaysLeft, describeAccess } from "../access-summary";
 
-const primaryButton =
-  "self-start rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700";
+const primaryButton = `${buttonPrimary} self-start`;
 
 /**
  * Client dashboard for the home page. Reads the session, so render it inside
@@ -21,9 +21,9 @@ export async function ClientHome() {
 
   if (links.length === 0) {
     return (
-      <section className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <h2 className="text-lg font-semibold">Your follow-up</h2>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <section className={card}>
+        <h2 className={h2}>Your follow-up</h2>
+        <p className={muted}>
           You are not working with a nutritionist yet.
         </p>
         <Link href="/nutritionists" className={primaryButton}>
@@ -35,7 +35,7 @@ export async function ClientHome() {
 
   return (
     <section className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold">Your follow-up</h2>
+      <h2 className={h2}>Your follow-up</h2>
       {links.map((link) => (
         <LinkCard key={link.linkId} link={link} now={now} />
       ))}
@@ -48,23 +48,24 @@ function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
   const change = weightChange(link.weightSeries);
 
   return (
-    <article className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <h3 className="font-semibold">{link.nutritionistName}</h3>
-
-      <p className={link.accessExpired ? "text-sm font-medium text-red-600 dark:text-red-400" : "text-sm"}>
-        {describeAccess({ expired: link.accessExpired, daysLeft }, link.nutritionistName)}
-        {!link.accessExpired && link.accessUntil && ` (until ${link.accessUntil.toLocaleDateString()})`}
-      </p>
+    <article className={card}>
+      <div className="flex flex-col gap-1">
+        <h3 className="text-lg font-semibold tracking-tight">{link.nutritionistName}</h3>
+        <p className={link.accessExpired ? `${callout("danger")} font-medium` : muted}>
+          {describeAccess({ expired: link.accessExpired, daysLeft }, link.nutritionistName)}
+          {!link.accessExpired && link.accessUntil && ` (until ${link.accessUntil.toLocaleDateString()})`}
+        </p>
+      </div>
 
       {!link.accessExpired && (
-        <div className="flex flex-col gap-2">
-          <p
-            className={
-              link.state === "DUE"
-                ? "text-sm font-medium text-amber-600 dark:text-amber-400"
-                : "text-sm text-zinc-600 dark:text-zinc-400"
-            }
-          >
+        <div
+          className={
+            link.state === "DUE"
+              ? `${callout("warning")} flex flex-wrap items-center justify-between gap-3`
+              : "flex flex-col gap-2"
+          }
+        >
+          <p className={link.state === "DUE" ? "font-medium" : muted}>
             {describeCheckInStatus(link)}
             {link.due && link.state === "UPCOMING" && ` (${link.due.toLocaleDateString()})`}
           </p>
@@ -77,11 +78,18 @@ function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
       )}
 
       {link.latestWeightKg !== null && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm">
-            Latest weight: <span className="font-medium">{formatKg(link.latestWeightKg)}</span>
-            {change !== null &&
-              ` · ${formatWeightChange(change)} since ${link.weightSeries[0].date.toLocaleDateString()}`}
+        <div className="flex flex-col gap-4 border-t border-divider pt-4">
+          {/* Flex drops the {" "} nodes visually, but they keep the text "Latest weight: 71.5 kg · …". */}
+          <p className={`${eyebrow} flex flex-wrap items-baseline gap-x-3 gap-y-2`}>
+            <span className="basis-full">Latest weight:</span>{" "}
+            <span className={`${kpi} text-ink`}>{formatKg(link.latestWeightKg)}</span>
+            {change !== null && (
+              <span className="font-normal">
+                {" · "}
+                <span className="font-mono font-semibold tabular-nums text-ink">{formatWeightChange(change)}</span>
+                {` since ${link.weightSeries[0].date.toLocaleDateString()}`}
+              </span>
+            )}
           </p>
           <WeightChart series={link.weightSeries} />
         </div>

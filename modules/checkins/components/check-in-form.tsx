@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { inputClass } from "@/modules/nutritionists/components/profile-fields";
+import { buttonPrimary, fieldError, formSuccess, input, label as labelClass, textarea } from "@/modules/ui/classes";
 import { submitCheckIn, type SubmitCheckInState } from "../actions";
 import { CHECK_IN_LIMITS, RATINGS } from "../rules";
 import { DietAdherenceSlider } from "./diet-adherence-slider";
@@ -16,25 +16,25 @@ export function CheckInForm({ linkId }: { linkId: string }) {
   const problems = state.problems ?? {};
 
   return (
-    <form action={formAction} className="flex w-full max-w-xl flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
+    <form action={formAction} className="flex w-full flex-col gap-5">
+      <label className={labelClass}>
         Weight (kg)
         <input
           name="weightKg"
           inputMode="decimal"
           required
           placeholder="e.g. 72.5"
-          className={`${inputClass} w-32`}
+          className={`${input} w-32 font-mono tabular-nums`}
         />
       </label>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">How did it go? (1 = bad, 5 = great)</legend>
+        <legend className="mb-2 text-sm font-semibold">How did it go? (1 = bad, 5 = great)</legend>
         <div className="grid gap-3 sm:grid-cols-2">
           {Object.entries(RATINGS).map(([name, label]) => (
-            <label key={name} className="flex flex-col gap-1 text-sm">
+            <label key={name} className={labelClass}>
               {label}
-              <select name={name} required defaultValue="" className={inputClass}>
+              <select name={name} required defaultValue="" className={input}>
                 <option value="" disabled>
                   Choose…
                 </option>
@@ -51,44 +51,44 @@ export function CheckInForm({ linkId }: { linkId: string }) {
 
       <DietAdherenceSlider />
 
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" name="discomfort" />
+      <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
+        <input type="checkbox" name="discomfort" className="size-4 accent-[var(--accent)]" />
         I had some discomfort or pain
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Discomfort details
         <input
           name="discomfortNotes"
           maxLength={CHECK_IN_LIMITS.discomfortNotes}
           placeholder="Where and when (only if you had discomfort)"
-          className={inputClass}
+          className={input}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Notes
         <textarea
           name="notes"
           rows={3}
           maxLength={CHECK_IN_LIMITS.notes}
           placeholder="Anything your nutritionist should know"
-          className={inputClass}
+          className={textarea}
         />
       </label>
 
       {Object.keys(problems).length > 0 && (
-        <ul role="alert" className="list-inside list-disc text-sm text-red-600">
+        <ul role="alert" className={`list-inside list-disc ${fieldError}`}>
           {Object.entries(problems).map(([field, message]) => (
             <li key={field}>{message}</li>
           ))}
         </ul>
       )}
       {state.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className={fieldError}>
           {state.error}
         </p>
       )}
       {state.saved && (
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+        <p role="status" className={formSuccess}>
           Check-in sent.
         </p>
       )}
@@ -96,7 +96,7 @@ export function CheckInForm({ linkId }: { linkId: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        className={`${buttonPrimary} self-start`}
       >
         {pending ? "Sending…" : "Send check-in"}
       </button>

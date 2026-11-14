@@ -1,20 +1,26 @@
 import { RATINGS, type RatingField } from "../rules";
 import type { CheckInView } from "../dal";
+import { figure, list, muted } from "@/modules/ui/classes";
 
 /** Check-ins, newest first. Plain markup, so it renders on server and client. */
 export function CheckInHistory({ checkIns }: { checkIns: CheckInView[] }) {
-  if (checkIns.length === 0) return <p className="text-sm text-zinc-500">No check-ins yet.</p>;
+  if (checkIns.length === 0) return <p className={muted}>No check-ins yet.</p>;
 
   return (
-    <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+    <ul className={list}>
       {checkIns.map((checkIn) => (
-        <li key={checkIn.id} className="flex flex-col gap-1 py-3 text-sm">
+        <li key={checkIn.id} className="flex flex-col gap-1 py-3 text-sm first:pt-0 last:pb-0">
           <p>
-            <span className="font-medium">{checkIn.createdAt.toLocaleDateString()}</span> ·{" "}
-            {checkIn.weightKg} kg
-            {checkIn.dietAdherence !== null && <> · Diet followed: {checkIn.dietAdherence}%</>}
+            <span className="font-mono font-medium tabular-nums">{checkIn.createdAt.toLocaleDateString()}</span> ·{" "}
+            <span className={figure}>{checkIn.weightKg} kg</span>
+            {checkIn.dietAdherence !== null && (
+              <>
+                {" "}
+                · Diet followed: <span className={figure}>{checkIn.dietAdherence}%</span>
+              </>
+            )}
           </p>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="text-secondary">
             {(Object.entries(RATINGS) as [RatingField, string][])
               .map(([field, label]) => `${label}: ${checkIn[field]}/5`)
               .join(" · ")}
