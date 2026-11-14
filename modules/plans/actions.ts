@@ -10,10 +10,10 @@ import {
   DEFAULT_MEALS,
   PlanRuleError,
   copyPlanForClient,
-  moveInOrder,
   parseGrams,
   parseMealName,
   parseNote,
+  parseReorder,
   parsePlanName,
   parsePlanNotes,
   variantToggle,
@@ -147,19 +147,13 @@ export async function renameMeal(mealId: string, formData: FormData) {
   refresh(planId);
 }
 
-export async function moveMeal(mealId: string, direction: "up" | "down") {
-  const { planId } = await requireEditableMeal(mealId);
-  if (direction !== "up" && direction !== "down") throw new PlanRuleError("Invalid direction");
-
-  const meals = await prisma.meal.findMany({
-    where: { planId },
-    orderBy: { position: "asc" },
-    select: { id: true },
-  });
-  const order = moveInOrder(
+/** Saves the meal order after a drag and drop. */
+export async function reorderMeals(planId: string, orderedIds: unknown) {
+  await requireEditablePlan(planId);
+  const meals = await prisma.meal.findMany({ where: { planId }, select: { id: true } });
+  const order = parseReorder(
     meals.map((meal) => meal.id),
-    mealId,
-    direction,
+    orderedIds,
   );
   await prisma.$transaction(
     order.map((id, position) => prisma.meal.update({ where: { id }, data: { position } })),

@@ -106,15 +106,15 @@ export function variantToggle(
   return other ? { foodId: other.id, preparation: target } : null;
 }
 
-/** Returns the ids in their new order after moving one up or down (no-op at the edges). */
-export function moveInOrder(ids: string[], id: string, direction: "up" | "down"): string[] {
-  const index = ids.indexOf(id);
-  if (index === -1) throw new PlanRuleError("Item not found in this plan");
-  const swapWith = direction === "up" ? index - 1 : index + 1;
-  if (swapWith < 0 || swapWith >= ids.length) return ids;
-  const result = [...ids];
-  [result[index], result[swapWith]] = [result[swapWith], result[index]];
-  return result;
+/** A new order sent by the browser (drag and drop): must be a permutation of the current ids. */
+export function parseReorder(currentIds: string[], proposed: unknown): string[] {
+  const valid =
+    Array.isArray(proposed) &&
+    proposed.length === currentIds.length &&
+    proposed.every((id) => typeof id === "string" && currentIds.includes(id)) &&
+    new Set(proposed).size === proposed.length;
+  if (!valid) throw new PlanRuleError("The new order does not match this plan's meals");
+  return proposed as string[];
 }
 
 type PlanContent = {

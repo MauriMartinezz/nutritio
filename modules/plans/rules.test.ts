@@ -6,7 +6,7 @@ import {
   canEditPlan,
   copyPlanForClient,
   itemTotals,
-  moveInOrder,
+  parseReorder,
   parseGrams,
   parseMealName,
   parsePlanName,
@@ -79,14 +79,6 @@ test("foods without both variants have no toggle", () => {
   );
 });
 
-test("meals move up and down within the plan order", () => {
-  assert.deepEqual(moveInOrder(["a", "b", "c"], "b", "up"), ["b", "a", "c"]);
-  assert.deepEqual(moveInOrder(["a", "b", "c"], "b", "down"), ["a", "c", "b"]);
-  assert.deepEqual(moveInOrder(["a", "b", "c"], "a", "up"), ["a", "b", "c"]);
-  assert.deepEqual(moveInOrder(["a", "b", "c"], "c", "down"), ["a", "b", "c"]);
-  assert.throws(() => moveInOrder(["a"], "z", "up"), PlanRuleError);
-});
-
 test("using a template copies its meals and items for one client", () => {
   const template = {
     name: "Base plan",
@@ -132,5 +124,12 @@ test("a nutritionist who is not approved cannot edit plans", () => {
     const user = { id: "n1", nutritionistStatus };
     assert.equal(canEditPlan(user, { nutritionistId: "n1", clientId: null }, null), false);
     assert.equal(canEditPlan(user, { nutritionistId: "n1", clientId: "c1" }, { status: "ACCEPTED" }), false);
+  }
+});
+
+test("a dragged order must contain exactly the plan's meals", () => {
+  assert.deepEqual(parseReorder(["a", "b", "c"], ["c", "a", "b"]), ["c", "a", "b"]);
+  for (const bad of [["a", "b"], ["a", "b", "c", "d"], ["a", "a", "b"], ["a", "b", "x"], "a,b,c", null]) {
+    assert.throws(() => parseReorder(["a", "b", "c"], bad), PlanRuleError, JSON.stringify(bad));
   }
 });

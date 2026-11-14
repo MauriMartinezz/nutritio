@@ -4,7 +4,6 @@ import {
   addItem,
   addMeal,
   deletePlan,
-  moveMeal,
   removeItem,
   removeMeal,
   renameMeal,
@@ -15,6 +14,7 @@ import {
 import { getPlanForEditor, searchFoods } from "../dal";
 import { MAX_GRAMS } from "../rules";
 import { MacroSummary } from "./macro-summary";
+import { SortableMeals } from "./sortable-meals";
 
 const input =
   "rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900";
@@ -78,135 +78,132 @@ export async function PlanEditor({ params, searchParams }: Props) {
         </p>
       </section>
 
-      {plan.meals.map((meal, index) => (
-        <section key={meal.id} className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <form action={renameMeal.bind(null, meal.id)} className="flex gap-2">
-              <input name="name" required maxLength={60} defaultValue={meal.name} aria-label="Meal name" className={`${input} font-medium`} />
-              <button className={button}>Rename</button>
-            </form>
-            <div className="flex gap-1">
-              <form action={moveMeal.bind(null, meal.id, "up")}>
-                <button className={button} disabled={index === 0} aria-label={`Move ${meal.name} up`}>
-                  ↑
-                </button>
-              </form>
-              <form action={moveMeal.bind(null, meal.id, "down")}>
-                <button className={button} disabled={index === plan.meals.length - 1} aria-label={`Move ${meal.name} down`}>
-                  ↓
-                </button>
-              </form>
-              <form action={removeMeal.bind(null, meal.id)}>
-                <button className={button}>Remove meal</button>
-              </form>
-            </div>
-          </div>
-          <MacroSummary totals={meal.totals} strong />
+      <SortableMeals
+        planId={plan.id}
+        meals={plan.meals.map((meal) => ({
+          id: meal.id,
+          name: meal.name,
+          card: (
+            <section className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <form action={renameMeal.bind(null, meal.id)} className="flex gap-2">
+                  <input name="name" required maxLength={60} defaultValue={meal.name} aria-label="Meal name" className={`${input} font-medium`} />
+                  <button className={button}>Rename</button>
+                </form>
+                <div className="flex gap-1">
+                  <form action={removeMeal.bind(null, meal.id)}>
+                    <button className={button}>Remove meal</button>
+                  </form>
+                </div>
+              </div>
+              <MacroSummary totals={meal.totals} strong />
 
-          {meal.items.length === 0 ? (
-            <p className="text-sm text-zinc-500">No foods yet.</p>
-          ) : (
-            <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
-              {meal.items.map((item) => (
-                <li key={item.id} className="flex flex-col gap-2 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium">
-                      {item.food.label}
-                      {item.food.preparation && (
-                        <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                          {PREPARATION_LABELS[item.food.preparation]}
-                          {item.food.preparationNote && ` · ${item.food.preparationNote}`}
+              {meal.items.length === 0 ? (
+                <p className="text-sm text-zinc-500">No foods yet.</p>
+              ) : (
+                <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {meal.items.map((item) => (
+                    <li key={item.id} className="flex flex-col gap-2 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium">
+                          {item.food.label}
+                          {item.food.preparation && (
+                            <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                              {PREPARATION_LABELS[item.food.preparation]}
+                              {item.food.preparationNote && ` · ${item.food.preparationNote}`}
+                            </span>
+                          )}
+                        </p>
+                        <MacroSummary totals={item.totals} />
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <form action={updateItem.bind(null, item.id)} className="flex flex-wrap items-center gap-2">
+                          <input
+                            name="grams"
+                            type="number"
+                            required
+                            min={1}
+                            max={MAX_GRAMS}
+                            step={1}
+                            defaultValue={item.grams}
+                            aria-label="Grams"
+                            className={`${input} w-24`}
+                          />
+                          <span className="text-sm text-zinc-500">g</span>
+                          <input name="note" maxLength={200} defaultValue={item.note ?? ""} placeholder="Note" aria-label="Note" className={input} />
+                          <button className={button}>Save</button>
+                        </form>
+                        {item.toggle && (
+                          <form action={toggleItemVariant.bind(null, item.id)}>
+                            <button className={button}>Switch to {PREPARATION_LABELS[item.toggle.preparation]}</button>
+                          </form>
+                        )}
+                        <form action={removeItem.bind(null, item.id)}>
+                          <button className={button} aria-label={`Remove ${item.food.label}`}>
+                            Remove
+                          </button>
+                        </form>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <form action={`/plans/${plan.id}`} className="flex gap-2">
+                <input type="hidden" name="meal" value={meal.id} />
+                <input
+                  name="q"
+                  minLength={2}
+                  defaultValue={searchMealId === meal.id ? query : ""}
+                  placeholder="Search a food to add (e.g. arroz, pollo)"
+                  aria-label={`Search a food for ${meal.name}`}
+                  className={`${input} flex-1`}
+                />
+                <button className={button}>Search</button>
+              </form>
+
+              {searchMealId === meal.id && query && (
+                results.length === 0 ? (
+                  <p className="text-sm text-zinc-500">No foods match “{query}”.</p>
+                ) : (
+                  <ul className="flex flex-col divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+                    {results.map((food) => (
+                      <li key={food.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                        <span className="text-sm">
+                          {food.label}
+                          {food.preparation && (
+                            <span className="text-zinc-500">
+                              {" "}
+                              ({PREPARATION_LABELS[food.preparation]}
+                              {food.preparationNote && ` · ${food.preparationNote}`})
+                            </span>
+                          )}
+                          {food.kcal !== null && <span className="text-zinc-500"> · {Math.round(food.kcal)} kcal/100 g</span>}
                         </span>
-                      )}
-                    </p>
-                    <MacroSummary totals={item.totals} />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <form action={updateItem.bind(null, item.id)} className="flex flex-wrap items-center gap-2">
-                      <input
-                        name="grams"
-                        type="number"
-                        required
-                        min={1}
-                        max={MAX_GRAMS}
-                        step={1}
-                        defaultValue={item.grams}
-                        aria-label="Grams"
-                        className={`${input} w-24`}
-                      />
-                      <span className="text-sm text-zinc-500">g</span>
-                      <input name="note" maxLength={200} defaultValue={item.note ?? ""} placeholder="Note" aria-label="Note" className={input} />
-                      <button className={button}>Save</button>
-                    </form>
-                    {item.toggle && (
-                      <form action={toggleItemVariant.bind(null, item.id)}>
-                        <button className={button}>Switch to {PREPARATION_LABELS[item.toggle.preparation]}</button>
-                      </form>
-                    )}
-                    <form action={removeItem.bind(null, item.id)}>
-                      <button className={button} aria-label={`Remove ${item.food.label}`}>
-                        Remove
-                      </button>
-                    </form>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <form action={`/plans/${plan.id}`} className="flex gap-2">
-            <input type="hidden" name="meal" value={meal.id} />
-            <input
-              name="q"
-              minLength={2}
-              defaultValue={searchMealId === meal.id ? query : ""}
-              placeholder="Search a food to add (e.g. arroz, pollo)"
-              aria-label={`Search a food for ${meal.name}`}
-              className={`${input} flex-1`}
-            />
-            <button className={button}>Search</button>
-          </form>
-
-          {searchMealId === meal.id && query && (
-            results.length === 0 ? (
-              <p className="text-sm text-zinc-500">No foods match “{query}”.</p>
-            ) : (
-              <ul className="flex flex-col divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-                {results.map((food) => (
-                  <li key={food.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                    <span className="text-sm">
-                      {food.label}
-                      {food.preparation && (
-                        <span className="text-zinc-500">
-                          {" "}
-                          ({PREPARATION_LABELS[food.preparation]}
-                          {food.preparationNote && ` · ${food.preparationNote}`})
-                        </span>
-                      )}
-                      {food.kcal !== null && <span className="text-zinc-500"> · {Math.round(food.kcal)} kcal/100 g</span>}
-                    </span>
-                    <form action={addItem.bind(null, meal.id, food.id)} className="flex items-center gap-2">
-                      <input
-                        name="grams"
-                        type="number"
-                        required
-                        min={1}
-                        max={MAX_GRAMS}
-                        step={1}
-                        defaultValue={100}
-                        aria-label={`Grams of ${food.label}`}
-                        className={`${input} w-24`}
-                      />
-                      <span className="text-sm text-zinc-500">g</span>
-                      <button className={primary}>Add</button>
-                    </form>
-                  </li>
-                ))}
-              </ul>
-            )
-          )}
-        </section>
-      ))}
+                        <form action={addItem.bind(null, meal.id, food.id)} className="flex items-center gap-2">
+                          <input
+                            name="grams"
+                            type="number"
+                            required
+                            min={1}
+                            max={MAX_GRAMS}
+                            step={1}
+                            defaultValue={100}
+                            aria-label={`Grams of ${food.label}`}
+                            className={`${input} w-24`}
+                          />
+                          <span className="text-sm text-zinc-500">g</span>
+                          <button className={primary}>Add</button>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              )}
+            </section>
+          ),
+        }))}
+      />
 
       <form action={addMeal.bind(null, plan.id)} className="flex gap-2">
         <input name="name" required maxLength={60} placeholder="New meal (e.g. Pre-workout)" aria-label="New meal name" className={`${input} flex-1`} />
