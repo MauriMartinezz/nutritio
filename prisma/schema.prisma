@@ -195,6 +195,7 @@ model NutritionistClient {
   checkInEveryDays Int?       @map("check_in_every_days")
   updatedAt        DateTime   @updatedAt @map("updated_at")
   checkIns         CheckIn[]
+  meetingRequests  MeetingRequest[]
 
   @@unique([nutritionistId, clientId])
   @@index([clientId, status])
@@ -336,4 +337,36 @@ model Activity {
 
   @@index([userId, performedOn])
   @@map("activities")
+}
+
+enum MeetingKind {
+  VIDEO_CALL
+  IN_PERSON
+}
+
+enum MeetingStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+/// A meeting or visit asked by a client to one nutritionist (one link).
+/// The nutritionist accepts it with a date or declines it.
+model MeetingRequest {
+  id             String             @id @default(cuid())
+  linkId         String             @map("link_id")
+  link           NutritionistClient @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  kind           MeetingKind
+  message        String?            @db.VarChar(1000)
+  /// Free text, e.g. "weekday evenings".
+  preferredTimes String?            @map("preferred_times") @db.VarChar(300)
+  status         MeetingStatus      @default(PENDING)
+  /// Set when the nutritionist accepts.
+  scheduledFor   DateTime?          @map("scheduled_for")
+  responseNote   String?            @map("response_note") @db.VarChar(500)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  respondedAt    DateTime?          @map("responded_at")
+
+  @@index([linkId, status])
+  @@map("meeting_requests")
 }

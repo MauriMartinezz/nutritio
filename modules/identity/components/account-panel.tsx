@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
 import { getCurrentUser } from "../dal";
 import { SignOutButton } from "./sign-out-button";
 
@@ -66,10 +67,18 @@ export async function AccountPanel() {
           My activities
         </Link>
       )}
-      {user.nutritionistStatus === "APPROVED" && (
-        <Link href="/clients" className="text-sm underline">
-          My clients and requests
+      {user.role === "CLIENT" && (
+        <Link href="/meetings" className="text-sm underline">
+          Meetings
         </Link>
+      )}
+      {user.nutritionistStatus === "APPROVED" && (
+        <span className="flex items-center text-sm">
+          <Link href="/clients" className="underline">
+            My clients and requests
+          </Link>
+          <PendingActions />
+        </span>
       )}
       {user.nutritionistStatus === "APPROVED" && (
         <Link href="/plans" className="text-sm underline">

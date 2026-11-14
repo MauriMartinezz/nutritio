@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
+import { MeetingRequestsSection } from "@/modules/meetings/components/meeting-requests-section";
 import { DEFAULT_PERIOD, accessState, effectiveAccessUntil, type AccessState } from "../access";
 import { acceptClientRequest, rejectClientRequest, renewClientAccess, setAutoRenew } from "../actions";
 import { PeriodFields, formatPeriod } from "./period-fields";
@@ -88,6 +89,8 @@ export async function MyClients() {
           </ul>
         )}
       </section>
+
+      <MeetingRequestsSection />
 
       {clients.length === 0 ? (
         <section className="flex flex-col gap-3">
