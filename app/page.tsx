@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ClientHome } from "@/modules/home/components/client-home";
 import { AccountPanel } from "@/modules/identity/components/account-panel";
 
 export default function Home() {
@@ -12,6 +13,9 @@ export default function Home() {
       </header>
       <Suspense fallback={<p className="text-sm text-zinc-500">Loading your account…</p>}>
         <AccountPanel />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ClientHome />
       </Suspense>
     </main>
   );

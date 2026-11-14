@@ -1,7 +1,7 @@
 import "server-only";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hasActiveAccess } from "@/modules/coaching/access";
+import { accessState, effectiveAccessUntil, hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
 import { checkInStatus, nextCheckInDue, type CheckInState } from "./rules";
@@ -148,4 +148,65 @@ export async function getClientCheckInSummary(): Promise<ClientCheckInSummary[]>
       .map((checkIn) => ({ date: checkIn.createdAt, weightKg: checkIn.weightKg }))
       .reverse(),
   }));
+}
+
+export type ClientHomeLink = CheckInScheduleView & {
+  linkId: string;
+  nutritionistName: string;
+  /** End of access in force (auto-renew applied); null if never granted. */
+  accessUntil: Date | null;
+  accessExpired: boolean;
+  latestWeightKg: number | null;
+  /** Oldest first, ready for a chart. */
+  weightSeries: { date: Date; weightKg: number }[];
+};
+
+/**
+ * Every accepted link of the signed-in client, expired access included, with
+ * access end, check-in schedule and weight evolution. Also returns `now`, so
+ * the caller computes days left against the same instant.
+ */
+export async function getClientHome(): Promise<{ now: Date; links: ClientHomeLink[] }> {
+  const client = await requireRole("CLIENT");
+
+  const links = await prisma.nutritionistClient.findMany({
+    where: { clientId: client.id, status: "ACCEPTED" },
+    select: {
+      id: true,
+      respondedAt: true,
+      accessAmount: true,
+      accessUnit: true,
+      accessUntil: true,
+      autoRenew: true,
+      checkInEveryDays: true,
+      nutritionist: { select: { name: true } },
+      checkIns: { select: { createdAt: true, weightKg: true }, orderBy: { createdAt: "desc" } },
+    },
+    orderBy: { respondedAt: "asc" },
+  });
+  await connection();
+  const now = new Date();
+
+  return {
+    now,
+    links: links.map((link) => {
+      const access = { ...link, amount: link.accessAmount, unit: link.accessUnit };
+      const weights = link.checkIns.map((row) => ({ date: row.createdAt, weightKg: row.weightKg.toNumber() }));
+      const due = nextCheckInDue(
+        { checkInEveryDays: link.checkInEveryDays, startedAt: link.respondedAt },
+        weights[0]?.date ?? null,
+      );
+      return {
+        linkId: link.id,
+        nutritionistName: link.nutritionist.name,
+        accessUntil: effectiveAccessUntil(access, now),
+        accessExpired: accessState(access, now) === "EXPIRED",
+        checkInEveryDays: link.checkInEveryDays,
+        due,
+        ...checkInStatus(due, now),
+        latestWeightKg: weights[0]?.weightKg ?? null,
+        weightSeries: weights.reverse(),
+      };
+    }),
+  };
 }

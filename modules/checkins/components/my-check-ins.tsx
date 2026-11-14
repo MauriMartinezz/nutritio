@@ -2,6 +2,7 @@ import { getOwnCheckIns } from "../dal";
 import { describeCheckInStatus } from "../rules";
 import { CheckInForm } from "./check-in-form";
 import { CheckInHistory } from "./check-in-history";
+import { WeightChart } from "./weight-chart";
 
 /** The signed-in client's check-ins, per nutritionist. Render inside <Suspense>. */
 export async function MyCheckIns() {
@@ -33,6 +34,11 @@ export async function MyCheckIns() {
           <CheckInForm linkId={linkId} />
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-semibold">History</h3>
+            <WeightChart
+              series={checkIns
+                .map((checkIn) => ({ date: checkIn.createdAt, weightKg: checkIn.weightKg }))
+                .reverse()}
+            />
             <CheckInHistory checkIns={checkIns} />
           </div>
         </section>

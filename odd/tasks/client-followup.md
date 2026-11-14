@@ -29,12 +29,12 @@ Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due 
 | T1 | S11 | delegated (context backstop) | done | 9a8b514 |
 | T2 | S10 | delegated (context backstop) | done | ceaa1b1 |
 | T3 | S1, S9 | delegated (context backstop) | done | f72ee2c |
-| T4 | S2, S7 | delegated (context backstop) | pending | |
+| T4 | S2, S7 | delegated (context backstop) | done | (T4) |
 | T5 | S3 | delegated (context backstop) | pending | |
 | T6 | S8 | delegated (context backstop) | pending | |
 | T7 | S4 | delegated (context backstop) | pending | |
 | T8 | S5, S6 | delegated (context backstop) | pending | |
-| T9 | S12 | inline | done | (T9) |
+| T9 | S12 | inline | done | 892ddbc |
 
 Risk: item 2 (client data visible to nutritionists, medical info) → independent verifier at feature end.
 
@@ -49,3 +49,4 @@ Risk: item 2 (client data visible to nutritionists, medical info) → independen
 - **L7** (2026-11-14) — T3 (writer): check_in_every_days on the link (nutritionist sets it on the client page), check_ins (weight, sleep/training/energy/hunger 1–5, discomfort + notes), client /check-ins with status and history, nutritionist history via requireClientAccess; `getClientCheckInSummary` for T4. Writer RED→GREEN 87/87, tsc, lint. Parent E2E isolated: 13/13 + tamper 2/2 (signed-in other client cannot post to the link). Advisory (framework): re-posting a stale no-JS useActionState form (bound args) right after a successful submit hangs the request in `next start`; a fresh page load avoids it, browsers always post the freshly rendered form. Better Auth's production rate limit blocks a 4th sign-up within seconds (test artifact).
 - **L8** (2026-11-14) — New request (mid-turn): "Excelente, ya que hay una sección de Preferencias, se podría agregar que el usuario pueda cambiar el tema, de claro a oscuro o viceversa y que se persista (esto no hace falta que quede en la base, con que quede en el localstorage está bien)" → S12, task T9.
 - **L9** (2026-11-14) — T9 inline: theme in localStorage (`nutritio-theme`), head script sets `data-theme` before paint (falls back to system; storage errors ignored), Tailwind `dark:` variant driven by data-theme with a no-JS media fallback, Light/Dark toggle on /preferences. Tests 91/91 (written together with the code, RED not observed separately), tsc, lint, build; compiled CSS contains both selectors; live check 4/4 (script in head, toggle renders, preferences form intact). Toggle lives on the client preferences page only.
+- **L10** (2026-11-14) — T4 (writer): client home "Your follow-up" per nutritionist (days of access left / expired message, check-in due with link / next in N days, latest weight and change), dependency-free SVG weight chart (aria summary + hidden table) on home and /check-ins. Writer RED→GREEN 100/100, tsc, lint. Parent E2E isolated: 13/13 (empty state, access days, due, weight change, chart, expired message, not shown to nutritionists or signed-out). Dates use server-locale toLocaleDateString (advisory).
