@@ -3,7 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole, type CurrentUser } from "@/modules/identity/dal";
-import { canEditPlan, itemTotals, sumTotals, variantToggle, type Nutrients } from "./rules";
+import {
+  canEditPlan,
+  dailyTotals,
+  itemTotals,
+  perServing,
+  sumTotals,
+  variantToggle,
+  type Nutrients,
+} from "./rules";
 
 /**
  * The plan if the signed-in nutritionist may edit it, else null. Every plan read
@@ -71,6 +79,8 @@ async function loadPlan(where: PlanQuery) {
         select: {
           id: true,
           name: true,
+          servings: true,
+          extras: true,
           items: {
             orderBy: { position: "asc" },
             select: { id: true, grams: true, note: true, food: { select: FOOD_SELECT } },
@@ -118,7 +128,17 @@ async function loadPlan(where: PlanQuery) {
         totals: itemTotals(nutrients, item.grams),
       };
     });
-    return { id: meal.id, name: meal.name, items, totals: sumTotals(items.map((i) => i.totals)) };
+    // Item grams and totals are for the whole recipe; one serving is what the client eats.
+    const totals = sumTotals(items.map((i) => i.totals));
+    return {
+      id: meal.id,
+      name: meal.name,
+      servings: meal.servings,
+      extras: meal.extras,
+      items,
+      totals,
+      perServing: perServing(totals, meal.servings),
+    };
   });
 
   return {
@@ -129,7 +149,7 @@ async function loadPlan(where: PlanQuery) {
     client: plan.client,
     nutritionist: plan.nutritionist,
     meals,
-    totals: sumTotals(meals.map((meal) => meal.totals)),
+    totals: dailyTotals(meals),
   };
 }
 

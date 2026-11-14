@@ -7,6 +7,8 @@ import type { NutritionistStatus } from "@/modules/identity/roles";
 export const DEFAULT_MEALS = ["Breakfast", "Lunch", "Snack", "Dinner"] as const;
 
 export const MAX_GRAMS = 2000;
+export const MAX_SERVINGS = 20;
+export const MAX_EXTRAS = 500;
 
 export class PlanRuleError extends Error {
   constructor(message: string) {
@@ -51,6 +53,26 @@ export function parseGrams(value: unknown): number {
   return grams;
 }
 
+/** Servings a meal (recipe) makes: a whole number from 1 to 20. Item grams are for the whole recipe. */
+export function parseServings(value: unknown): number {
+  const raw = typeof value === "number" ? String(value) : text(value);
+  if (!/^\d+$/.test(raw)) throw new PlanRuleError("Servings must be a whole number");
+  const servings = Number(raw);
+  if (servings < 1 || servings > MAX_SERVINGS) {
+    throw new PlanRuleError(`Servings must be between 1 and ${MAX_SERVINGS}`);
+  }
+  return servings;
+}
+
+/** Free-text extras of a recipe (low-calorie vegetables, condiments...). Empty means none. */
+export function parseMealExtras(value: unknown): string | null {
+  const extras = text(value);
+  if (extras.length > MAX_EXTRAS) {
+    throw new PlanRuleError(`Extras must be at most ${MAX_EXTRAS} characters`);
+  }
+  return extras || null;
+}
+
 /** Food values per 100 g, already converted from Decimal. Null means unknown. */
 export type Nutrients = {
   kcal: number | null;
@@ -90,6 +112,18 @@ export function sumTotals(list: Totals[]): Totals {
   return totals;
 }
 
+/** One serving of a recipe: its whole totals divided by the servings it makes. */
+export function perServing(totals: Totals, servings: number): Totals {
+  const result: Totals = { ...totals };
+  for (const key of NUTRIENT_KEYS) result[key] = round2(totals[key] / servings);
+  return result;
+}
+
+/** What the client eats in a day: one serving of each meal. */
+export function dailyTotals(meals: { totals: Totals; servings: number }[]): Totals {
+  return sumTotals(meals.map((meal) => perServing(meal.totals, meal.servings)));
+}
+
 type Preparation = "RAW" | "COOKED";
 
 /**
@@ -123,6 +157,8 @@ type PlanContent = {
   meals: {
     name: string;
     position: number;
+    servings: number;
+    extras: string | null;
     items: { foodId: number; grams: number; note: string | null; position: number }[];
   }[];
 };
@@ -138,6 +174,8 @@ export function copyPlanForClient(template: PlanContent, clientId: string) {
       .map((meal) => ({
         name: meal.name,
         position: meal.position,
+        servings: meal.servings,
+        extras: meal.extras,
         items: [...meal.items]
           .sort((a, b) => a.position - b.position)
           .map(({ foodId, grams, note, position }) => ({ foodId, grams, note, position })),

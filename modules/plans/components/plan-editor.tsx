@@ -8,12 +8,14 @@ import {
   removeMeal,
   renameMeal,
   toggleItemVariant,
+  updateMealRecipe,
   updateItem,
   updatePlanDetails,
 } from "../actions";
 import { getPlanForEditor, searchFoods } from "../dal";
-import { MAX_GRAMS } from "../rules";
+import { MAX_EXTRAS, MAX_GRAMS, MAX_SERVINGS } from "../rules";
 import { MacroSummary } from "./macro-summary";
+import { MealTotals } from "./meal-totals";
 import { SortableMeals } from "./sortable-meals";
 
 const input =
@@ -76,6 +78,9 @@ export async function PlanEditor({ params, searchParams }: Props) {
         <p>
           Daily total: <MacroSummary totals={plan.totals} strong />
         </p>
+        <p className="text-xs text-zinc-500">
+          Item grams are for the whole recipe; the daily total counts one serving of each meal.
+        </p>
       </section>
 
       <SortableMeals
@@ -96,7 +101,34 @@ export async function PlanEditor({ params, searchParams }: Props) {
                   </form>
                 </div>
               </div>
-              <MacroSummary totals={meal.totals} strong />
+              <MealTotals servings={meal.servings} totals={meal.totals} perServing={meal.perServing} strong />
+
+              <form action={updateMealRecipe.bind(null, meal.id)} className="flex flex-wrap items-start gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                  Servings
+                  <input
+                    name="servings"
+                    type="number"
+                    required
+                    min={1}
+                    max={MAX_SERVINGS}
+                    step={1}
+                    defaultValue={meal.servings}
+                    aria-label={`Servings of ${meal.name}`}
+                    className={`${input} w-20`}
+                  />
+                </label>
+                <textarea
+                  name="extras"
+                  maxLength={MAX_EXTRAS}
+                  rows={1}
+                  defaultValue={meal.extras ?? ""}
+                  placeholder="Extras (low-calorie vegetables, condiments…)"
+                  aria-label={`Extras of ${meal.name}`}
+                  className={`${input} min-w-48 flex-1`}
+                />
+                <button className={button}>Save recipe</button>
+              </form>
 
               {meal.items.length === 0 ? (
                 <p className="text-sm text-zinc-500">No foods yet.</p>

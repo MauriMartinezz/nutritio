@@ -221,13 +221,17 @@ model MealPlan {
   @@map("meal_plans")
 }
 
-/// One meal of a daily plan (Breakfast, Lunch...), ordered by position.
+/// One meal of a daily plan (Breakfast, Lunch...), ordered by position. A meal is a recipe.
 model Meal {
   id       String     @id @default(cuid())
   planId   String     @map("plan_id")
   plan     MealPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
   name     String     @db.VarChar(60)
   position Int
+  /// Servings the recipe makes; item grams are for the whole recipe.
+  servings Int        @default(1)
+  /// Free-text extras: low-calorie vegetables, condiments...
+  extras   String?    @db.VarChar(500)
   items    MealItem[]
 
   @@index([planId, position])

@@ -1,5 +1,6 @@
 import { listMyPlans, type PlanView } from "../dal";
 import { MacroSummary } from "./macro-summary";
+import { MealTotals } from "./meal-totals";
 
 const PREPARATION_LABELS = { RAW: "raw", COOKED: "cooked" } as const;
 
@@ -57,8 +58,13 @@ function PlanCard({ plan }: { plan: PlanView }) {
         <section key={meal.id} className="flex flex-col gap-2">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h4 className="font-medium">{meal.name}</h4>
-            <MacroSummary totals={meal.totals} />
+            <MealTotals servings={meal.servings} totals={meal.totals} perServing={meal.perServing} />
           </div>
+          {meal.servings > 1 && (
+            <p className="text-xs text-zinc-500">
+              Quantities below are for the whole recipe ({meal.servings} servings). Eat one serving per day.
+            </p>
+          )}
           {meal.items.length === 0 ? (
             <p className="text-sm text-zinc-500">Nothing planned.</p>
           ) : (
@@ -76,6 +82,12 @@ function PlanCard({ plan }: { plan: PlanView }) {
                 </li>
               ))}
             </ul>
+          )}
+          {meal.extras && (
+            <p className="whitespace-pre-line text-sm">
+              <span className="text-zinc-500">Extras: </span>
+              {meal.extras}
+            </p>
           )}
         </section>
       ))}

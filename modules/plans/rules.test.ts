@@ -5,8 +5,12 @@ import {
   PlanRuleError,
   canEditPlan,
   copyPlanForClient,
+  dailyTotals,
   itemTotals,
+  parseMealExtras,
   parseReorder,
+  parseServings,
+  perServing,
   parseGrams,
   parseMealName,
   parsePlanName,
@@ -84,8 +88,8 @@ test("using a template copies its meals and items for one client", () => {
     name: "Base plan",
     notes: "Drink water",
     meals: [
-      { name: "Lunch", position: 1, items: [{ foodId: 7, grams: 150, note: null, position: 0 }] },
-      { name: "Breakfast", position: 0, items: [] },
+      { name: "Lunch", position: 1, servings: 1, extras: null, items: [{ foodId: 7, grams: 150, note: null, position: 0 }] },
+      { name: "Breakfast", position: 0, servings: 1, extras: null, items: [] },
     ],
   };
   assert.deepEqual(copyPlanForClient(template, "client-1"), {
@@ -93,8 +97,8 @@ test("using a template copies its meals and items for one client", () => {
     notes: "Drink water",
     clientId: "client-1",
     meals: [
-      { name: "Breakfast", position: 0, items: [] },
-      { name: "Lunch", position: 1, items: [{ foodId: 7, grams: 150, note: null, position: 0 }] },
+      { name: "Breakfast", position: 0, servings: 1, extras: null, items: [] },
+      { name: "Lunch", position: 1, servings: 1, extras: null, items: [{ foodId: 7, grams: 150, note: null, position: 0 }] },
     ],
   });
 });
@@ -132,4 +136,68 @@ test("a dragged order must contain exactly the plan's meals", () => {
   for (const bad of [["a", "b"], ["a", "b", "c", "d"], ["a", "a", "b"], ["a", "b", "x"], "a,b,c", null]) {
     assert.throws(() => parseReorder(["a", "b", "c"], bad), PlanRuleError, JSON.stringify(bad));
   }
+});
+
+test("servings of a recipe: a whole number from 1 to 20", () => {
+  assert.equal(parseServings("4"), 4);
+  assert.equal(parseServings(" 20 "), 20);
+  assert.equal(parseServings(1), 1);
+  for (const bad of ["0", "21", "2.5", "-1", "", "abc", undefined]) {
+    assert.throws(() => parseServings(bad), PlanRuleError, String(bad));
+  }
+});
+
+test("recipe extras are free text up to 500 characters, empty means none", () => {
+  assert.equal(parseMealExtras("  Lettuce, tomato, oregano  "), "Lettuce, tomato, oregano");
+  assert.equal(parseMealExtras("   "), null);
+  assert.equal(parseMealExtras(undefined), null);
+  assert.equal(parseMealExtras("x".repeat(500))?.length, 500);
+  assert.throws(() => parseMealExtras("x".repeat(501)), PlanRuleError);
+});
+
+test("per-serving totals divide the whole recipe by its servings", () => {
+  const recipe = { kcal: 2000, proteinG: 150, carbsG: 200, fatG: 50, incomplete: true };
+  assert.deepEqual(perServing(recipe, 4), { kcal: 500, proteinG: 37.5, carbsG: 50, fatG: 12.5, incomplete: true });
+  assert.deepEqual(perServing({ kcal: 100, proteinG: 10, carbsG: 0, fatG: 1, incomplete: false }, 3), {
+    kcal: 33.33,
+    proteinG: 3.33,
+    carbsG: 0,
+    fatG: 0.33,
+    incomplete: false,
+  });
+});
+
+test("the daily total adds one serving of each meal", () => {
+  const prep = { kcal: 2000, proteinG: 160, carbsG: 200, fatG: 40, incomplete: false };
+  const breakfast = { kcal: 400, proteinG: 20, carbsG: 50, fatG: 10, incomplete: false };
+  assert.deepEqual(
+    dailyTotals([
+      { totals: prep, servings: 4 },
+      { totals: breakfast, servings: 1 },
+    ]),
+    { kcal: 900, proteinG: 60, carbsG: 100, fatG: 20, incomplete: false },
+  );
+});
+
+test("with one serving per meal the daily total is the plain sum of the meals", () => {
+  const a = { kcal: 130.5, proteinG: 2.7, carbsG: 28, fatG: 0.3, incomplete: false };
+  const b = { kcal: 200, proteinG: 31, carbsG: 0, fatG: 3.6, incomplete: true };
+  assert.deepEqual(
+    dailyTotals([
+      { totals: a, servings: 1 },
+      { totals: b, servings: 1 },
+    ]),
+    sumTotals([a, b]),
+  );
+});
+
+test("using a template copies each meal's servings and extras", () => {
+  const template = {
+    name: "Meal prep",
+    notes: null,
+    meals: [{ name: "Chicken bowl", position: 0, servings: 4, extras: "Lettuce, lemon", items: [] }],
+  };
+  assert.deepEqual(copyPlanForClient(template, "c1").meals, [
+    { name: "Chicken bowl", position: 0, servings: 4, extras: "Lettuce, lemon", items: [] },
+  ]);
 });

@@ -32,11 +32,11 @@ Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due 
 | T3 | S1, S9 | delegated (context backstop) | done | f72ee2c |
 | T4 | S2, S7 | delegated (context backstop) | done | ef04d3c |
 | T5 | S3 | delegated (context backstop) | done | 6039278 |
-| T6 | S8 | delegated (context backstop) | done | feat(meetings) commit |
+| T6 | S8 | delegated (context backstop) | done | 567bef4 |
 | T7 | S4 | delegated (context backstop) | pending | |
-| T8 | S5, S6 | delegated (context backstop) | pending | |
+| T8 | S5, S6 | delegated (context backstop) | done | (T8) |
 | T9 | S12 | inline | done | 892ddbc |
-| T10 | S9b | inline (after T5, shares schema.prisma) | done | (T10) |
+| T10 | S9b | inline (after T5, shares schema.prisma) | done | 5c6b8c6 |
 
 Risk: item 2 (client data visible to nutritionists, medical info) → independent verifier at feature end.
 
@@ -56,3 +56,4 @@ Risk: item 2 (client data visible to nutritionists, medical info) → independen
 - **L12** (2026-11-14) — T5 (writer): activities (type enum incl. OTHER + custom name, date, minutes, intensity, notes) on /activities with weekly summary and 30-day list, owner-scoped delete; nutritionist "Activity" section via requireClientAccess. Writer RED→GREEN 108/108, tsc, lint. Parent E2E isolated: 11/11 (save, invalid rejected, weekly total, linked/unlinked nutritionist, non-owner delete blocked).
 - **L13** (2026-11-14) — T10 inline: `diet_adherence` (nullable Int, older check-ins have none), required 0–100 whole % in parseCheckIn, slider (step 5, default 50, live value) in the check-in form, "Diet followed: N%" in both histories. RED 3 failing → GREEN 109/109, tsc, lint, build. Live: 8/8 (slider renders, saved, 101 rejected, both histories).
 - **L14** (2026-11-14) — T6 (writer): meeting requests (video call / in-person, preferred times, message) on /meetings for clients with an active link, one pending request per link; nutritionist answers on /clients (accept with date + note, decline with note), ownership and PENDING re-derived from the DB with a conditional update; yellow pending-actions badge on /clients heading and account panel, hidden at 0. Writer 118/118, tsc, lint, build. Parent E2E isolated: 16/16 (empty state, request, badge 1→0, other nutritionist cannot see/answer, accept, decline, client statuses). Advisory: the one-pending rule is count-then-create, so two simultaneous requests could both pass.
+- **L15** (2026-11-14) — T8 (writer, done before T7 because the shopping list divides by servings): `meals.servings` (1–20, default 1) and `meals.extras` (≤500, nullable); "Save recipe" form per meal; whole-recipe and per-serving totals when servings > 1; daily total = sum of one serving per meal; template copies carry both. Writer RED 7 failing → GREEN 124/124, tsc, lint, build. Parent E2E isolated: 11/11 (defaults, save, daily total ÷ servings, invalid servings rejected, other nutritionist blocked, client sees extras and per-serving note).

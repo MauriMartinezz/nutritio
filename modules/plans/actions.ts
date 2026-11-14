@@ -11,11 +11,13 @@ import {
   PlanRuleError,
   copyPlanForClient,
   parseGrams,
+  parseMealExtras,
   parseMealName,
   parseNote,
   parseReorder,
   parsePlanName,
   parsePlanNotes,
+  parseServings,
   variantToggle,
 } from "./rules";
 
@@ -87,6 +89,8 @@ export async function createPlanFromTemplate(clientId: string, formData: FormDat
         select: {
           name: true,
           position: true,
+          servings: true,
+          extras: true,
           items: { select: { foodId: true, grams: true, note: true, position: true } },
         },
       },
@@ -105,6 +109,8 @@ export async function createPlanFromTemplate(clientId: string, formData: FormDat
         create: copy.meals.map((meal) => ({
           name: meal.name,
           position: meal.position,
+          servings: meal.servings,
+          extras: meal.extras,
           items: { create: meal.items },
         })),
       },
@@ -144,6 +150,19 @@ export async function addMeal(planId: string, formData: FormData) {
 export async function renameMeal(mealId: string, formData: FormData) {
   const { planId } = await requireEditableMeal(mealId);
   await prisma.meal.update({ where: { id: mealId }, data: { name: parseMealName(formData.get("name")) } });
+  refresh(planId);
+}
+
+/** Recipe details of a meal: how many servings it makes and its free-text extras. */
+export async function updateMealRecipe(mealId: string, formData: FormData) {
+  const { planId } = await requireEditableMeal(mealId);
+  await prisma.meal.update({
+    where: { id: mealId },
+    data: {
+      servings: parseServings(formData.get("servings")),
+      extras: parseMealExtras(formData.get("extras")),
+    },
+  });
   refresh(planId);
 }
 
