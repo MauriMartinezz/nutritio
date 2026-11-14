@@ -53,6 +53,9 @@ export async function AccountPanel() {
     );
   }
 
+  // Approved nutritionists get the dashboard (NutritionistHome) instead.
+  if (user.role === "NUTRITIONIST" && user.nutritionistStatus === "APPROVED") return null;
+
   return (
     <section className={card}>
       <p className={eyebrow}>{ROLE_LABELS[user.role]}</p>

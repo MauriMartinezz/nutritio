@@ -114,6 +114,7 @@ export async function renewClientAccess(linkId: string, formData: FormData) {
     data: { accessUntil: renewAccess(link, period, new Date()) },
   });
   revalidatePath("/clients", "layout");
+  revalidatePath("/");
 }
 
 /** Turns automatic renewal on or off and sets its period (also the renewal default). */
