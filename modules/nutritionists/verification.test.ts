@@ -3,51 +3,13 @@ import assert from "node:assert/strict";
 import {
   InvalidAdminUpdateError,
   InvalidVerificationError,
-  changeNutritionistStatus,
+  REVIEW_NOTE_MAX,
   parseAdminNutritionistUpdate,
+  parseReviewNote,
+  reviewStatus,
 } from "./verification";
 
 const today = new Date("2026-11-13T12:00:00Z");
-
-test("an admin approves or rejects a pending nutritionist", () => {
-  const pending = { role: "NUTRITIONIST", nutritionistStatus: "PENDING" } as const;
-  assert.equal(changeNutritionistStatus(pending, "APPROVED"), "APPROVED");
-  assert.equal(changeNutritionistStatus(pending, "REJECTED"), "REJECTED");
-});
-
-test("an admin can revoke an approved nutritionist and re-approve a rejected one", () => {
-  assert.equal(
-    changeNutritionistStatus({ role: "NUTRITIONIST", nutritionistStatus: "APPROVED" }, "REJECTED"),
-    "REJECTED",
-  );
-  assert.equal(
-    changeNutritionistStatus({ role: "NUTRITIONIST", nutritionistStatus: "REJECTED" }, "APPROVED"),
-    "APPROVED",
-  );
-  assert.equal(
-    changeNutritionistStatus({ role: "NUTRITIONIST", nutritionistStatus: "APPROVED" }, "PENDING"),
-    "PENDING",
-  );
-});
-
-test("only nutritionists have a verification status", () => {
-  assert.throws(
-    () => changeNutritionistStatus({ role: "CLIENT", nutritionistStatus: null }, "APPROVED"),
-    InvalidVerificationError,
-  );
-  assert.throws(
-    () => changeNutritionistStatus({ role: "ADMIN", nutritionistStatus: null }, "APPROVED"),
-    InvalidVerificationError,
-  );
-});
-
-test("an unknown status is rejected", () => {
-  assert.throws(
-    () =>
-      changeNutritionistStatus({ role: "NUTRITIONIST", nutritionistStatus: "PENDING" }, "BANNED"),
-    InvalidVerificationError,
-  );
-});
 
 const form = {
   name: " Sandra Pérez ",
@@ -84,4 +46,20 @@ test("an admin update reports name, email, status and profile problems together"
     assert.ok(error instanceof InvalidAdminUpdateError);
     assert.deepEqual(Object.keys(error.problems).sort(), ["dni", "email", "name", "status"]);
   }
+});
+
+test("review note: trimmed, empty becomes null, at most 1000 characters", () => {
+  assert.equal(parseReviewNote("  Fix the license number  "), "Fix the license number");
+  assert.equal(parseReviewNote("   "), null);
+  assert.equal(parseReviewNote(undefined), null);
+  assert.equal(parseReviewNote("a".repeat(REVIEW_NOTE_MAX)), "a".repeat(REVIEW_NOTE_MAX));
+  assert.throws(() => parseReviewNote("a".repeat(REVIEW_NOTE_MAX + 1)), InvalidVerificationError);
+});
+
+test("review decision: approve, reject or save keeps the current status", () => {
+  assert.equal(reviewStatus("APPROVED", "PENDING"), "APPROVED");
+  assert.equal(reviewStatus("REJECTED", "PENDING"), "REJECTED");
+  assert.equal(reviewStatus("save", "REJECTED"), "REJECTED");
+  assert.equal(reviewStatus("save", null), "PENDING");
+  assert.throws(() => reviewStatus("ADMIN", "PENDING"), InvalidVerificationError);
 });

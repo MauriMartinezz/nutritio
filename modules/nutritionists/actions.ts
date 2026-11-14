@@ -6,8 +6,10 @@ import { uniqueViolationIndex } from "@/lib/prisma-errors";
 import { requireRole } from "@/modules/identity/dal";
 import {
   InvalidAdminUpdateError,
-  changeNutritionistStatus,
+  InvalidVerificationError,
   parseAdminNutritionistUpdate,
+  parseReviewNote,
+  reviewStatus,
 } from "./verification";
 import { InvalidPublicProfileError, parsePublicProfile } from "./public-profile";
 
@@ -20,54 +22,57 @@ async function findNutritionistOrThrow(nutritionistId: string) {
   return target;
 }
 
-/** Quick status change from the admin list (approve, reject, revoke). */
-export async function setNutritionistStatus(nutritionistId: string, status: string) {
-  await requireRole("ADMIN");
-
-  const target = await findNutritionistOrThrow(nutritionistId);
-  const newStatus = changeNutritionistStatus(target, status);
-
-  await prisma.user.updateMany({
-    where: { id: nutritionistId, role: "NUTRITIONIST" },
-    data: { nutritionistStatus: newStatus },
-  });
-
-  revalidatePath("/admin");
-}
-
-export type UpdateNutritionistState = {
+export type ReviewNutritionistState = {
   problems?: Record<string, string>;
-  saved?: boolean;
+  /** The status after a successful save. */
+  saved?: "PENDING" | "APPROVED" | "REJECTED";
 };
 
-/** Full edit from the admin form (used with useActionState). */
-export async function updateNutritionist(
+/**
+ * Review panel: the admin corrects the application, leaves a note for the
+ * nutritionist and approves, rejects or just saves (used with useActionState).
+ */
+export async function reviewNutritionist(
   nutritionistId: string,
-  _previous: UpdateNutritionistState,
+  _previous: ReviewNutritionistState,
   formData: FormData,
-): Promise<UpdateNutritionistState> {
+): Promise<ReviewNutritionistState> {
   await requireRole("ADMIN");
 
   const target = await findNutritionistOrThrow(nutritionistId);
   if (target.role !== "NUTRITIONIST") return { problems: { form: "This user is not a nutritionist" } };
 
+  const input = Object.fromEntries(formData);
   let update;
+  let note;
+  let status;
   try {
-    update = parseAdminNutritionistUpdate(Object.fromEntries(formData));
+    status = reviewStatus(input.decision, target.nutritionistStatus);
+  } catch (error) {
+    if (error instanceof InvalidVerificationError) return { problems: { decision: error.message } };
+    throw error;
+  }
+  try {
+    note = parseReviewNote(input.note);
+    update = parseAdminNutritionistUpdate({ ...input, status });
   } catch (error) {
     if (error instanceof InvalidAdminUpdateError) return { problems: error.problems };
+    if (error instanceof InvalidVerificationError) return { problems: { note: error.message } };
     throw error;
   }
 
-  const { status, ...fields } = update;
+  const { status: newStatus, ...fields } = update;
   const emailChanged = fields.email !== target.email.toLowerCase();
+  const decided = input.decision !== "save";
 
   try {
     await prisma.user.update({
       where: { id: nutritionistId, role: "NUTRITIONIST" },
       data: {
         ...fields,
-        nutritionistStatus: status,
+        nutritionistStatus: newStatus,
+        verificationNote: note,
+        ...(decided && { reviewedAt: new Date() }),
         // A new login email has not been verified by its owner.
         ...(emailChanged && { emailVerified: false }),
       },
@@ -85,8 +90,7 @@ export async function updateNutritionist(
   }
 
   revalidatePath("/admin");
-  revalidatePath(`/admin/nutritionists/${nutritionistId}`);
-  return { saved: true };
+  return { saved: newStatus };
 }
 
 export type UpdatePublicProfileState = {

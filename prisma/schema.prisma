@@ -80,6 +80,9 @@ model User {
   role               Role                 @default(CLIENT)
   /// Only set for nutritionists. Changed exclusively by admins.
   nutritionistStatus NutritionistStatus?  @map("nutritionist_status")
+  /// Admin feedback on the verification request, shown to the nutritionist.
+  verificationNote   String?              @map("verification_note") @db.VarChar(1000)
+  reviewedAt         DateTime?            @map("reviewed_at")
   /// Nutritionist profile (null for other roles). Set at sign-up, then admin-only.
   dni                String?              @unique @db.VarChar(8)
   licenseNumber      String?              @map("license_number") @db.VarChar(30)

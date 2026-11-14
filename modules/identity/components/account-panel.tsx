@@ -8,6 +8,7 @@ import {
   h1,
   type Tone,
 } from "@/modules/ui/classes";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "../dal";
 
 const ROLE_LABELS = {
@@ -56,14 +57,24 @@ export async function AccountPanel() {
   // Approved nutritionists get the dashboard (NutritionistHome) instead.
   if (user.role === "NUTRITIONIST" && user.nutritionistStatus === "APPROVED") return null;
 
+  const review =
+    user.role === "NUTRITIONIST"
+      ? await prisma.user.findUnique({ where: { id: user.id }, select: { verificationNote: true } })
+      : null;
+
   return (
     <section className={card}>
       <p className={eyebrow}>{ROLE_LABELS[user.role]}</p>
       <h1 className={h1}>Hi, {user.name.split(/\s+/)[0]}</h1>
       {user.nutritionistStatus && (
-        <p className={callout(STATUS_TONES[user.nutritionistStatus])}>
-          {STATUS_MESSAGES[user.nutritionistStatus]}
-        </p>
+        <div className={`${callout(STATUS_TONES[user.nutritionistStatus])} flex flex-col gap-1`}>
+          <p>{STATUS_MESSAGES[user.nutritionistStatus]}</p>
+          {review?.verificationNote && (
+            <p className="whitespace-pre-line">
+              <span className="font-semibold">Note from the admin:</span> {review.verificationNote}
+            </p>
+          )}
+        </div>
       )}
     </section>
   );

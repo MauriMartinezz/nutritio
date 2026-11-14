@@ -8,12 +8,13 @@ import {
   buttonPrimary,
   buttonSecondary,
   card,
+  figure,
   input,
   list,
   muted,
-  type Tone,
 } from "@/modules/ui/classes";
-import { setNutritionistStatus } from "../actions";
+import { ReviewPanel } from "./review-panel";
+import { STATUS_LABELS, STATUS_TONES } from "./status";
 
 const TABS = [
   { label: "Pending", status: "PENDING" },
@@ -22,22 +23,7 @@ const TABS = [
   { label: "All", status: "ALL" },
 ] as const;
 
-const STATUS_TONES: Record<NutritionistStatus, Tone> = {
-  PENDING: "warning",
-  APPROVED: "success",
-  REJECTED: "neutral",
-};
-
-const QUICK_ACTIONS: Record<NutritionistStatus, { label: string; to: NutritionistStatus }[]> = {
-  PENDING: [
-    { label: "Approve", to: "APPROVED" },
-    { label: "Reject", to: "REJECTED" },
-  ],
-  APPROVED: [{ label: "Revoke", to: "REJECTED" }],
-  REJECTED: [{ label: "Approve", to: "APPROVED" }],
-};
-
-type SearchParams = Promise<{ status?: string; q?: string }>;
+type SearchParams = Promise<{ status?: string; q?: string; review?: string }>;
 
 /** Admin-only list. Reads the session and search params, so render it inside <Suspense>. */
 export async function NutritionistList({ searchParams }: { searchParams: SearchParams }) {
@@ -74,10 +60,15 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
       licenseNumber: true,
       specialty: true,
       nutritionistStatus: true,
+      createdAt: true,
+      verificationNote: true,
     },
     orderBy: { createdAt: "asc" },
     take: 200,
   });
+
+  const listQuery = { status, ...(query && { q: query }) };
+  const reviewing = typeof params.review === "string" ? params.review : null;
 
   return (
     <div className="flex flex-col gap-4">
@@ -115,43 +106,40 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
         <ul className={`${list} rounded-card-lg border border-line bg-surface px-5 md:px-6`}>
           {nutritionists.map((nutritionist) => {
             const current = nutritionist.nutritionistStatus ?? "PENDING";
+            const selected = reviewing === nutritionist.id;
             return (
-              <li key={nutritionist.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
+              <li
+                key={nutritionist.id}
+                className={`flex flex-wrap items-center justify-between gap-4 py-4 ${selected ? "-mx-5 bg-surface-active px-5 md:-mx-6 md:px-6" : ""}`}
+              >
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <p className="flex flex-wrap items-center gap-2 font-semibold">
                     {nutritionist.name}
-                    <span className={badge(STATUS_TONES[current])}>
-                      {current.toLowerCase()}
-                    </span>
+                    <span className={badge(STATUS_TONES[current])}>{STATUS_LABELS[current]}</span>
                   </p>
                   <p className={`${muted} break-all`}>{nutritionist.email}</p>
                   <p className={muted}>
-                    DNI {nutritionist.dni ?? "—"} · License {nutritionist.licenseNumber ?? "—"}
-                    {nutritionist.specialty && ` · ${nutritionist.specialty}`}
+                    License {nutritionist.licenseNumber ?? "—"}
+                    {nutritionist.specialty && ` · ${nutritionist.specialty}`} · applied{" "}
+                    <span className={figure}>{nutritionist.createdAt.toLocaleDateString()}</span>
+                    {nutritionist.verificationNote && " · has a note"}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {QUICK_ACTIONS[current].map((action) => (
-                    <form key={action.to} action={setNutritionistStatus.bind(null, nutritionist.id, action.to)}>
-                      <button
-                        className={action.to === "APPROVED" ? buttonPrimary : buttonSecondary}
-                      >
-                        {action.label}
-                      </button>
-                    </form>
-                  ))}
-                  <Link
-                    href={`/admin/nutritionists/${nutritionist.id}`}
-                    className={buttonSecondary}
-                  >
-                    Edit
-                  </Link>
-                </div>
+                <Link
+                  href={{ pathname: "/admin", query: { ...listQuery, review: nutritionist.id } }}
+                  scroll={false}
+                  aria-current={selected ? "true" : undefined}
+                  className={current === "PENDING" ? buttonPrimary : buttonSecondary}
+                >
+                  {current === "PENDING" ? "Review" : "Open"}
+                </Link>
               </li>
             );
           })}
         </ul>
       )}
+
+      {reviewing && <ReviewPanel id={reviewing} closeHref={`/admin?${new URLSearchParams(listQuery)}`} />}
     </div>
   );
 }

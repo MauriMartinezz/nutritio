@@ -10,7 +10,7 @@ export default function AdminPage({ searchParams }: PageProps<"/admin">) {
     <main className={page}>
       <h1 className={h1}>Nutritionists</h1>
       <Suspense fallback={<p className={muted}>Loading…</p>}>
-        <NutritionistList searchParams={searchParams as Promise<{ status?: string; q?: string }>} />
+        <NutritionistList searchParams={searchParams as Promise<{ status?: string; q?: string; review?: string }>} />
       </Suspense>
     </main>
   );

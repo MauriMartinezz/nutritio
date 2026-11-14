@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
     agentFeedback: true,
   },
   cacheComponents: true,
+  async redirects() {
+    return [
+      // The admin editor moved into the review panel on /admin.
+      { source: "/admin/nutritionists/:id", destination: "/admin?status=ALL&review=:id", permanent: false },
+    ];
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {

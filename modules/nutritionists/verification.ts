@@ -2,7 +2,6 @@
 import {
   NUTRITIONIST_STATUSES,
   type NutritionistStatus,
-  type Role,
 } from "@/modules/identity/roles";
 import {
   InvalidProfileError,
@@ -26,18 +25,6 @@ export class InvalidAdminUpdateError extends Error {
 
 function isStatus(value: unknown): value is NutritionistStatus {
   return (NUTRITIONIST_STATUSES as readonly unknown[]).includes(value);
-}
-
-/** Admins may move a nutritionist to any verification status (approve, reject, revoke). */
-export function changeNutritionistStatus(
-  target: { role: Role; nutritionistStatus: NutritionistStatus | null },
-  newStatus: unknown,
-): NutritionistStatus {
-  if (target.role !== "NUTRITIONIST") {
-    throw new InvalidVerificationError("Only nutritionists have a verification status");
-  }
-  if (!isStatus(newStatus)) throw new InvalidVerificationError(`Unknown status "${String(newStatus)}"`);
-  return newStatus;
 }
 
 export type AdminNutritionistUpdate = {
@@ -74,4 +61,22 @@ export function parseAdminNutritionistUpdate(
   if (Object.keys(problems).length > 0 || !profile) throw new InvalidAdminUpdateError(problems);
 
   return { name, email, status: input.status as NutritionistStatus, ...profile };
+}
+
+export const REVIEW_NOTE_MAX = 1000;
+
+/** Admin feedback for the nutritionist; blank means no note. */
+export function parseReviewNote(raw: unknown): string | null {
+  const note = typeof raw === "string" ? raw.trim() : "";
+  if (note.length > REVIEW_NOTE_MAX) {
+    throw new InvalidVerificationError(`The note can be at most ${REVIEW_NOTE_MAX} characters`);
+  }
+  return note || null;
+}
+
+/** Status after a review: approve, reject, or "save" to keep the current one. */
+export function reviewStatus(decision: unknown, current: NutritionistStatus | null): NutritionistStatus {
+  if (decision === "save") return current ?? "PENDING";
+  if (decision === "APPROVED" || decision === "REJECTED") return decision;
+  throw new InvalidVerificationError(`Unknown decision "${String(decision)}"`);
 }
