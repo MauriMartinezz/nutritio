@@ -1,5 +1,6 @@
 // Periodic check-ins: the nutritionist agrees a frequency (in days) with each
-// client, and the client reports weight, a few 1–5 ratings and notes.
+// client, and the client reports weight, whether they completed the agreed
+// workouts, a few 1–5 ratings and notes.
 
 export const CHECK_IN_LIMITS = {
   minWeightKg: 20,
@@ -20,14 +21,25 @@ export const FREQUENCY_PRESETS = [7, 14, 15, 30] as const;
 
 export const RATINGS = {
   sleep: "Sleep",
-  trainingAdherence: "Completed the agreed workouts",
   energy: "Energy",
   hunger: "Hunger",
 } as const;
 export type RatingField = keyof typeof RATINGS;
 
+export const COMPLETED_WORKOUTS_LABEL = "Completed the agreed workouts";
+
+export const GYM_PERFORMANCE = {
+  IMPROVED: "Improved",
+  SAME: "Stayed the same",
+  DROPPED: "Dropped",
+} as const;
+export type GymPerformance = keyof typeof GYM_PERFORMANCE;
+
 export type CheckInInput = Record<RatingField, number> & {
   weightKg: number;
+  completedWorkouts: boolean;
+  /** Optional: not everyone trains at a gym. */
+  gymPerformance: GymPerformance | null;
   /** How much of the diet the client could follow, 0–100 %. */
   dietAdherence: number;
   discomfort: boolean;
@@ -67,6 +79,17 @@ export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
     problems.weightKg = `Weight must be between ${minWeightKg} and ${maxWeightKg} kg`;
   }
 
+  const completedWorkouts = input.completedWorkouts === "yes";
+  if (input.completedWorkouts !== "yes" && input.completedWorkouts !== "no") {
+    problems.completedWorkouts = `${COMPLETED_WORKOUTS_LABEL}: choose yes or no`;
+  }
+
+  const rawGym = text(input.gymPerformance);
+  const gymPerformance = rawGym === "" ? null : (rawGym as GymPerformance);
+  if (gymPerformance !== null && !(gymPerformance in GYM_PERFORMANCE)) {
+    problems.gymPerformance = "Gym performance must be improved, the same or dropped";
+  }
+
   const ratings = {} as Record<RatingField, number>;
   for (const [field, label] of Object.entries(RATINGS) as [RatingField, string][]) {
     const raw = text(input[field]);
@@ -97,6 +120,8 @@ export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
 
   return {
     weightKg,
+    completedWorkouts,
+    gymPerformance,
     ...ratings,
     dietAdherence,
     discomfort,

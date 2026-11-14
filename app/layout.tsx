@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { Suspense } from "react";
 import { AppNav, Brand } from "@/modules/identity/components/app-nav";
 import { themeInitScript } from "@/modules/theme/theme";
+import { Toast } from "@/modules/ui/components/toast";
 import "./globals.css";
 
 const plexSans = IBM_Plex_Sans({
@@ -45,6 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </Suspense>
         </nav>
         <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+        <Suspense fallback={null}>
+          <Toast />
+        </Suspense>
       </body>
     </html>
   );

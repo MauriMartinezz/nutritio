@@ -294,7 +294,8 @@ model CheckIn {
   /// Ratings from 1 to 5.
   sleep             Int
   /// Whether the client could complete the agreed workouts.
-  trainingAdherence Int                @map("training_adherence")
+  completedWorkouts Boolean            @map("completed_workouts")
+  gymPerformance    GymPerformance?    @map("gym_performance")
   energy            Int
   hunger            Int
   /// % of the diet followed (0–100). Null for check-ins sent before this field existed.
@@ -376,4 +377,10 @@ model MeetingRequest {
 
   @@index([linkId, status])
   @@map("meeting_requests")
+}
+
+enum GymPerformance {
+  IMPROVED
+  SAME
+  DROPPED
 }

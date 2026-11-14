@@ -4,14 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { accessState, effectiveAccessUntil, hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
-import { checkInStatus, nextCheckInDue, type CheckInState } from "./rules";
+import { checkInStatus, nextCheckInDue, type CheckInState, type GymPerformance } from "./rules";
 
 export type CheckInView = {
   id: string;
   createdAt: Date;
   weightKg: number;
   sleep: number;
-  trainingAdherence: number;
+  completedWorkouts: boolean;
+  gymPerformance: GymPerformance | null;
   energy: number;
   hunger: number;
   dietAdherence: number | null;
@@ -32,7 +33,8 @@ const CHECK_IN_SELECT = {
   createdAt: true,
   weightKg: true,
   sleep: true,
-  trainingAdherence: true,
+  completedWorkouts: true,
+  gymPerformance: true,
   energy: true,
   hunger: true,
   dietAdherence: true,

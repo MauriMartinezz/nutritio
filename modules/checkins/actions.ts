@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
+import { setFlash } from "@/modules/ui/set-flash";
 import { InvalidCheckInError, parseCheckIn, parseFrequency } from "./rules";
 
 /** The nutritionist agrees how often (in days) a client sends a check-in. */
@@ -26,7 +28,6 @@ export async function setCheckInFrequency(clientId: string, formData: FormData) 
 export type SubmitCheckInState = {
   problems?: Record<string, string>;
   error?: string;
-  saved?: boolean;
 };
 
 /** The signed-in client sends a check-in to one nutritionist (used with useActionState). */
@@ -59,5 +60,6 @@ export async function submitCheckIn(
 
   revalidatePath("/check-ins");
   revalidatePath("/");
-  return { saved: true };
+  await setFlash("check-in-sent");
+  redirect("/");
 }

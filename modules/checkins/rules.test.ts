@@ -15,7 +15,7 @@ const d = (iso: string) => new Date(iso);
 const valid = {
   weightKg: "72,5",
   sleep: "4",
-  trainingAdherence: "5",
+  completedWorkouts: "yes",
   energy: "3",
   hunger: "2",
   dietAdherence: "75",
@@ -23,11 +23,12 @@ const valid = {
   notes: "  Good week  ",
 };
 
-test("a check-in has a weight (comma decimal ok), four 1–5 ratings, discomfort and notes", () => {
+test("a check-in has a weight (comma decimal ok), workouts yes/no, three 1–5 ratings, discomfort and notes", () => {
   assert.deepEqual(parseCheckIn({ ...valid, discomfort: "on" }), {
     weightKg: 72.5,
+    completedWorkouts: true,
+    gymPerformance: null,
     sleep: 4,
-    trainingAdherence: 5,
     energy: 3,
     hunger: 2,
     dietAdherence: 75,
@@ -35,6 +36,18 @@ test("a check-in has a weight (comma decimal ok), four 1–5 ratings, discomfort
     discomfortNotes: "Knee pain",
     notes: "Good week",
   });
+});
+
+test("completed workouts is yes or no", () => {
+  assert.equal(parseCheckIn({ ...valid, completedWorkouts: "no" }).completedWorkouts, false);
+  assert.throws(() => parseCheckIn({ ...valid, completedWorkouts: undefined }), InvalidCheckInError);
+});
+
+test("gym performance is optional: improved, same or dropped", () => {
+  assert.equal(parseCheckIn({ ...valid, gymPerformance: "IMPROVED" }).gymPerformance, "IMPROVED");
+  assert.equal(parseCheckIn({ ...valid, gymPerformance: "DROPPED" }).gymPerformance, "DROPPED");
+  assert.equal(parseCheckIn({ ...valid, gymPerformance: "" }).gymPerformance, null);
+  assert.throws(() => parseCheckIn({ ...valid, gymPerformance: "GREAT" }), InvalidCheckInError);
 });
 
 test("discomfort notes are only kept when there was discomfort; empty notes become null", () => {
@@ -49,7 +62,7 @@ test("a check-in reports every problem at once", () => {
     parseCheckIn({
       weightKg: "19.9",
       sleep: "0",
-      trainingAdherence: "6",
+      completedWorkouts: "maybe",
       energy: "3.5",
       hunger: "",
       dietAdherence: "101",
@@ -61,13 +74,13 @@ test("a check-in reports every problem at once", () => {
   } catch (error) {
     assert.ok(error instanceof InvalidCheckInError);
     assert.deepEqual(Object.keys(error.problems).sort(), [
+      "completedWorkouts",
       "dietAdherence",
       "discomfortNotes",
       "energy",
       "hunger",
       "notes",
       "sleep",
-      "trainingAdherence",
       "weightKg",
     ]);
   }
