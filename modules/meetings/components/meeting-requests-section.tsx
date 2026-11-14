@@ -9,7 +9,7 @@ export async function MeetingRequestsSection() {
 
   return (
     <>
-      <section className={card}>
+      <section id="meeting-requests" className={card}>
         <h2 className={`${h2} flex flex-wrap items-center gap-2`}>
           Meeting requests{" "}
           <span className={`${badge(pending.length > 0 ? "warning" : "neutral")} font-mono`}>

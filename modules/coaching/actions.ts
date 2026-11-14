@@ -5,6 +5,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import { addPeriod, effectiveAccessUntil, parsePeriod, renewAccess, type AccessPeriod } from "./access";
+import { parsePeriodChoice } from "./roster";
 import {
   LinkRuleError,
   decideLinkRequest,
@@ -81,9 +82,9 @@ async function respond(linkId: string, response: LinkResponse, period?: AccessPe
   revalidatePath("/clients");
 }
 
-/** Accepts a request, granting access for the period in the form (amount + unit). */
+/** Accepts a request, granting access for the period in the form (a preset, or amount + unit). */
 export async function acceptClientRequest(linkId: string, formData: FormData) {
-  await respond(linkId, "ACCEPT", parsePeriod(formData.get("amount"), formData.get("unit")));
+  await respond(linkId, "ACCEPT", parsePeriodChoice(Object.fromEntries(formData)));
 }
 
 export async function rejectClientRequest(linkId: string) {
@@ -104,15 +105,15 @@ async function requireOwnAcceptedLink(linkId: string) {
   return { ...link, amount: link.accessAmount, unit: link.accessUnit };
 }
 
-/** Renew button: extends access by the chosen period (defaults to the period granted). */
+/** Quick renew: extends access by the chosen period (a preset, or amount + unit). */
 export async function renewClientAccess(linkId: string, formData: FormData) {
   const link = await requireOwnAcceptedLink(linkId);
-  const period = parsePeriod(formData.get("amount"), formData.get("unit"));
+  const period = parsePeriodChoice(Object.fromEntries(formData));
   await prisma.nutritionistClient.update({
     where: { id: link.id },
     data: { accessUntil: renewAccess(link, period, new Date()) },
   });
-  revalidatePath("/clients");
+  revalidatePath("/clients", "layout");
 }
 
 /** Turns automatic renewal on or off and sets its period (also the renewal default). */
@@ -130,5 +131,5 @@ export async function setAutoRenew(linkId: string, formData: FormData) {
       accessUnit: period.unit,
     },
   });
-  revalidatePath("/clients");
+  revalidatePath("/clients", "layout");
 }

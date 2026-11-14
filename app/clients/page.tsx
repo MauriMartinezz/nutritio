@@ -6,7 +6,7 @@ import { PendingActions } from "@/modules/meetings/components/pending-actions-ba
 
 export const metadata: Metadata = { title: "My clients · Nutritio" };
 
-export default function Page() {
+export default function Page({ searchParams }: PageProps<"/clients">) {
   return (
     <main className={page}>
       <h1 className={`${h1} flex flex-wrap items-center`}>
@@ -16,7 +16,7 @@ export default function Page() {
         </Suspense>
       </h1>
       <Suspense fallback={<p className={muted}>Loading…</p>}>
-        <MyClients />
+        <MyClients searchParams={searchParams} />
       </Suspense>
     </main>
   );
