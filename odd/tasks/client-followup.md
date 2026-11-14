@@ -24,8 +24,8 @@ Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due 
 
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
-| T1 | S11 | delegated (context backstop) | done | (T1) |
-| T2 | S10 | delegated (context backstop) | pending | |
+| T1 | S11 | delegated (context backstop) | done | 9a8b514 |
+| T2 | S10 | delegated (context backstop) | done | (T2) |
 | T3 | S1, S9 | delegated (context backstop) | pending | |
 | T4 | S2, S7 | delegated (context backstop) | pending | |
 | T5 | S3 | delegated (context backstop) | pending | |
@@ -42,3 +42,4 @@ Risk: item 2 (client data visible to nutritionists, medical info) → independen
 - **L3** (2026-11-14) — "Sí, me olvidé mencionar que el nutricionista puede dar una breve descripción: Quién es, dónde estudió, qué puede incluir su plan. Las recetas son las comidas del plan, aunque una receta puede rendir más de 1 porción" → S11 extended with bio; S5/S6 attach to plan meals.
 - **L4** (2026-11-14) — Route: parent context is long (advisory backstop), so each task goes to one bounded writer, sequentially (tasks share schema.prisma and pages, so no parallel writers); parent reviews diff, spot-checks, commits.
 - **L5** (2026-11-14) — T1 (writer): bio, education, plan includes, fee (amount ARS/USD + description) on /profile, shown in directory. Writer RED→GREEN 73/73, tsc, lint. Parent E2E on an isolated `next start` (test-only auth secret, port 3100): 7/7 (save, negative fee rejected, client sees it, client cannot update). The user's running dev server keeps the old Prisma client in globalThis after migrations → needs a restart.
+- **L6** (2026-11-14) — T2 (writer): client_preferences 1:1 (diet flags, meal prep, cooking style, diabetic/celiac/hypertension, intolerances, notes) on /preferences; nutritionist reads them only via requireClientAccess on the client page. Writer RED→GREEN 80/80, tsc, lint. Parent E2E isolated: 9/9 (save, linked nutritionist sees, unlinked sees nothing, not in directory/lists, nutritionist cannot write).

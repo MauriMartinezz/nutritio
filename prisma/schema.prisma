@@ -105,6 +105,8 @@ model User {
   authoredPlans      MealPlan[]           @relation("PlanAuthor")
   /// Plans assigned to this client.
   assignedPlans      MealPlan[]           @relation("PlanClient")
+  /// Dietary preferences and medical info of a client (null until saved).
+  preferences        ClientPreferences?
 
   @@index([role, nutritionistStatus])
   @@map("users")
@@ -239,4 +241,33 @@ model MealItem {
 
   @@index([mealId, position])
   @@map("meal_items")
+}
+
+enum CookingStyle {
+  BASIC
+  ELABORATE
+  NO_PREFERENCE
+}
+
+/// Dietary preferences and medical conditions of a client. Medical data: readable
+/// only by the client and by nutritionists with an accepted link.
+model ClientPreferences {
+  userId          String       @id @map("user_id")
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lowCarb         Boolean      @default(false) @map("low_carb")
+  vegan           Boolean      @default(false)
+  vegetarian      Boolean      @default(false)
+  glutenFree      Boolean      @default(false) @map("gluten_free")
+  prefersMealPrep Boolean      @default(false) @map("prefers_meal_prep")
+  cookingStyle    CookingStyle @default(NO_PREFERENCE) @map("cooking_style")
+  diabetic        Boolean      @default(false)
+  celiac          Boolean      @default(false)
+  hypertension    Boolean      @default(false)
+  /// Free text, e.g. "lactose, walnuts".
+  intolerances    String?      @db.VarChar(500)
+  otherConditions String?      @map("other_conditions") @db.VarChar(500)
+  notes           String?      @db.Text
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("client_preferences")
 }
