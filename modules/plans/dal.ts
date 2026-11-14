@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole, type CurrentUser } from "@/modules/identity/dal";
 import { canEditPlan, itemTotals, sumTotals, variantToggle, type Nutrients } from "./rules";
@@ -194,14 +195,34 @@ export async function searchFoods(query: string) {
   }));
 }
 
-/** The client's own plans, newest first, grouped by nutritionist (S6). */
+/**
+ * The client's own plans, newest first (S6), only from nutritionists whose link is
+ * accepted and whose access has not expired. Also returns who the expired ones are.
+ */
 export async function listMyPlans() {
   const client = await requireRole("CLIENT");
+  const links = await prisma.nutritionistClient.findMany({
+    where: { clientId: client.id, status: "ACCEPTED" },
+    select: {
+      nutritionistId: true,
+      accessUntil: true,
+      autoRenew: true,
+      accessAmount: true,
+      accessUnit: true,
+      nutritionist: { select: { name: true } },
+    },
+  });
+  const now = new Date();
+  const isActive = (link: (typeof links)[number]) =>
+    hasActiveAccess({ ...link, amount: link.accessAmount, unit: link.accessUnit }, now);
+  const active = links.filter(isActive).map((link) => link.nutritionistId);
+  const expired = links.filter((link) => !isActive(link)).map((link) => link.nutritionist.name);
+
   const plans = await prisma.mealPlan.findMany({
-    where: { clientId: client.id },
+    where: { clientId: client.id, nutritionistId: { in: active } },
     select: { id: true },
     orderBy: { createdAt: "desc" },
   });
   const loaded = await Promise.all(plans.map((plan) => loadPlan({ id: plan.id, clientId: client.id })));
-  return loaded.filter((plan): plan is PlanView => plan !== null);
+  return { plans: loaded.filter((plan): plan is PlanView => plan !== null), expired };
 }

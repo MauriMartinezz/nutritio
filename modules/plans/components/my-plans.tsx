@@ -5,9 +5,19 @@ const PREPARATION_LABELS = { RAW: "raw", COOKED: "cooked" } as const;
 
 /** The signed-in client's plans, read-only, grouped by nutritionist. Render inside <Suspense>. */
 export async function MyPlans() {
-  const plans = await listMyPlans();
+  const { plans, expired } = await listMyPlans();
+  const expiredNotice = expired.length > 0 && (
+    <p role="status" className="rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+      Your access with {expired.join(", ")} has expired. Ask them to renew it to see their plans again.
+    </p>
+  );
   if (plans.length === 0) {
-    return <p className="text-sm text-zinc-500">Your nutritionists have not assigned you a plan yet.</p>;
+    return (
+      <div className="flex flex-col gap-4">
+        {expiredNotice}
+        <p className="text-sm text-zinc-500">You have no active meal plans.</p>
+      </div>
+    );
   }
 
   // Grouped by id: two nutritionists may share a name.
@@ -15,6 +25,7 @@ export async function MyPlans() {
 
   return (
     <div className="flex flex-col gap-10">
+      {expiredNotice}
       {[...byNutritionist].map(([nutritionistId, nutritionistPlans]) => (
         <section key={nutritionistId} className="flex flex-col gap-6">
           <h2 className="text-lg font-semibold">From {nutritionistPlans[0].nutritionist.name}</h2>
