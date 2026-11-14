@@ -1,10 +1,7 @@
-import { inputClass } from "@/modules/nutritionists/components/profile-fields";
+import { badge, buttonPrimary, buttonSecondary, card, figure, h2, input, label, list, muted } from "@/modules/ui/classes";
 import { respondToMeeting } from "../actions";
 import { getNutritionistMeetings } from "../dal";
 import { MEETING_LIMITS, meetingKindLabel, toDateTimeLocalValue } from "../rules";
-
-const button =
-  "rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900";
 
 /** Pending meeting requests (accept/decline) and upcoming meetings. Render inside <Suspense>. */
 export async function MeetingRequestsSection() {
@@ -12,60 +9,69 @@ export async function MeetingRequestsSection() {
 
   return (
     <>
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">
-          Meeting requests <span className="text-zinc-500">({pending.length})</span>
+      <section className={card}>
+        <h2 className={`${h2} flex flex-wrap items-center gap-2`}>
+          Meeting requests{" "}
+          <span className={`${badge(pending.length > 0 ? "warning" : "neutral")} font-mono`}>
+            ({pending.length})
+          </span>
         </h2>
         {pending.length === 0 ? (
-          <p className="text-sm text-zinc-500">No pending meeting requests.</p>
+          <p className={muted}>No pending meeting requests.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className={list}>
             {pending.map((request) => (
-              <li key={request.id} className="flex flex-col gap-3 py-3">
+              <li key={request.id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
                 <div className="flex flex-col gap-1 text-sm">
                   <p className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="text-base font-medium">{request.client.name}</span>
-                    <span className="text-zinc-500">
+                    <span className="text-base font-semibold">{request.client.name}</span>
+                    <span className="text-secondary">
                       {meetingKindLabel(request.kind)} · requested {request.createdAt.toLocaleDateString()}
                     </span>
                   </p>
-                  {request.preferredTimes && <p className="text-zinc-500">Preferred: {request.preferredTimes}</p>}
-                  {request.message && <p className="whitespace-pre-line">{request.message}</p>}
+                  {request.preferredTimes && <p className="text-secondary">Preferred: {request.preferredTimes}</p>}
+                  {request.message && (
+                    <p className="whitespace-pre-line rounded-card bg-surface-muted px-3 py-2">{request.message}</p>
+                  )}
                 </div>
-                <div className="flex flex-wrap items-end gap-4">
-                  <form action={respondToMeeting.bind(null, request.id)} className="flex flex-wrap items-end gap-2">
+                <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
+                  <form
+                    action={respondToMeeting.bind(null, request.id)}
+                    className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-end"
+                  >
                     <input type="hidden" name="decision" value="accept" />
                     {/* datetime-local has no time zone: the server reads it in its local time. */}
-                    <label className="flex flex-col gap-1 text-sm">
+                    <label className={label}>
                       Date and time
                       <input
                         type="datetime-local"
                         name="scheduledFor"
                         required
                         min={toDateTimeLocalValue(now)}
-                        className={inputClass}
+                        className={`${input} font-mono`}
                       />
                     </label>
-                    <label className="flex flex-col gap-1 text-sm">
+                    <label className={label}>
                       Note (optional)
                       <input
                         name="responseNote"
                         maxLength={MEETING_LIMITS.responseNote}
                         placeholder="e.g. video link by email"
-                        className={inputClass}
+                        className={input}
                       />
                     </label>
-                    <button className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700">
-                      Accept meeting
-                    </button>
+                    <button className={buttonPrimary}>Accept meeting</button>
                   </form>
-                  <form action={respondToMeeting.bind(null, request.id)} className="flex flex-wrap items-end gap-2">
+                  <form
+                    action={respondToMeeting.bind(null, request.id)}
+                    className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-end"
+                  >
                     <input type="hidden" name="decision" value="decline" />
-                    <label className="flex flex-col gap-1 text-sm">
+                    <label className={label}>
                       Reason (optional)
-                      <input name="responseNote" maxLength={MEETING_LIMITS.responseNote} className={inputClass} />
+                      <input name="responseNote" maxLength={MEETING_LIMITS.responseNote} className={input} />
                     </label>
-                    <button className={button}>Decline meeting</button>
+                    <button className={buttonSecondary}>Decline meeting</button>
                   </form>
                 </div>
               </li>
@@ -74,22 +80,20 @@ export async function MeetingRequestsSection() {
         )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">Upcoming meetings</h2>
+      <section className={card}>
+        <h2 className={h2}>Upcoming meetings</h2>
         {upcoming.length === 0 ? (
-          <p className="text-sm text-zinc-500">No upcoming meetings.</p>
+          <p className={muted}>No upcoming meetings.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+          <ul className={list}>
             {upcoming.map((meeting) => (
-              <li key={meeting.id} className="flex flex-col gap-1 py-3 text-sm">
+              <li key={meeting.id} className="flex flex-col gap-1 py-3 text-sm first:pt-0 last:pb-0">
                 <p className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="font-medium">{meeting.client.name}</span>
-                  <span>{meeting.scheduledFor?.toLocaleString()}</span>
+                  <span className="font-semibold">{meeting.client.name}</span>
+                  <span className={figure}>{meeting.scheduledFor?.toLocaleString()}</span>
                 </p>
-                <p className="text-zinc-500">{meetingKindLabel(meeting.kind)}</p>
-                {meeting.responseNote && (
-                  <p className="text-zinc-600 dark:text-zinc-400">Note: {meeting.responseNote}</p>
-                )}
+                <p className="text-secondary">{meetingKindLabel(meeting.kind)}</p>
+                {meeting.responseNote && <p className="text-secondary">Note: {meeting.responseNote}</p>}
               </li>
             ))}
           </ul>

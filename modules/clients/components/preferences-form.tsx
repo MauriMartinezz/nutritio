@@ -1,7 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import { inputClass } from "@/modules/nutritionists/components/profile-fields";
+import {
+  buttonPrimary,
+  callout,
+  card,
+  formSuccess,
+  input,
+  label as labelClass,
+  textarea,
+} from "@/modules/ui/classes";
 import { saveClientPreferences, type SaveClientPreferencesState } from "../actions";
 import {
   COOKING_STYLES,
@@ -20,13 +28,14 @@ function Checkboxes({
   values: ClientPreferences | null;
 }) {
   return (
-    <div className="flex flex-wrap gap-x-6 gap-y-2">
+    <div className="grid gap-x-6 sm:grid-cols-2">
       {Object.entries(flags).map(([name, label]) => (
-        <label key={name} className="flex items-center gap-2 text-sm">
+        <label key={name} className="flex min-h-11 items-center gap-3 text-sm">
           <input
             type="checkbox"
             name={name}
             defaultChecked={values?.[name as keyof ClientPreferences] === true}
+            className="size-4 accent-accent"
           />
           {label}
         </label>
@@ -43,18 +52,18 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
   const problems = state.problems ?? {};
 
   return (
-    <form action={formAction} className="flex w-full max-w-xl flex-col gap-5">
+    <form action={formAction} className={`${card} w-full gap-6`}>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Diet</legend>
+        <legend className="mb-1 text-sm font-semibold">Diet</legend>
         <Checkboxes flags={PREFERENCE_FLAGS} values={preferences} />
       </fieldset>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Cooking style
         <select
           name="cookingStyle"
           defaultValue={preferences?.cookingStyle ?? "NO_PREFERENCE"}
-          className={inputClass}
+          className={input}
         >
           {COOKING_STYLES.map((style) => (
             <option key={style} value={style}>
@@ -65,31 +74,31 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
       </label>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-medium">Health</legend>
+        <legend className="mb-1 text-sm font-semibold">Health</legend>
         <Checkboxes flags={MEDICAL_FLAGS} values={preferences} />
       </fieldset>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Intolerances
         <input
           name="intolerances"
           maxLength={PREFERENCE_LIMITS.intolerances}
           defaultValue={preferences?.intolerances ?? ""}
           placeholder="e.g. lactose, walnuts"
-          className={inputClass}
+          className={input}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Other conditions
         <input
           name="otherConditions"
           maxLength={PREFERENCE_LIMITS.otherConditions}
           defaultValue={preferences?.otherConditions ?? ""}
           placeholder="Anything else your nutritionist should know"
-          className={inputClass}
+          className={input}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Notes
         <textarea
           name="notes"
@@ -97,19 +106,19 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
           maxLength={PREFERENCE_LIMITS.notes}
           defaultValue={preferences?.notes ?? ""}
           placeholder="Foods you dislike, schedule, goals…"
-          className={inputClass}
+          className={textarea}
         />
       </label>
 
       {Object.keys(problems).length > 0 && (
-        <ul role="alert" className="list-inside list-disc text-sm text-red-600">
+        <ul role="alert" className={`${callout("danger")} list-inside list-disc`}>
           {Object.entries(problems).map(([field, message]) => (
             <li key={field}>{message}</li>
           ))}
         </ul>
       )}
       {state.saved && (
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+        <p role="status" className={formSuccess}>
           Preferences saved.
         </p>
       )}
@@ -117,7 +126,7 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        className={`${buttonPrimary} self-start`}
       >
         {pending ? "Saving…" : "Save preferences"}
       </button>

@@ -1,8 +1,10 @@
 // Form inputs for the nutritionist profile, shared by sign-up and the admin editor.
 // Plain inputs (no hooks), so it renders in both Server and Client Components.
 
-export const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
+import { fieldHint, input, label } from "@/modules/ui/classes";
+
+/** Full-width text input (kept as an export: other forms import it). */
+export const inputClass = `${input} w-full`;
 
 export type ProfileFieldValues = {
   dni?: string | null;
@@ -15,7 +17,7 @@ export type ProfileFieldValues = {
 export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) {
   return (
     <>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         DNI
         <input
           name="dni"
@@ -27,7 +29,7 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
           className={inputClass}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Professional license (MN / MP)
         <input
           name="licenseNumber"
@@ -37,7 +39,7 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
           className={inputClass}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Date of birth
         <input
           name="birthDate"
@@ -47,7 +49,7 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
           className={inputClass}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Contact phone
         <input
           name="phone"
@@ -59,8 +61,10 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
           className={inputClass}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Specialty <span className="text-zinc-500">(optional)</span>
+      <label className={label}>
+        <span>
+          Specialty <span className={fieldHint}>(optional)</span>
+        </span>
         <input
           name="specialty"
           maxLength={100}

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { updatePublicProfile, type UpdatePublicProfileState } from "../actions";
 import { PUBLIC_PROFILE_LIMITS } from "../public-profile";
+import { buttonPrimary, callout, card, formSuccess, label, textarea } from "@/modules/ui/classes";
 import { inputClass } from "./profile-fields";
 
 export type PublicProfileValues = {
@@ -23,8 +24,8 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
   const problems = state.problems ?? {};
 
   return (
-    <form action={formAction} className="flex w-full max-w-xl flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
+    <form action={formAction} className={`${card} w-full`}>
+      <label className={label}>
         About you
         <textarea
           name="bio"
@@ -32,10 +33,10 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
           maxLength={PUBLIC_PROFILE_LIMITS.bio}
           defaultValue={profile.bio ?? ""}
           placeholder="Who you are and how you work"
-          className={inputClass}
+          className={`${textarea} w-full`}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Education
         <textarea
           name="education"
@@ -43,10 +44,10 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
           maxLength={PUBLIC_PROFILE_LIMITS.education}
           defaultValue={profile.education ?? ""}
           placeholder="Where you studied"
-          className={inputClass}
+          className={`${textarea} w-full`}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         What your plan includes
         <textarea
           name="planIncludes"
@@ -54,32 +55,32 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
           maxLength={PUBLIC_PROFILE_LIMITS.planIncludes}
           defaultValue={profile.planIncludes ?? ""}
           placeholder="e.g. weekly check-ins, shopping list, recipes"
-          className={inputClass}
+          className={`${textarea} w-full`}
         />
       </label>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-medium">Fee</legend>
-        <div className="flex gap-3">
-          <label className="flex w-28 flex-col gap-1 text-sm">
+        <legend className="mb-1 text-sm font-semibold">Fee</legend>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <label className={`${label} sm:w-28`}>
             Currency
             <select name="feeCurrency" defaultValue={profile.feeCurrency} className={inputClass}>
               <option value="ARS">ARS</option>
               <option value="USD">USD</option>
             </select>
           </label>
-          <label className="flex flex-1 flex-col gap-1 text-sm">
+          <label className={`${label} flex-1`}>
             Amount
             <input
               name="feeAmount"
               inputMode="decimal"
               defaultValue={profile.feeAmount ?? ""}
               placeholder="25000"
-              className={inputClass}
+              className={`${inputClass} font-mono`}
             />
           </label>
         </div>
-        <label className="flex flex-col gap-1 text-sm">
+        <label className={label}>
           Fee description
           <input
             name="feeDescription"
@@ -92,14 +93,14 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
       </fieldset>
 
       {Object.keys(problems).length > 0 && (
-        <ul role="alert" className="list-inside list-disc text-sm text-red-600">
+        <ul role="alert" className={`${callout("danger")} list-inside list-disc`}>
           {Object.entries(problems).map(([field, message]) => (
             <li key={field}>{message}</li>
           ))}
         </ul>
       )}
       {state.saved && (
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+        <p role="status" className={formSuccess}>
           Public profile saved.
         </p>
       )}
@@ -107,7 +108,7 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        className={`${buttonPrimary} self-start`}
       >
         {pending ? "Saving…" : "Save public profile"}
       </button>

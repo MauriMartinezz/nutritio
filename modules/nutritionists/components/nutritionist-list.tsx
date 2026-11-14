@@ -3,6 +3,16 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import { NUTRITIONIST_STATUSES, type NutritionistStatus } from "@/modules/identity/roles";
+import {
+  badge,
+  buttonPrimary,
+  buttonSecondary,
+  card,
+  input,
+  list,
+  muted,
+  type Tone,
+} from "@/modules/ui/classes";
 import { setNutritionistStatus } from "../actions";
 
 const TABS = [
@@ -12,10 +22,10 @@ const TABS = [
   { label: "All", status: "ALL" },
 ] as const;
 
-const STATUS_BADGES: Record<NutritionistStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-  APPROVED: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
-  REJECTED: "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300",
+const STATUS_TONES: Record<NutritionistStatus, Tone> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "neutral",
 };
 
 const QUICK_ACTIONS: Record<NutritionistStatus, { label: string; to: NutritionistStatus }[]> = {
@@ -71,16 +81,16 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
 
   return (
     <div className="flex flex-col gap-4">
-      <nav className="flex flex-wrap gap-2 text-sm">
+      <nav className="flex flex-wrap gap-2 text-sm font-semibold">
         {TABS.map((tab) => (
           <Link
             key={tab.status}
             href={{ pathname: "/admin", query: { status: tab.status, ...(query && { q: query }) } }}
             aria-current={status === tab.status ? "page" : undefined}
-            className={`rounded-full px-3 py-1 ${
+            className={`inline-flex min-h-11 items-center rounded-full px-4 ${
               status === tab.status
-                ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                : "border border-zinc-300 dark:border-zinc-700"
+                ? "bg-ink text-bg"
+                : "border border-line-strong bg-surface text-ink hover:bg-surface-muted"
             }`}
           >
             {tab.label}
@@ -88,49 +98,43 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
         ))}
       </nav>
 
-      <form className="flex gap-2" action="/admin">
+      <form className="flex flex-col gap-2 sm:flex-row" action="/admin">
         <input type="hidden" name="status" value={status} />
         <input
           name="q"
           defaultValue={query}
           placeholder="Search by name, email, DNI or license"
-          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className={`${input} w-full`}
         />
-        <button className="rounded-md border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700">
-          Search
-        </button>
+        <button className={buttonSecondary}>Search</button>
       </form>
 
       {nutritionists.length === 0 ? (
-        <p className="text-sm text-zinc-500">No nutritionists found.</p>
+        <p className={`${card} ${muted}`}>No nutritionists found.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
+        <ul className={`${list} rounded-card-lg border border-line bg-surface px-5 md:px-6`}>
           {nutritionists.map((nutritionist) => {
             const current = nutritionist.nutritionistStatus ?? "PENDING";
             return (
-              <li key={nutritionist.id} className="flex flex-wrap items-center justify-between gap-4 py-3">
-                <div className="flex flex-col gap-0.5">
-                  <p className="flex items-center gap-2 font-medium">
+              <li key={nutritionist.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <p className="flex flex-wrap items-center gap-2 font-semibold">
                     {nutritionist.name}
-                    <span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_BADGES[current]}`}>
+                    <span className={badge(STATUS_TONES[current])}>
                       {current.toLowerCase()}
                     </span>
                   </p>
-                  <p className="text-sm text-zinc-500">{nutritionist.email}</p>
-                  <p className="text-sm text-zinc-500">
+                  <p className={`${muted} break-all`}>{nutritionist.email}</p>
+                  <p className={muted}>
                     DNI {nutritionist.dni ?? "—"} · License {nutritionist.licenseNumber ?? "—"}
                     {nutritionist.specialty && ` · ${nutritionist.specialty}`}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {QUICK_ACTIONS[current].map((action) => (
                     <form key={action.to} action={setNutritionistStatus.bind(null, nutritionist.id, action.to)}>
                       <button
-                        className={
-                          action.to === "APPROVED"
-                            ? "rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700"
-                            : "rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-                        }
+                        className={action.to === "APPROVED" ? buttonPrimary : buttonSecondary}
                       >
                         {action.label}
                       </button>
@@ -138,7 +142,7 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
                   ))}
                   <Link
                     href={`/admin/nutritionists/${nutritionist.id}`}
-                    className="rounded-md px-3 py-1.5 text-sm underline"
+                    className={buttonSecondary}
                   >
                     Edit
                   </Link>

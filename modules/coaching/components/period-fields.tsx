@@ -1,7 +1,5 @@
+import { input } from "@/modules/ui/classes";
 import type { AccessPeriod } from "../access";
-
-const input =
-  "rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900";
 
 /** Amount + unit inputs (named "amount" and "unit") for an access period. */
 export function PeriodFields({ defaultValue, label }: { defaultValue: AccessPeriod; label: string }) {
@@ -16,7 +14,7 @@ export function PeriodFields({ defaultValue, label }: { defaultValue: AccessPeri
         step={1}
         defaultValue={defaultValue.amount}
         aria-label={`${label} amount`}
-        className={`${input} w-20`}
+        className={`${input} w-20 font-mono`}
       />
       <select name="unit" defaultValue={defaultValue.unit} aria-label={`${label} unit`} className={input}>
         <option value="DAY">days</option>

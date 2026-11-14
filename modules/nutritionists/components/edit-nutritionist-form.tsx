@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { buttonPrimary, callout, card, formSuccess, label } from "@/modules/ui/classes";
 import { updateNutritionist, type UpdateNutritionistState } from "../actions";
 import { ProfileFields, inputClass, type ProfileFieldValues } from "./profile-fields";
 
@@ -19,12 +20,12 @@ export function EditNutritionistForm({ nutritionist }: { nutritionist: EditableN
   const problems = state.problems ?? {};
 
   return (
-    <form action={formAction} className="flex w-full max-w-md flex-col gap-4">
-      <label className="flex flex-col gap-1 text-sm">
+    <form action={formAction} className={`${card} w-full max-w-xl`}>
+      <label className={label}>
         Full name
         <input name="name" required defaultValue={nutritionist.name} className={inputClass} />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Email (used to sign in)
         <input
           name="email"
@@ -34,7 +35,7 @@ export function EditNutritionistForm({ nutritionist }: { nutritionist: EditableN
           className={inputClass}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Verification status
         <select name="status" defaultValue={nutritionist.status} className={inputClass}>
           <option value="PENDING">Pending</option>
@@ -46,14 +47,14 @@ export function EditNutritionistForm({ nutritionist }: { nutritionist: EditableN
       <ProfileFields values={nutritionist} />
 
       {Object.keys(problems).length > 0 && (
-        <ul role="alert" className="list-inside list-disc text-sm text-red-600">
+        <ul role="alert" className={`${callout("danger")} list-inside list-disc`}>
           {Object.entries(problems).map(([field, message]) => (
             <li key={field}>{message}</li>
           ))}
         </ul>
       )}
       {state.saved && (
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+        <p role="status" className={formSuccess}>
           Changes saved.
         </p>
       )}
@@ -61,7 +62,7 @@ export function EditNutritionistForm({ nutritionist }: { nutritionist: EditableN
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        className={`${buttonPrimary} self-start`}
       >
         {pending ? "Saving…" : "Save changes"}
       </button>
