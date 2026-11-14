@@ -9,7 +9,7 @@ export function PendingActionsBadge({ count }: { count: number }) {
       role="status"
       aria-label={pendingActionsLabel(count)}
       title={pendingActionsLabel(count)}
-      className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-yellow-400 px-1.5 text-xs font-bold leading-5 text-zinc-900"
+      className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-yellow-400 px-1.5 font-mono text-xs font-bold leading-5 text-zinc-900"
     >
       {count}
     </span>

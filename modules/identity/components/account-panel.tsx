@@ -1,7 +1,14 @@
 import Link from "next/link";
-import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
+import {
+  buttonPrimary,
+  buttonSecondary,
+  callout,
+  card,
+  eyebrow,
+  h1,
+  type Tone,
+} from "@/modules/ui/classes";
 import { getCurrentUser } from "../dal";
-import { SignOutButton } from "./sign-out-button";
 
 const ROLE_LABELS = {
   ADMIN: "Administrator",
@@ -11,9 +18,16 @@ const ROLE_LABELS = {
 
 const STATUS_MESSAGES = {
   PENDING: "Your nutritionist profile is waiting for admin verification.",
-  APPROVED: "Your nutritionist profile is verified and listed in the directory.",
+  APPROVED:
+    "Your nutritionist profile is verified and listed in the directory.",
   REJECTED: "Your nutritionist profile was not approved.",
 } as const;
+
+const STATUS_TONES: Record<keyof typeof STATUS_MESSAGES, Tone> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
+};
 
 /** Reads the session, so it must be rendered inside a <Suspense> boundary. */
 export async function AccountPanel() {
@@ -21,82 +35,33 @@ export async function AccountPanel() {
 
   if (!user) {
     return (
-      <div className="flex gap-4 text-sm">
-        <Link href="/sign-in" className="underline">
-          Sign in
-        </Link>
-        <Link href="/sign-up" className="underline">
-          Create an account
-        </Link>
-      </div>
+      <section className="flex flex-col gap-5">
+        <h1 className={h1}>Nutritio</h1>
+        <p className="max-w-xl text-lg text-secondary">
+          Nutrition plans and progress tracking for nutritionists and their
+          clients.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/sign-in" className={buttonPrimary}>
+            Sign in
+          </Link>
+          <Link href="/sign-up" className={buttonSecondary}>
+            Create an account
+          </Link>
+        </div>
+      </section>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <p>
-        Signed in as <strong>{user.name}</strong> ({ROLE_LABELS[user.role]})
-      </p>
+    <section className={card}>
+      <p className={eyebrow}>{ROLE_LABELS[user.role]}</p>
+      <h1 className={h1}>Hi, {user.name.split(/\s+/)[0]}</h1>
       {user.nutritionistStatus && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className={callout(STATUS_TONES[user.nutritionistStatus])}>
           {STATUS_MESSAGES[user.nutritionistStatus]}
         </p>
       )}
-      {user.role === "CLIENT" && (
-        <Link href="/nutritionists" className="text-sm underline">
-          Find a nutritionist
-        </Link>
-      )}
-      {user.role === "CLIENT" && (
-        <Link href="/my-plans" className="text-sm underline">
-          My meal plans
-        </Link>
-      )}
-      {user.role === "CLIENT" && (
-        <Link href="/preferences" className="text-sm underline">
-          My preferences
-        </Link>
-      )}
-      {user.role === "CLIENT" && (
-        <Link href="/check-ins" className="text-sm underline">
-          My check-ins
-        </Link>
-      )}
-      {user.role === "CLIENT" && (
-        <Link href="/activities" className="text-sm underline">
-          My activities
-        </Link>
-      )}
-      {user.role === "CLIENT" && (
-        <Link href="/meetings" className="text-sm underline">
-          Meetings
-        </Link>
-      )}
-      {user.nutritionistStatus === "APPROVED" && (
-        <span className="flex items-center text-sm">
-          <Link href="/clients" className="underline">
-            My clients and requests
-          </Link>
-          <PendingActions />
-        </span>
-      )}
-      {user.nutritionistStatus === "APPROVED" && (
-        <Link href="/plans" className="text-sm underline">
-          Plan templates
-        </Link>
-      )}
-      {user.role === "NUTRITIONIST" &&
-        (user.nutritionistStatus === "APPROVED" || user.nutritionistStatus === "PENDING") && (
-          <Link href="/profile" className="text-sm underline">
-            My public profile
-          </Link>
-        )}
-      {user.role === "ADMIN" && (
-        <Link href="/admin" className="text-sm underline">
-          Manage nutritionists
-        </Link>
-      )}
-      <SignOutButton />
-    </div>
+    </section>
   );
 }
