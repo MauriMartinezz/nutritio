@@ -1,46 +1,15 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { renewClientAccess } from "@/modules/coaching/actions";
 import { QuickPeriodForm } from "@/modules/coaching/components/quick-period-form";
 import { timeLeftLabel } from "@/modules/coaching/roster";
 import { getCurrentUser } from "@/modules/identity/dal";
-import { buttonLink, card, cardSm, eyebrow, figure, h1, h2, kpi, link, list, muted } from "@/modules/ui/classes";
+import { buttonLink, card, figure, link, list, muted } from "@/modules/ui/classes";
+import { DashboardHeader, Kpi, KpiRow, PanelHeader, panelRow } from "./dashboard-parts";
 import { relativeTime } from "../dashboard";
 import { getNutritionistDashboard } from "../nutritionist-dashboard-dal";
 
 const ATTENTION_LIMIT = 6;
-
-function Kpi({ label, value, hint, href }: { label: string; value: ReactNode; hint: string; href?: string }) {
-  const body = (
-    <>
-      <span className="text-sm font-medium text-secondary">{label}</span>
-      <span className={kpi}>{value}</span>
-      <span className="text-xs text-tertiary">{hint}</span>
-    </>
-  );
-  return href ? (
-    <Link href={href} className={`${cardSm} gap-2 hover:border-line-strong hover:bg-surface-muted`}>
-      {body}
-    </Link>
-  ) : (
-    <div className={`${cardSm} gap-2`}>{body}</div>
-  );
-}
-
-function PanelHeader({ title, href, linkLabel }: { title: string; href?: string; linkLabel?: string }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <h2 className={h2}>{title}</h2>
-      {href && (
-        <Link href={href} className={buttonLink}>
-          {linkLabel}
-        </Link>
-      )}
-    </div>
-  );
-}
-
-const rowClass = "flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0";
+const rowClass = panelRow;
 
 /**
  * Home dashboard for approved nutritionists. Reads the session: render inside
@@ -80,14 +49,9 @@ export async function NutritionistHome() {
 
   return (
     <div className="flex flex-col gap-7">
-      <header className="flex flex-col gap-1">
-        <p className={eyebrow}>
-          {now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-        </p>
-        <h1 className={h1}>Hi, {user.name.split(/\s+/)[0]}</h1>
-      </header>
+      <DashboardHeader name={user.name} now={now} />
 
-      <section aria-label="Summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <KpiRow>
         <Kpi
           label="Active clients"
           value={data.activeCount}
@@ -111,7 +75,7 @@ export async function NutritionistHome() {
           value={data.adherence.average === null ? "—" : `${data.adherence.average}%`}
           hint={`Average of ${data.adherence.checkIns} check-in${data.adherence.checkIns === 1 ? "" : "s"} · 30 days`}
         />
-      </section>
+      </KpiRow>
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <section className={card}>

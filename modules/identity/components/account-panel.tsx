@@ -54,8 +54,8 @@ export async function AccountPanel() {
     );
   }
 
-  // Approved nutritionists get the dashboard (NutritionistHome) instead.
-  if (user.role === "NUTRITIONIST" && user.nutritionistStatus === "APPROVED") return null;
+  // Clients, admins and approved nutritionists get a dashboard (modules/home) instead.
+  if (user.role !== "NUTRITIONIST" || user.nutritionistStatus === "APPROVED") return null;
 
   const review =
     user.role === "NUTRITIONIST"
