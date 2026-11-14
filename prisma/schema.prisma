@@ -107,6 +107,8 @@ model User {
   assignedPlans      MealPlan[]           @relation("PlanClient")
   /// Dietary preferences and medical info of a client (null until saved).
   preferences        ClientPreferences?
+  /// Physical activities logged by this client.
+  activities         Activity[]
 
   @@index([role, nutritionistStatus])
   @@map("users")
@@ -294,4 +296,42 @@ model CheckIn {
 
   @@index([linkId, createdAt])
   @@map("check_ins")
+}
+
+enum ActivityType {
+  STRENGTH
+  GYM
+  CALISTHENICS
+  FOOTBALL
+  RUNNING
+  CYCLING
+  SWIMMING
+  WALKING
+  YOGA
+  OTHER
+}
+
+enum ActivityIntensity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// A physical activity logged by a client. Readable by the client and by
+/// nutritionists with an accepted link.
+model Activity {
+  id              String            @id @default(cuid())
+  userId          String            @map("user_id")
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            ActivityType
+  /// Only for OTHER, e.g. "Padel".
+  customName      String?           @map("custom_name") @db.VarChar(60)
+  performedOn     DateTime          @map("performed_on") @db.Date
+  durationMinutes Int               @map("duration_minutes")
+  intensity       ActivityIntensity
+  notes           String?           @db.VarChar(500)
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  @@index([userId, performedOn])
+  @@map("activities")
 }

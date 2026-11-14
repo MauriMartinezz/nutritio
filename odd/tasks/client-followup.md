@@ -15,6 +15,7 @@ Branch: `feat/client-followup` (stacked on `feat/plan-dnd`) · Delivery: `ask-on
 - **S7** — Client home. User words: "el usuario verá que tiene la revisión pendiente y puede cargarla además de que en el inicio se verá su evolución y cuánto falta para su chequeo y cuánto le queda de suscripción."
 - **S8** — Meeting requests. User words: "El usuario podrá pedir una reunión o visita con el nutricionista, al nutricionista le llegará una notificación en la app o le aparecerá un N en amarillo que indique que se le requiere para tomar una acción."
 - **S9** — Check-in content. User words: "En el chequeo, el usuario puede cargar notas y puntuar ciertos aspectos: sueño, si pudo completar sus entrenamientos pactados, si tuvo alguna molestia, etc."
+- **S9b** — Diet adherence. User words: "En el seguimiento el asesorado podrá indicar cuánto pudo seguir de la dieta, quizá un slider esté bien". Check-in field `dietAdherence` 0–100 % (slider, step 5), shown in both histories.
 - **S10** — Preferences and medical. User words: "El usuario podrá tener preferencias o cuestiones médicas: dietas bajas en carbohidratos, vegano, vegetariano, si prefiere hacer meal prep, si prefiere comidas básicas o más elaboradas, intolerante a X alimento, diabético, etc."
 - **S11** — Fees and bio. User words: "El nutricionista podrá cargar sus honorarios y el cliente podrá verlos antes de contratarlo" and "el nutricionista puede dar una breve descripción: Quién es, dónde estudió, qué puede incluir su plan." Editable by the nutritionist on their own profile page; shown in the directory before requesting.
 
@@ -29,12 +30,13 @@ Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due 
 | T1 | S11 | delegated (context backstop) | done | 9a8b514 |
 | T2 | S10 | delegated (context backstop) | done | ceaa1b1 |
 | T3 | S1, S9 | delegated (context backstop) | done | f72ee2c |
-| T4 | S2, S7 | delegated (context backstop) | done | (T4) |
-| T5 | S3 | delegated (context backstop) | pending | |
+| T4 | S2, S7 | delegated (context backstop) | done | ef04d3c |
+| T5 | S3 | delegated (context backstop) | done | (T5) |
 | T6 | S8 | delegated (context backstop) | pending | |
 | T7 | S4 | delegated (context backstop) | pending | |
 | T8 | S5, S6 | delegated (context backstop) | pending | |
 | T9 | S12 | inline | done | 892ddbc |
+| T10 | S9b | inline (after T5, shares schema.prisma) | pending | |
 
 Risk: item 2 (client data visible to nutritionists, medical info) → independent verifier at feature end.
 
@@ -50,3 +52,5 @@ Risk: item 2 (client data visible to nutritionists, medical info) → independen
 - **L8** (2026-11-14) — New request (mid-turn): "Excelente, ya que hay una sección de Preferencias, se podría agregar que el usuario pueda cambiar el tema, de claro a oscuro o viceversa y que se persista (esto no hace falta que quede en la base, con que quede en el localstorage está bien)" → S12, task T9.
 - **L9** (2026-11-14) — T9 inline: theme in localStorage (`nutritio-theme`), head script sets `data-theme` before paint (falls back to system; storage errors ignored), Tailwind `dark:` variant driven by data-theme with a no-JS media fallback, Light/Dark toggle on /preferences. Tests 91/91 (written together with the code, RED not observed separately), tsc, lint, build; compiled CSS contains both selectors; live check 4/4 (script in head, toggle renders, preferences form intact). Toggle lives on the client preferences page only.
 - **L10** (2026-11-14) — T4 (writer): client home "Your follow-up" per nutritionist (days of access left / expired message, check-in due with link / next in N days, latest weight and change), dependency-free SVG weight chart (aria summary + hidden table) on home and /check-ins. Writer RED→GREEN 100/100, tsc, lint. Parent E2E isolated: 13/13 (empty state, access days, due, weight change, chart, expired message, not shown to nutritionists or signed-out). Dates use server-locale toLocaleDateString (advisory).
+- **L11** (2026-11-14) — "En el seguimiento el asesorado podrá indicar cuánto pudo seguir de la dieta, quizá un slider esté bien" → S9b / T10, done inline after T5 to avoid concurrent schema edits.
+- **L12** (2026-11-14) — T5 (writer): activities (type enum incl. OTHER + custom name, date, minutes, intensity, notes) on /activities with weekly summary and 30-day list, owner-scoped delete; nutritionist "Activity" section via requireClientAccess. Writer RED→GREEN 108/108, tsc, lint. Parent E2E isolated: 11/11 (save, invalid rejected, weekly total, linked/unlinked nutritionist, non-owner delete blocked).

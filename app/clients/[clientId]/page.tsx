@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import { ClientActivities } from "@/modules/activities/components/client-activities";
 import { ClientCheckIns } from "@/modules/checkins/components/client-check-ins";
 import { ClientProfile } from "@/modules/coaching/components/client-profile";
 import { ClientPlans } from "@/modules/plans/components/client-plans";
@@ -16,6 +17,7 @@ export default function Page({ params }: PageProps<"/clients/[clientId]">) {
       <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
         <ClientProfile params={params} />
         <ClientCheckIns params={params} />
+        <ClientActivities params={params} />
         <ClientPlans params={params} />
       </Suspense>
     </main>
