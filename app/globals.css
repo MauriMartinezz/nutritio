@@ -125,19 +125,22 @@
   --radius-badge: 4px;
 }
 
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-plex-sans), system-ui, sans-serif;
-}
+/* In the base layer so Tailwind utilities always win. */
+@layer base {
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-plex-sans), system-ui, sans-serif;
+  }
 
-a {
-  color: inherit;
-}
+  a {
+    color: inherit;
+  }
 
-h1,
-h2,
-h3 {
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
 }
