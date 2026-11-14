@@ -52,3 +52,9 @@ test("renewing extends from the end date while active, or from now when expired"
   const expired = { accessUntil: d("2026-10-01T00:00:00Z"), autoRenew: false, ...month };
   assert.deepEqual(renewAccess(expired, month, now), d("2026-12-13T12:00:00Z"));
 });
+
+test("monthly auto-renewal keeps the original day of the month (no month-end drift)", () => {
+  const link = { accessUntil: d("2026-01-31T12:00:00Z"), autoRenew: true, ...month };
+  // Jan 31 → Feb 28 → … → Nov 30 (not Nov 28).
+  assert.deepEqual(effectiveAccessUntil(link, d("2026-11-15T00:00:00Z")), d("2026-11-30T12:00:00Z"));
+});

@@ -50,8 +50,13 @@ export type LinkAccess = { accessUntil: Date | null; autoRenew: boolean } & Acce
  */
 export function effectiveAccessUntil(link: LinkAccess, now: Date): Date | null {
   if (!link.accessUntil || !link.autoRenew) return link.accessUntil;
+  // Count whole periods from the stored date (not chained), so month ends don't drift.
+  let periods = 0;
   let until = link.accessUntil;
-  while (until <= now) until = addPeriod(until, link);
+  while (until <= now) {
+    periods += 1;
+    until = addPeriod(link.accessUntil, { amount: link.amount * periods, unit: link.unit });
+  }
   return until;
 }
 

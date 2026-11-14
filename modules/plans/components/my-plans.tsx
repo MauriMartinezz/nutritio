@@ -15,7 +15,11 @@ export async function MyPlans() {
     return (
       <div className="flex flex-col gap-4">
         {expiredNotice}
-        <p className="text-sm text-zinc-500">You have no active meal plans.</p>
+        <p className="text-sm text-zinc-500">
+          {expired.length > 0
+            ? "You have no active meal plans."
+            : "Your nutritionists have not assigned you a plan yet."}
+        </p>
       </div>
     );
   }

@@ -23,8 +23,8 @@ Out of scope: payments, notifications/emails, client-initiated renewal.
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
 | T1 | S1, S2, S4, S5 | inline | done | cf8b672 |
-| T2 | S1, S3, S4, S5 | inline | done | (T2) |
-| T3 | S2 | inline | done | (T3) |
+| T2 | S1, S3, S4, S5 | inline | done | 9d995df |
+| T3 | S2 | inline | done | 091f58b |
 
 T1: schema + migration (period, access end, auto-renew on nutritionist_clients) and pure access rules.
 T2: accept with period, dashboard on /clients, Renew form, auto-renew setting.
@@ -38,3 +38,4 @@ Risk: item 2 (client access) and item 1 (migration backfills existing accepted l
 - **L2** (2026-11-13) — Clarification answer: "1) En realidad me gustaría que el nutricionista pueda renovar cada X tiempo que quiera (X días, X semanas, X meses) 2)no me gusta esta opcion. Quizá un botón de Renovar y que ahí pregunte por cuánto tiempo y que por defecto sea el tiempo que se dio de alta (por ejemplo, el nutricionista le dio acceso por 1 mes y por defecto que le aparezca 1 mes al renovar salvo que lo cambie)"
 - **L3** (2026-11-13) — T1: access rules RED (suite missing) → GREEN 64/64. Migration `client_access` adds access_amount/unit/until and auto_renew; backfills existing ACCEPTED links with 1 month from now. Auto-renew is computed lazily (roll forward on read), no scheduled job.
 - **L4** (2026-11-13) — T2/T3: accept with period, dashboard (expiring/expired/active), Renew (default = granted period, renewing with another period keeps the default), auto-renew with its own period (turning it off persists the rolled-forward date), client view hides plans of expired/non-accepted links with a notice. E2E against `next dev`: 22/22 access checks (incl. amount 999 rejected, other nutritionist and client cannot renew) + 28/28 meal-plans regression. Test users removed. Not covered by unit tests: the action wiring (covered by E2E only).
+- **L5** (2026-11-13) — Independent verifier: S1–S5 PASS, no access bypass. Blocker: client empty-state text changed without a request → restored when nothing expired (live-checked). Fixed advisory: monthly auto-renew drifted at month end (Jan 31 → Nov 28); now counts whole periods from the stored date (RED → GREEN 65/65). Open advisories: dates formatted in server timezone; backfill used NOW(3) (UTC here by coincidence; migration already applied, left as is); directory says "Working together" for expired links; concurrent Renew clicks may extend once; revoked-nutritionist plans stay visible to clients (pre-existing).
