@@ -196,3 +196,62 @@ export function canEditPlan(
   if (plan.nutritionistId !== nutritionist.id) return false;
   return plan.clientId === null || canAccessClient(nutritionist.nutritionistStatus, link);
 }
+
+export const SHOPPING_PERIODS = ["weekly", "biweekly", "monthly"] as const;
+export type ShoppingPeriod = (typeof SHOPPING_PERIODS)[number];
+
+/** Days each list covers: a week, and the weekly list x2 (biweekly) or x4 (monthly). */
+export const SHOPPING_DAYS: Record<ShoppingPeriod, number> = { weekly: 7, biweekly: 14, monthly: 28 };
+
+/** The `?list=` search param: weekly when missing, anything unknown is rejected. */
+export function parseShoppingPeriod(value: unknown): ShoppingPeriod {
+  if (value === undefined || value === "") return "weekly";
+  if (typeof value === "string" && (SHOPPING_PERIODS as readonly string[]).includes(value)) {
+    return value as ShoppingPeriod;
+  }
+  throw new PlanRuleError("Unknown shopping list period");
+}
+
+type ShoppingMeal = {
+  name: string;
+  servings: number;
+  extras: string | null;
+  items: { grams: number; food: { id: number; label: string } }[];
+};
+
+/**
+ * Shopping list derived from a plan: the client eats one serving of each meal per day,
+ * so each food needs (recipe grams / servings) x days, summed across meals and rounded
+ * to whole grams. Extras have no quantities and are listed apart, once per distinct text.
+ */
+export function shoppingList(meals: ShoppingMeal[], period: ShoppingPeriod) {
+  if (!Object.hasOwn(SHOPPING_DAYS, period)) throw new PlanRuleError("Unknown shopping list period");
+  const days = SHOPPING_DAYS[period];
+
+  const foods = new Map<number, { foodId: number; label: string; grams: number }>();
+  const extras = new Map<string, { text: string; meals: string[] }>();
+  for (const meal of meals) {
+    for (const item of meal.items) {
+      const line = foods.get(item.food.id) ?? { foodId: item.food.id, label: item.food.label, grams: 0 };
+      line.grams += (item.grams / meal.servings) * days;
+      foods.set(item.food.id, line);
+    }
+    const text = meal.extras?.trim();
+    if (text) {
+      const key = text.toLowerCase();
+      const entry = extras.get(key) ?? { text, meals: [] };
+      if (!entry.meals.includes(meal.name)) entry.meals.push(meal.name);
+      extras.set(key, entry);
+    }
+  }
+
+  const items = [...foods.values()]
+    .map((line) => ({ ...line, grams: Math.round(line.grams) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  return { period, days, items, extras: [...extras.values()] };
+}
+
+/** Grams for display: whole grams below 1 kg, kilograms with one decimal from 1000 g. */
+export function formatShoppingGrams(grams: number): string {
+  return grams >= 1000 ? `${(Math.round(grams / 100) / 10).toFixed(1)} kg` : `${grams} g`;
+}

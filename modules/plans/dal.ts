@@ -221,8 +221,32 @@ export async function searchFoods(query: string) {
  */
 export async function listMyPlans() {
   const client = await requireRole("CLIENT");
+  const { active, expired } = await myNutritionistAccess(client.id);
+
+  const plans = await prisma.mealPlan.findMany({
+    where: { clientId: client.id, nutritionistId: { in: active } },
+    select: { id: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const loaded = await Promise.all(plans.map((plan) => loadPlan({ id: plan.id, clientId: client.id })));
+  return { plans: loaded.filter((plan): plan is PlanView => plan !== null), expired };
+}
+
+/** One of the client's own plans under the same visibility rule as listMyPlans, else null. */
+export async function getMyPlan(planId: string) {
+  const client = await requireRole("CLIENT");
+  const { active } = await myNutritionistAccess(client.id);
+  const visible = await prisma.mealPlan.findFirst({
+    where: { id: planId, clientId: client.id, nutritionistId: { in: active } },
+    select: { id: true },
+  });
+  return visible ? loadPlan({ id: visible.id, clientId: client.id }) : null;
+}
+
+/** Nutritionists the client has an accepted link with, split by whether access is still active. */
+async function myNutritionistAccess(clientId: string) {
   const links = await prisma.nutritionistClient.findMany({
-    where: { clientId: client.id, status: "ACCEPTED" },
+    where: { clientId, status: "ACCEPTED" },
     select: {
       nutritionistId: true,
       accessUntil: true,
@@ -237,12 +261,5 @@ export async function listMyPlans() {
     hasActiveAccess({ ...link, amount: link.accessAmount, unit: link.accessUnit }, now);
   const active = links.filter(isActive).map((link) => link.nutritionistId);
   const expired = links.filter((link) => !isActive(link)).map((link) => link.nutritionist.name);
-
-  const plans = await prisma.mealPlan.findMany({
-    where: { clientId: client.id, nutritionistId: { in: active } },
-    select: { id: true },
-    orderBy: { createdAt: "desc" },
-  });
-  const loaded = await Promise.all(plans.map((plan) => loadPlan({ id: plan.id, clientId: client.id })));
-  return { plans: loaded.filter((plan): plan is PlanView => plan !== null), expired };
+  return { active, expired };
 }

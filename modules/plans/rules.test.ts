@@ -10,6 +10,9 @@ import {
   parseMealExtras,
   parseReorder,
   parseServings,
+  formatShoppingGrams,
+  parseShoppingPeriod,
+  shoppingList,
   perServing,
   parseGrams,
   parseMealName,
@@ -200,4 +203,74 @@ test("using a template copies each meal's servings and extras", () => {
   assert.deepEqual(copyPlanForClient(template, "c1").meals, [
     { name: "Chicken bowl", position: 0, servings: 4, extras: "Lettuce, lemon", items: [] },
   ]);
+});
+
+const mealWith = (servings: number, extras: string | null, items: [number, string, number][], name = "Meal") => ({
+  name,
+  servings,
+  extras,
+  items: items.map(([id, label, grams]) => ({ grams, food: { id, label } })),
+});
+
+test("a weekly shopping list is one serving per day for 7 days: grams / servings * 7", () => {
+  const list = shoppingList([mealWith(1, null, [[1, "Rice", 100]]), mealWith(4, null, [[2, "Chicken", 800]])], "weekly");
+  assert.deepEqual(list.items, [
+    { foodId: 2, label: "Chicken", grams: 1400 },
+    { foodId: 1, label: "Rice", grams: 700 },
+  ]);
+});
+
+test("the same food in several meals is summed into one line, sorted by name", () => {
+  const list = shoppingList(
+    [mealWith(1, null, [[1, "Rice", 100]]), mealWith(2, null, [[1, "Rice", 300], [3, "Oats", 50]])],
+    "weekly",
+  );
+  assert.deepEqual(list.items, [
+    { foodId: 3, label: "Oats", grams: 175 },
+    { foodId: 1, label: "Rice", grams: 1750 },
+  ]);
+});
+
+test("biweekly multiplies the weekly list by 2 and monthly by 4 (14 and 28 days)", () => {
+  const meals = [mealWith(3, null, [[1, "Rice", 100]])];
+  assert.equal(shoppingList(meals, "weekly").items[0].grams, 233);
+  assert.equal(shoppingList(meals, "biweekly").items[0].grams, 467);
+  assert.equal(shoppingList(meals, "monthly").items[0].grams, 933);
+  assert.equal(shoppingList(meals, "weekly").days, 7);
+  assert.equal(shoppingList(meals, "biweekly").days, 14);
+  assert.equal(shoppingList(meals, "monthly").days, 28);
+});
+
+test("extras are listed apart, without quantities, once per distinct text", () => {
+  const list = shoppingList(
+    [
+      mealWith(1, " Lettuce, tomato ", [], "Lunch"),
+      mealWith(1, null, [], "Snack"),
+      mealWith(2, "lettuce, tomato", [], "Dinner"),
+      mealWith(1, "Oregano", [], "Breakfast"),
+    ],
+    "monthly",
+  );
+  assert.deepEqual(list.extras, [
+    { text: "Lettuce, tomato", meals: ["Lunch", "Dinner"] },
+    { text: "Oregano", meals: ["Breakfast"] },
+  ]);
+  assert.deepEqual(list.items, []);
+});
+
+test("the shopping period is weekly by default; other values are rejected", () => {
+  assert.equal(parseShoppingPeriod(undefined), "weekly");
+  assert.equal(parseShoppingPeriod(""), "weekly");
+  assert.equal(parseShoppingPeriod("biweekly"), "biweekly");
+  assert.equal(parseShoppingPeriod("monthly"), "monthly");
+  for (const bad of ["daily", "Weekly", ["weekly"], 7]) {
+    assert.throws(() => parseShoppingPeriod(bad), PlanRuleError, String(bad));
+  }
+  assert.throws(() => shoppingList([], "yearly" as never), PlanRuleError);
+});
+
+test("shopping grams show whole grams below 1 kg and kilograms with one decimal from 1000 g", () => {
+  assert.equal(formatShoppingGrams(999), "999 g");
+  assert.equal(formatShoppingGrams(1000), "1.0 kg");
+  assert.equal(formatShoppingGrams(1750), "1.8 kg");
 });

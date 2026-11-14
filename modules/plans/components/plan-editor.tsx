@@ -78,6 +78,11 @@ export async function PlanEditor({ params, searchParams }: Props) {
         <p>
           Daily total: <MacroSummary totals={plan.totals} strong />
         </p>
+        <p>
+          <Link href={`/plans/${plan.id}/shopping-list`} className="text-sm underline">
+            Shopping list
+          </Link>
+        </p>
         <p className="text-xs text-zinc-500">
           Item grams are for the whole recipe; the daily total counts one serving of each meal.
         </p>

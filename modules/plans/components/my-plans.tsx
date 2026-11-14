@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { listMyPlans, type PlanView } from "../dal";
 import { MacroSummary } from "./macro-summary";
 import { MealTotals } from "./meal-totals";
@@ -52,6 +53,11 @@ function PlanCard({ plan }: { plan: PlanView }) {
         {plan.notes && <p className="whitespace-pre-line text-sm">{plan.notes}</p>}
         <p>
           Daily total: <MacroSummary totals={plan.totals} strong />
+        </p>
+        <p>
+          <Link href={`/my-plans/${plan.id}/shopping-list`} className="text-sm underline">
+            Shopping list
+          </Link>
         </p>
       </header>
       {plan.meals.map((meal) => (
