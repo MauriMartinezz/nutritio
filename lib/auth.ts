@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
+import { InvalidDisplayNameError, normalizeNameUpdate } from "@/modules/identity/account";
 import { InvalidProfileError } from "@/modules/nutritionists/profile";
 import {
   InvalidRoleError,
@@ -72,6 +73,15 @@ export const auth = betterAuth({
           } catch (error) {
             if (error instanceof PrivilegedFieldChangeError) {
               throw new APIError("FORBIDDEN", { message: error.message });
+            }
+            throw error;
+          }
+          // Name edits from the profile page go through updateUser.
+          try {
+            return normalizeNameUpdate(update);
+          } catch (error) {
+            if (error instanceof InvalidDisplayNameError) {
+              throw new APIError("BAD_REQUEST", { message: error.message });
             }
             throw error;
           }

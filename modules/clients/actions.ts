@@ -32,6 +32,6 @@ export async function saveClientPreferences(
     update: preferences,
   });
 
-  revalidatePath("/preferences");
+  revalidatePath("/profile");
   return { saved: true };
 }
