@@ -48,6 +48,7 @@ export async function requestNutritionist(nutritionistId: string) {
   }
 
   revalidatePath("/nutritionists");
+  revalidatePath(`/nutritionists/${nutritionistId}`);
 }
 
 async function respond(linkId: string, response: LinkResponse, period?: AccessPeriod) {
