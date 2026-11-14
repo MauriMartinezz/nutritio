@@ -56,6 +56,11 @@ export async function AccountPanel() {
           My preferences
         </Link>
       )}
+      {user.role === "CLIENT" && (
+        <Link href="/check-ins" className="text-sm underline">
+          My check-ins
+        </Link>
+      )}
       {user.nutritionistStatus === "APPROVED" && (
         <Link href="/clients" className="text-sm underline">
           My clients and requests

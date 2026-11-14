@@ -18,6 +18,8 @@ Branch: `feat/client-followup` (stacked on `feat/plan-dnd`) · Delivery: `ask-on
 - **S10** — Preferences and medical. User words: "El usuario podrá tener preferencias o cuestiones médicas: dietas bajas en carbohidratos, vegano, vegetariano, si prefiere hacer meal prep, si prefiere comidas básicas o más elaboradas, intolerante a X alimento, diabético, etc."
 - **S11** — Fees and bio. User words: "El nutricionista podrá cargar sus honorarios y el cliente podrá verlos antes de contratarlo" and "el nutricionista puede dar una breve descripción: Quién es, dónde estudió, qué puede incluir su plan." Editable by the nutritionist on their own profile page; shown in the directory before requesting.
 
+- **S12** — Theme. User words: "se podría agregar que el usuario pueda cambiar el tema, de claro a oscuro o viceversa y que se persista (esto no hace falta que quede en la base, con que quede en el localstorage está bien)". Default follows the system until the user picks one.
+
 Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due = last check-in (or access start) + frequency; fees = amount + currency + free-text description, shown in the directory; preferences are a fixed checklist plus free-text intolerances/notes, visible to the client's nutritionists; the badge counts pending link requests + meeting requests.
 
 ## Tasks
@@ -25,13 +27,14 @@ Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due 
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
 | T1 | S11 | delegated (context backstop) | done | 9a8b514 |
-| T2 | S10 | delegated (context backstop) | done | (T2) |
-| T3 | S1, S9 | delegated (context backstop) | pending | |
+| T2 | S10 | delegated (context backstop) | done | ceaa1b1 |
+| T3 | S1, S9 | delegated (context backstop) | done | (T3) |
 | T4 | S2, S7 | delegated (context backstop) | pending | |
 | T5 | S3 | delegated (context backstop) | pending | |
 | T6 | S8 | delegated (context backstop) | pending | |
 | T7 | S4 | delegated (context backstop) | pending | |
 | T8 | S5, S6 | delegated (context backstop) | pending | |
+| T9 | S12 | inline | pending | |
 
 Risk: item 2 (client data visible to nutritionists, medical info) → independent verifier at feature end.
 
@@ -43,3 +46,5 @@ Risk: item 2 (client data visible to nutritionists, medical info) → independen
 - **L4** (2026-11-14) — Route: parent context is long (advisory backstop), so each task goes to one bounded writer, sequentially (tasks share schema.prisma and pages, so no parallel writers); parent reviews diff, spot-checks, commits.
 - **L5** (2026-11-14) — T1 (writer): bio, education, plan includes, fee (amount ARS/USD + description) on /profile, shown in directory. Writer RED→GREEN 73/73, tsc, lint. Parent E2E on an isolated `next start` (test-only auth secret, port 3100): 7/7 (save, negative fee rejected, client sees it, client cannot update). The user's running dev server keeps the old Prisma client in globalThis after migrations → needs a restart.
 - **L6** (2026-11-14) — T2 (writer): client_preferences 1:1 (diet flags, meal prep, cooking style, diabetic/celiac/hypertension, intolerances, notes) on /preferences; nutritionist reads them only via requireClientAccess on the client page. Writer RED→GREEN 80/80, tsc, lint. Parent E2E isolated: 9/9 (save, linked nutritionist sees, unlinked sees nothing, not in directory/lists, nutritionist cannot write).
+- **L7** (2026-11-14) — T3 (writer): check_in_every_days on the link (nutritionist sets it on the client page), check_ins (weight, sleep/training/energy/hunger 1–5, discomfort + notes), client /check-ins with status and history, nutritionist history via requireClientAccess; `getClientCheckInSummary` for T4. Writer RED→GREEN 87/87, tsc, lint. Parent E2E isolated: 13/13 + tamper 2/2 (signed-in other client cannot post to the link). Advisory (framework): re-posting a stale no-JS useActionState form (bound args) right after a successful submit hangs the request in `next start`; a fresh page load avoids it, browsers always post the freshly rendered form. Better Auth's production rate limit blocks a 4th sign-up within seconds (test artifact).
+- **L8** (2026-11-14) — New request (mid-turn): "Excelente, ya que hay una sección de Preferencias, se podría agregar que el usuario pueda cambiar el tema, de claro a oscuro o viceversa y que se persista (esto no hace falta que quede en la base, con que quede en el localstorage está bien)" → S12, task T9.

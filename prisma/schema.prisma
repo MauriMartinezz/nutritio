@@ -174,22 +174,25 @@ enum LinkStatus {
 /// Working relationship requested by a client and answered by a nutritionist.
 /// A client may have several nutritionists; one row per pair.
 model NutritionistClient {
-  id             String     @id @default(cuid())
-  nutritionistId String     @map("nutritionist_id")
-  nutritionist   User       @relation("NutritionistLinks", fields: [nutritionistId], references: [id], onDelete: Cascade)
-  clientId       String     @map("client_id")
-  client         User       @relation("ClientLinks", fields: [clientId], references: [id], onDelete: Cascade)
-  status         LinkStatus @default(PENDING)
-  requestedAt    DateTime   @default(now()) @map("requested_at")
-  respondedAt    DateTime?  @map("responded_at")
+  id               String     @id @default(cuid())
+  nutritionistId   String     @map("nutritionist_id")
+  nutritionist     User       @relation("NutritionistLinks", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  clientId         String     @map("client_id")
+  client           User       @relation("ClientLinks", fields: [clientId], references: [id], onDelete: Cascade)
+  status           LinkStatus @default(PENDING)
+  requestedAt      DateTime   @default(now()) @map("requested_at")
+  respondedAt      DateTime?  @map("responded_at")
   /// Access period chosen by the nutritionist; also the default for renewals and auto-renewal.
-  accessAmount   Int        @default(1) @map("access_amount")
-  accessUnit     AccessUnit @default(MONTH) @map("access_unit")
+  accessAmount     Int        @default(1) @map("access_amount")
+  accessUnit       AccessUnit @default(MONTH) @map("access_unit")
   /// End of the client's access. Null until the request is accepted.
-  accessUntil    DateTime?  @map("access_until")
+  accessUntil      DateTime?  @map("access_until")
   /// When on, an expired end date rolls forward by the period automatically.
-  autoRenew      Boolean    @default(false) @map("auto_renew")
-  updatedAt      DateTime   @updatedAt @map("updated_at")
+  autoRenew        Boolean    @default(false) @map("auto_renew")
+  /// Days between check-ins, agreed by the nutritionist. Null until agreed.
+  checkInEveryDays Int?       @map("check_in_every_days")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  checkIns         CheckIn[]
 
   @@unique([nutritionistId, clientId])
   @@index([clientId, status])
@@ -270,4 +273,25 @@ model ClientPreferences {
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
   @@map("client_preferences")
+}
+
+/// A periodic report of the client to one nutritionist (one link).
+model CheckIn {
+  id                String             @id @default(cuid())
+  linkId            String             @map("link_id")
+  link              NutritionistClient @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  weightKg          Decimal            @map("weight_kg") @db.Decimal(5, 2)
+  /// Ratings from 1 to 5.
+  sleep             Int
+  /// Whether the client could complete the agreed workouts.
+  trainingAdherence Int                @map("training_adherence")
+  energy            Int
+  hunger            Int
+  discomfort        Boolean            @default(false)
+  discomfortNotes   String?            @map("discomfort_notes") @db.VarChar(500)
+  notes             String?            @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at")
+
+  @@index([linkId, createdAt])
+  @@map("check_ins")
 }
