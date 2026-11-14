@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hasActiveAccess } from "@/modules/coaching/access";
+import { parseRosterFilter, rosterHref } from "@/modules/coaching/roster";
+import { setFlash } from "@/modules/ui/set-flash";
 import { requireRole } from "@/modules/identity/dal";
 import {
   InvalidMeetingRequestError,
@@ -80,4 +83,7 @@ export async function respondToMeeting(requestId: string, formData: FormData) {
   });
 
   revalidateMeetingPages();
+  await setFlash(response.status === "ACCEPTED" ? "meeting-accepted" : "meeting-declined");
+  // Back to the clients table (same filter); the URL is never taken from the browser.
+  redirect(rosterHref(parseRosterFilter(formData.get("filter"))));
 }

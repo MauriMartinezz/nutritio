@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { renewClientAccess } from "@/modules/coaching/actions";
-import { QuickPeriodForm } from "@/modules/coaching/components/quick-period-form";
-import { timeLeftLabel } from "@/modules/coaching/roster";
+import { rosterHref, timeLeftLabel } from "@/modules/coaching/roster";
 import { getCurrentUser } from "@/modules/identity/dal";
 import { buttonLink, card, figure, link, list, muted } from "@/modules/ui/classes";
 import { DashboardHeader, Kpi, KpiRow, PanelHeader, panelRow } from "./dashboard-parts";
@@ -28,14 +26,14 @@ export async function NutritionistHome() {
       key: `p${c.linkId}`,
       name: c.name,
       detail: "Wants to work with you",
-      href: "/clients?filter=pending",
+      href: rosterHref("all", { accept: c.linkId }),
       action: "Review",
     })),
     ...data.meetingRequests.map((m) => ({
       key: `m${m.id}`,
       name: m.name,
       detail: `Asked for a ${m.kind.toLowerCase()} · ${relativeTime(m.at, now)}`,
-      href: "/clients#meeting-requests",
+      href: rosterHref("all", { meeting: m.id }),
       action: "Answer",
     })),
     ...data.expired.map((c) => ({
@@ -120,13 +118,9 @@ export async function NutritionistHome() {
                       </p>
                     </div>
                   </div>
-                  <QuickPeriodForm
-                    action={renewClientAccess.bind(null, c.linkId)}
-                    placeholder="Renew…"
-                    submitLabel="Renew"
-                    label={`Renew ${c.name} for`}
-                    customDefault={c.period}
-                  />
+                  <Link href={rosterHref("expiring", { renew: c.linkId })} className={buttonLink}>
+                    Renew
+                  </Link>
                 </li>
               ))}
             </ul>

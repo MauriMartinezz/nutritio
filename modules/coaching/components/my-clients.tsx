@@ -2,21 +2,20 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
-import { MeetingRequestsSection } from "@/modules/meetings/components/meeting-requests-section";
-import { badge, buttonSecondary, callout, card, figure, link, muted, type Tone } from "@/modules/ui/classes";
-import { DEFAULT_PERIOD, effectiveAccessUntil } from "../access";
-import { acceptClientRequest, rejectClientRequest, renewClientAccess } from "../actions";
+import { meetingKindLabel } from "@/modules/meetings/rules";
+import { badge, buttonPrimary, buttonSecondary, callout, card, figure, link, muted, type Tone } from "@/modules/ui/classes";
+import { effectiveAccessUntil } from "../access";
 import {
   ROSTER_FILTERS,
   matchesFilter,
+  parseRosterDialog,
   parseRosterFilter,
+  rosterHref,
   rosterStatus,
   sortRoster,
-  timeLeftLabel,
   type RosterStatus,
 } from "../roster";
-import { formatPeriod } from "./period-fields";
-import { QuickPeriodForm } from "./quick-period-form";
+import { RosterDialogs } from "./roster-dialogs";
 
 export const STATUS_PILLS: Record<RosterStatus, { label: string; tone: Tone }> = {
   ACTIVE: { label: "Active", tone: "success" },
@@ -39,18 +38,28 @@ function ActionBell({ reasons }: { reasons: string[] }) {
 }
 
 const cell =
-  "flex items-center justify-between gap-3 before:text-xs before:font-medium before:text-secondary before:content-[attr(data-label)] md:table-cell md:px-3 md:py-3 md:align-middle md:before:content-none md:first:pl-0 md:last:pr-0";
+  "flex items-center justify-between gap-3 before:text-xs before:font-medium before:text-secondary before:content-[attr(data-label)] md:table-cell md:px-3 md:py-3 md:align-middle md:whitespace-nowrap md:before:content-none md:first:pl-0 md:last:pr-0";
+const timeFormat: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" };
 
-/** A nutritionist's clients in one table. Render inside <Suspense>. */
-export async function MyClients({ searchParams }: { searchParams: Promise<{ filter?: string | string[] }> }) {
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/**
+ * A nutritionist's clients in one table, one line per client. Renewing,
+ * accepting and answering meetings open a dialog. Render inside <Suspense>.
+ */
+export async function MyClients({ searchParams }: { searchParams: SearchParams }) {
   const nutritionist = await requireRole("NUTRITIONIST");
-  const filter = parseRosterFilter((await searchParams).filter);
+  const params = await searchParams;
+  const filter = parseRosterFilter(params.filter);
+  const dialog = parseRosterDialog(params);
 
   if (nutritionist.nutritionistStatus !== "APPROVED") {
     return <p className={callout("warning")}>Clients can find you once an admin verifies your profile.</p>;
   }
 
-  const [links, meetingCounts] = await Promise.all([
+  await connection();
+  const now = new Date();
+  const [links, meetings] = await Promise.all([
     prisma.nutritionistClient.findMany({
       where: { nutritionistId: nutritionist.id },
       select: {
@@ -60,34 +69,40 @@ export async function MyClients({ searchParams }: { searchParams: Promise<{ filt
         accessUnit: true,
         accessUntil: true,
         autoRenew: true,
-        client: { select: { id: true, name: true, email: true } },
+        client: { select: { id: true, name: true } },
       },
       orderBy: { requestedAt: "asc" },
     }),
-    prisma.meetingRequest.groupBy({
-      by: ["linkId"],
-      where: { status: "PENDING", link: { nutritionistId: nutritionist.id } },
-      _count: { _all: true },
+    // Pending requests (oldest first) and upcoming meetings (soonest first).
+    prisma.meetingRequest.findMany({
+      where: {
+        link: { nutritionistId: nutritionist.id },
+        OR: [{ status: "PENDING" }, { status: "ACCEPTED", scheduledFor: { gte: now } }],
+      },
+      select: { id: true, linkId: true, kind: true, status: true, scheduledFor: true },
+      orderBy: [{ scheduledFor: "asc" }, { createdAt: "asc" }],
     }),
   ]);
-  await connection();
-  const now = new Date();
-  const pendingMeetings = new Map(meetingCounts.map((row) => [row.linkId, row._count._all]));
 
   const rows = sortRoster(
-    links.map((link) => {
-      const access = { ...link, amount: link.accessAmount, unit: link.accessUnit };
-      const meetings = pendingMeetings.get(link.id) ?? 0;
+    links.map((row) => {
+      const access = { ...row, amount: row.accessAmount, unit: row.accessUnit };
+      const pending = meetings.filter((m) => m.linkId === row.id && m.status === "PENDING");
+      const next = meetings.find((m) => m.linkId === row.id && m.status === "ACCEPTED");
       const reasons = [
-        ...(link.status === "PENDING" ? ["request to work with you"] : []),
-        ...(meetings > 0 ? [`${meetings} meeting request${meetings === 1 ? "" : "s"}`] : []),
+        ...(row.status === "PENDING" ? ["request to work with you"] : []),
+        ...(pending.length > 0 ? [`${pending.length} meeting request${pending.length === 1 ? "" : "s"}`] : []),
       ];
-      const status = rosterStatus(access, now);
       return {
-        ...link,
-        period: { amount: link.accessAmount, unit: link.accessUnit },
-        status,
-        until: link.status === "ACCEPTED" ? effectiveAccessUntil(access, now) : null,
+        id: row.id,
+        linkStatus: row.status,
+        client: row.client,
+        access,
+        period: { amount: row.accessAmount, unit: row.accessUnit },
+        status: rosterStatus(access, now),
+        until: row.status === "ACCEPTED" ? effectiveAccessUntil(access, now) : null,
+        pendingMeeting: pending[0] ?? null,
+        nextMeeting: next ?? null,
         needsAction: reasons.length > 0,
         reasons,
       };
@@ -104,7 +119,7 @@ export async function MyClients({ searchParams }: { searchParams: Promise<{ filt
           return (
             <Link
               key={option.value}
-              href={option.value === "all" ? "/clients" : `/clients?filter=${option.value}`}
+              href={rosterHref(option.value)}
               aria-current={active ? "page" : undefined}
               className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-4 text-sm font-medium ${
                 active ? "border-ink bg-ink text-bg" : "border-line-strong bg-surface text-secondary hover:text-ink"
@@ -125,75 +140,83 @@ export async function MyClients({ searchParams }: { searchParams: Promise<{ filt
           <table className="block w-full text-sm md:table">
             <thead className="hidden border-b border-line text-left text-xs text-secondary md:table-header-group">
               <tr>
-                {["Client", "Status", "Time left", "Access until", "Auto-renew", "Actions"].map((heading) => (
-                  <th key={heading} scope="col" className="px-3 pb-3 font-medium first:pl-0 last:pr-0">
+                {["Client", "Status", "Access until", "Meetings"].map((heading) => (
+                  <th key={heading} scope="col" className="px-3 pb-3 font-medium first:pl-0">
                     {heading}
                   </th>
                 ))}
+                <th scope="col" className="pb-3 pl-3 text-right font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody className="block divide-y divide-divider md:table-row-group">
               {visible.map((row) => {
                 const pill = STATUS_PILLS[row.status];
-                const accepted = row.status !== "PENDING" && row.status !== "REJECTED";
+                const accepted = row.linkStatus === "ACCEPTED";
                 return (
                   <tr key={row.id} className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 md:table-row">
-                    <th scope="row" className="flex items-center gap-2 text-left font-normal md:table-cell md:py-3 md:pr-3">
+                    <th scope="row" className="text-left font-normal md:table-cell md:py-3 md:pr-3">
                       <span className="flex items-center gap-2">
                         {accepted ? (
-                          <Link href={`/clients/${row.client.id}`} className={`${link} font-semibold`}>
+                          <Link href={`/clients/${row.client.id}`} className={`${link} truncate font-semibold`}>
                             {row.client.name}
                           </Link>
                         ) : (
-                          <span className="font-semibold">{row.client.name}</span>
+                          <span className="truncate font-semibold">{row.client.name}</span>
                         )}
                         {row.needsAction && <ActionBell reasons={row.reasons} />}
                       </span>
-                      <span className={`${muted} block break-all text-xs max-md:hidden`}>{row.client.email}</span>
                     </th>
                     <td data-label="Status" className={cell}>
                       <span className={badge(pill.tone)}>{pill.label}</span>
-                    </td>
-                    <td data-label="Time left" className={cell}>
-                      <span className={accepted ? "font-medium" : "text-tertiary"}>
-                        {accepted ? timeLeftLabel(row.until, now) : "—"}
-                      </span>
                     </td>
                     <td data-label="Access until" className={cell}>
                       <span className={row.until ? figure : "text-tertiary"}>
                         {row.until?.toLocaleDateString() ?? "—"}
                       </span>
                     </td>
-                    <td data-label="Auto-renew" className={cell}>
-                      <span className={row.autoRenew && accepted ? "" : "text-tertiary"}>
-                        {accepted && row.autoRenew ? `Every ${formatPeriod(row.period)}` : accepted ? "Off" : "—"}
-                      </span>
-                    </td>
-                    <td className="flex flex-wrap items-center gap-2 pt-1 md:table-cell md:py-3 md:pl-3">
-                      {row.status === "PENDING" ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          <QuickPeriodForm
-                            action={acceptClientRequest.bind(null, row.id)}
-                            placeholder="Accept for…"
-                            submitLabel="Accept"
-                            label={`Accept ${row.client.name} for`}
-                            customDefault={DEFAULT_PERIOD}
-                          />
-                          <form action={rejectClientRequest.bind(null, row.id)}>
-                            <button className={buttonSecondary}>Decline</button>
-                          </form>
-                        </div>
-                      ) : accepted ? (
-                        <QuickPeriodForm
-                          action={renewClientAccess.bind(null, row.id)}
-                          placeholder="Renew…"
-                          submitLabel="Renew"
-                          label={`Renew ${row.client.name} for`}
-                          customDefault={row.period}
-                        />
+                    <td data-label="Meetings" className={cell}>
+                      {row.pendingMeeting ? (
+                        <span className={badge("warning")}>{meetingKindLabel(row.pendingMeeting.kind)} requested</span>
+                      ) : row.nextMeeting?.scheduledFor ? (
+                        <span className="font-mono text-xs tabular-nums">
+                          {row.nextMeeting.scheduledFor.toLocaleString("en-US", timeFormat)}
+                        </span>
                       ) : (
                         <span className="text-tertiary">—</span>
                       )}
+                    </td>
+                    <td className="flex flex-wrap justify-end gap-2 pt-1 md:table-cell md:py-3 md:pl-3 md:text-right">
+                      <span className="inline-flex flex-wrap justify-end gap-2">
+                        {row.linkStatus === "PENDING" && (
+                          <Link
+                            href={rosterHref(filter, { accept: row.id })}
+                            scroll={false}
+                            className={buttonPrimary}
+                          >
+                            Review request
+                          </Link>
+                        )}
+                        {row.pendingMeeting && (
+                          <Link
+                            href={rosterHref(filter, { meeting: row.pendingMeeting.id })}
+                            scroll={false}
+                            className={buttonPrimary}
+                          >
+                            Answer
+                          </Link>
+                        )}
+                        {accepted && (
+                          <Link
+                            href={rosterHref(filter, { renew: row.id })}
+                            scroll={false}
+                            className={buttonSecondary}
+                          >
+                            Renew
+                          </Link>
+                        )}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -203,7 +226,7 @@ export async function MyClients({ searchParams }: { searchParams: Promise<{ filt
         )}
       </section>
 
-      <MeetingRequestsSection />
+      <RosterDialogs dialog={dialog} rows={rows} filter={filter} nutritionistId={nutritionist.id} now={now} />
     </div>
   );
 }

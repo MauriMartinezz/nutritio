@@ -1,12 +1,12 @@
 import { connection } from "next/server";
 import { badge, buttonSecondary, card, figure, h2, muted } from "@/modules/ui/classes";
 import { effectiveAccessUntil } from "../access";
-import { renewClientAccess, setAutoRenew } from "../actions";
+import Link from "next/link";
+import { setAutoRenew } from "../actions";
 import { getClientAccess } from "../dal";
-import { rosterStatus, timeLeftLabel } from "../roster";
+import { rosterHref, rosterStatus, timeLeftLabel } from "../roster";
 import { STATUS_PILLS } from "./my-clients";
 import { PeriodFields } from "./period-fields";
-import { QuickPeriodForm } from "./quick-period-form";
 
 /** Access status, quick renew and auto-renew settings. Render inside <Suspense>. */
 export async function ClientAccess({ params }: { params: Promise<{ clientId: string }> }) {
@@ -34,13 +34,9 @@ export async function ClientAccess({ params }: { params: Promise<{ clientId: str
           </span>
         )}
       </p>
-      <QuickPeriodForm
-        action={renewClientAccess.bind(null, link.id)}
-        placeholder="Renew…"
-        submitLabel="Renew"
-        label="Renew access for"
-        customDefault={period}
-      />
+      <Link href={rosterHref("all", { renew: link.id })} className={`${buttonSecondary} self-start`}>
+        Renew access…
+      </Link>
       <form
         action={setAutoRenew.bind(null, link.id)}
         className="flex flex-wrap items-center gap-2 border-t border-divider pt-4"

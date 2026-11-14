@@ -88,3 +88,28 @@ export function sortRoster<T extends RosterRow>(rows: T[]): T[] {
       end(a) - end(b),
   );
 }
+
+/** Dialogs of the clients table, opened through the URL so they work without JavaScript. */
+export const ROSTER_DIALOGS = ["renew", "accept", "meeting"] as const;
+export type RosterDialogKind = (typeof ROSTER_DIALOGS)[number];
+export type RosterDialog = { kind: RosterDialogKind; id: string };
+
+const first = (value: unknown) => (Array.isArray(value) ? value[0] : value);
+
+/** The dialog named in the search params, e.g. ?renew=<linkId>; null when none. */
+export function parseRosterDialog(params: Partial<Record<string, string | string[] | undefined>>): RosterDialog | null {
+  for (const kind of ROSTER_DIALOGS) {
+    const id = first(params[kind]);
+    if (typeof id === "string" && id !== "") return { kind, id };
+  }
+  return null;
+}
+
+/** Link to the clients table with a filter and, optionally, one open dialog. */
+export function rosterHref(filter: RosterFilter, dialog?: Partial<Record<RosterDialogKind, string>>): string {
+  const params = new URLSearchParams();
+  if (filter !== "all") params.set("filter", filter);
+  for (const [kind, id] of Object.entries(dialog ?? {})) if (id) params.set(kind, id);
+  const query = params.toString();
+  return query ? `/clients?${query}` : "/clients";
+}

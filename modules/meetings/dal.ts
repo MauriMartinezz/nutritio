@@ -65,42 +65,6 @@ export async function getOwnMeetings(): Promise<OwnMeetingLink[]> {
     }));
 }
 
-export type NutritionistMeetingView = MeetingView & { client: { id: string; name: string } };
-
-/**
- * Meeting requests of the signed-in approved nutritionist's clients: pending
- * ones (oldest first) and upcoming accepted ones (soonest first).
- */
-export async function getNutritionistMeetings(): Promise<{
-  pending: NutritionistMeetingView[];
-  upcoming: NutritionistMeetingView[];
-  now: Date;
-}> {
-  const nutritionist = await requireRole("NUTRITIONIST");
-  if (nutritionist.nutritionistStatus !== "APPROVED") return { pending: [], upcoming: [], now: new Date(0) };
-
-  await connection();
-  const now = new Date();
-  const select = { ...MEETING_SELECT, link: { select: { client: { select: { id: true, name: true } } } } };
-  const owned = { link: { nutritionistId: nutritionist.id } };
-
-  const [pending, upcoming] = await Promise.all([
-    prisma.meetingRequest.findMany({
-      where: { ...owned, status: "PENDING" },
-      select,
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.meetingRequest.findMany({
-      where: { ...owned, status: "ACCEPTED", scheduledFor: { gte: now } },
-      select,
-      orderBy: { scheduledFor: "asc" },
-    }),
-  ]);
-
-  const toView = ({ link, ...request }: (typeof pending)[number]) => ({ ...request, client: link.client });
-  return { pending: pending.map(toView), upcoming: upcoming.map(toView), now };
-}
-
 /**
  * Number of things the signed-in nutritionist must act on (pending link
  * requests + pending meeting requests). 0 for anyone else.

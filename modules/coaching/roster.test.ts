@@ -10,6 +10,7 @@ import {
   timeLeftLabel,
   type RosterRow,
 } from "./roster";
+import { parseRosterDialog, rosterHref } from "./roster";
 
 const now = new Date("2026-06-01T12:00:00Z");
 const day = 24 * 60 * 60 * 1000;
@@ -80,4 +81,22 @@ test("sorting: needs action first, then pending, expiring, expired, active by en
     ["PENDING!", "ACTIVE!", "EXPIRING", "EXPIRED", "ACTIVE", "ACTIVE", "REJECTED"],
   );
   assert.deepEqual(sortRoster(rows).filter((r) => r.status === "ACTIVE" && !r.needsAction).map((r) => r.until), [at(20), at(90)]);
+});
+
+test("rosterHref keeps the filter (except all) and adds one dialog", () => {
+  assert.equal(rosterHref("all"), "/clients");
+  assert.equal(rosterHref("expiring"), "/clients?filter=expiring");
+  assert.equal(rosterHref("all", { renew: "l1" }), "/clients?renew=l1");
+  assert.equal(rosterHref("pending", { accept: "l2" }), "/clients?filter=pending&accept=l2");
+  assert.equal(rosterHref("needs-action", { meeting: "m 1" }), "/clients?filter=needs-action&meeting=m+1");
+});
+
+test("parseRosterDialog reads one dialog from the URL; unknown or empty ids open nothing", () => {
+  assert.deepEqual(parseRosterDialog({ renew: "l1" }), { kind: "renew", id: "l1" });
+  assert.deepEqual(parseRosterDialog({ accept: "l2" }), { kind: "accept", id: "l2" });
+  assert.deepEqual(parseRosterDialog({ meeting: "m1" }), { kind: "meeting", id: "m1" });
+  assert.deepEqual(parseRosterDialog({ renew: ["l1", "l9"] }), { kind: "renew", id: "l1" });
+  assert.equal(parseRosterDialog({}), null);
+  assert.equal(parseRosterDialog({ renew: "" }), null);
+  assert.equal(parseRosterDialog({ filter: "all" }), null);
 });

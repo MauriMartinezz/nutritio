@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma";
 import { badge, eyebrow, figure, h2, h3, muted } from "@/modules/ui/classes";
-import { CloseOnEscape } from "./close-on-escape";
+import { CloseOnEscape } from "@/modules/ui/components/close-on-escape";
 import { STATUS_LABELS, STATUS_TONES } from "./status";
 import { ReviewForm } from "./review-form";
 

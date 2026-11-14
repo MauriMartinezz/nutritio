@@ -1,11 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import { addPeriod, effectiveAccessUntil, parsePeriod, renewAccess, type AccessPeriod } from "./access";
-import { parsePeriodChoice } from "./roster";
+import type { FlashKey } from "@/modules/ui/flash";
+import { setFlash } from "@/modules/ui/set-flash";
+import { parsePeriodChoice, parseRosterFilter, rosterHref } from "./roster";
 import {
   LinkRuleError,
   decideLinkRequest,
@@ -81,15 +84,25 @@ async function respond(linkId: string, response: LinkResponse, period?: AccessPe
   if (count === 0) throw new LinkRuleError("Only pending requests can be answered");
 
   revalidatePath("/clients");
+  revalidatePath("/");
 }
 
 /** Accepts a request, granting access for the period in the form (a preset, or amount + unit). */
 export async function acceptClientRequest(linkId: string, formData: FormData) {
   await respond(linkId, "ACCEPT", parsePeriodChoice(Object.fromEntries(formData)));
+  await backToRoster(formData, "client-accepted");
 }
 
-export async function rejectClientRequest(linkId: string) {
+export async function rejectClientRequest(linkId: string, formData: FormData) {
   await respond(linkId, "REJECT");
+  await backToRoster(formData, "client-declined");
+}
+
+/** Closes the dialog: back to the clients table (same filter) with a toast. */
+async function backToRoster(formData: FormData, flash: FlashKey): Promise<never> {
+  await setFlash(flash);
+  // Only a known filter value: the return URL is never taken from the browser.
+  redirect(rosterHref(parseRosterFilter(formData.get("filter"))));
 }
 
 /** An accepted link of the signed-in approved nutritionist, or an error. */
@@ -116,6 +129,7 @@ export async function renewClientAccess(linkId: string, formData: FormData) {
   });
   revalidatePath("/clients", "layout");
   revalidatePath("/");
+  await backToRoster(formData, "access-renewed");
 }
 
 /** Turns automatic renewal on or off and sets its period (also the renewal default). */
