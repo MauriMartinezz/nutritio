@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { PlanShoppingList } from "@/modules/plans/components/shopping-list";
+import { muted, page } from "@/modules/ui/classes";
 
 export const metadata: Metadata = { title: "Shopping list · Nutritio" };
 
 export default function Page({ params, searchParams }: PageProps<"/plans/[planId]/shopping-list">) {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-16">
-      <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+    <main className={page}>
+      <Suspense fallback={<p className={muted}>Loading…</p>}>
         <PlanShoppingList params={params} searchParams={searchParams as Promise<{ list?: string | string[] }>} />
       </Suspense>
     </main>

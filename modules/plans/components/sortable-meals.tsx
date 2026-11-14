@@ -18,6 +18,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { callout } from "@/modules/ui/classes";
 import { reorderMeals } from "../actions";
 
 type SortableMeal = { id: string; name: string; card: ReactNode };
@@ -54,7 +55,7 @@ export function SortableMeals({ planId, meals }: { planId: string; meals: Sortab
   return (
     <div className="flex flex-col gap-3">
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className={callout("danger")}>
           {error}
         </p>
       )}
@@ -65,7 +66,7 @@ export function SortableMeals({ planId, meals }: { planId: string; meals: Sortab
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={order} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-4">
             {order.map((id) => {
               const meal = byId.get(id);
               return meal ? <SortableMealCard key={id} meal={meal} /> : null;
@@ -85,8 +86,8 @@ function SortableMealCard({ meal }: { meal: SortableMeal }) {
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex w-full gap-3 rounded-lg border border-zinc-200 bg-background p-4 dark:border-zinc-800 ${
-        isDragging ? "relative z-10 opacity-90 shadow-lg" : ""
+      className={`flex w-full gap-2 rounded-card-lg border bg-surface p-4 sm:gap-3 md:p-5 ${
+        isDragging ? "relative z-10 border-accent opacity-95 ring-2 ring-accent/30" : "border-line"
       }`}
     >
       <button
@@ -95,7 +96,7 @@ function SortableMealCard({ meal }: { meal: SortableMeal }) {
         {...attributes}
         {...listeners}
         aria-label={`Drag to reorder ${meal.name}`}
-        className="-ml-1 flex w-5 shrink-0 cursor-grab touch-none items-start justify-center pt-1.5 text-lg leading-none text-zinc-400 hover:text-zinc-700 active:cursor-grabbing dark:hover:text-zinc-200"
+        className="-ml-2 flex h-11 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-control text-lg leading-none text-tertiary hover:bg-surface-muted hover:text-ink active:cursor-grabbing"
       >
         ⠿
       </button>

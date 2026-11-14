@@ -1,5 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  buttonPrimary,
+  buttonSecondary,
+  card,
+  figure,
+  h1,
+  h2,
+  link,
+  list as listClass,
+  muted,
+} from "@/modules/ui/classes";
 import { getMyPlan, getPlanForEditor, type PlanView } from "../dal";
 import {
   PlanRuleError,
@@ -66,53 +77,50 @@ function ShoppingListView({
   const list = shoppingList(plan.meals, period);
   return (
     <div className="flex flex-col gap-6">
-      <Link href={back} className="text-sm underline">
-        ← Back to the plan
-      </Link>
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Shopping list</h1>
-        <p className="text-sm text-zinc-500">
-          {plan.name} · {list.days} days, one serving of each meal per day
+      <header className="flex flex-col gap-2">
+        <Link href={back} className={`${link} self-start text-sm`}>
+          ← Back to the plan
+        </Link>
+        <h1 className={h1}>Shopping list</h1>
+        <p className={muted}>
+          {plan.name} · <span className="font-mono font-medium tabular-nums">{list.days}</span> days, one serving of each
+          meal per day
         </p>
       </header>
-      <nav aria-label="Shopping list period" className="flex gap-2">
+      <nav aria-label="Shopping list period" className="flex flex-wrap gap-2">
         {SHOPPING_PERIODS.map((option) => (
           <Link
             key={option}
             href={option === "weekly" ? path : `${path}?list=${option}`}
             aria-current={option === period ? "page" : undefined}
-            className={
-              option === period
-                ? "rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white"
-                : "rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            }
+            className={option === period ? buttonPrimary : buttonSecondary}
           >
             {PERIOD_LABELS[option]}
           </Link>
         ))}
       </nav>
-      <section className="flex flex-col gap-2">
-        <h2 className="text-lg font-semibold">{PERIOD_LABELS[period]} quantities</h2>
+      <section className={card}>
+        <h2 className={h2}>{PERIOD_LABELS[period]} quantities</h2>
         {list.items.length === 0 ? (
-          <p className="text-sm text-zinc-500">This plan has no foods yet.</p>
+          <p className={muted}>This plan has no foods yet.</p>
         ) : (
-          <ul className="flex flex-col divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
+          <ul className={`${listClass} text-sm`}>
             {list.items.map((item) => (
-              <li key={item.foodId} className="flex justify-between gap-4 py-1.5">
-                <span>{item.label}</span>
-                <span className="tabular-nums">{formatShoppingGrams(item.grams)}</span>
+              <li key={item.foodId} className="flex min-h-11 items-center justify-between gap-4 py-2">
+                <span className="font-medium">{item.label}</span>
+                <span className={`${figure} shrink-0`}>{formatShoppingGrams(item.grams)}</span>
               </li>
             ))}
           </ul>
         )}
       </section>
       {list.extras.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h2 className="text-lg font-semibold">Also buy (extras)</h2>
-          <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">
+        <section className={card}>
+          <h2 className={h2}>Also buy (extras)</h2>
+          <ul className={`${listClass} text-sm`}>
             {list.extras.map((extra) => (
-              <li key={extra.text} className="whitespace-pre-line">
-                {extra.text} <span className="text-zinc-500">({extra.meals.join(", ")})</span>
+              <li key={extra.text} className="whitespace-pre-line py-2">
+                {extra.text} <span className="text-secondary">({extra.meals.join(", ")})</span>
               </li>
             ))}
           </ul>

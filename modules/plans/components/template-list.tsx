@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonSecondary, card, input, link, list, muted } from "@/modules/ui/classes";
 import { createPlan } from "../actions";
 import { listTemplates } from "../dal";
 
@@ -7,34 +8,34 @@ export async function TemplateList() {
   const templates = await listTemplates();
 
   return (
-    <div className="flex flex-col gap-4">
-      {templates.length === 0 ? (
-        <p className="text-sm text-zinc-500">
-          No templates yet. A template is a plan without a client that you can copy for any client.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-1">
-          {templates.map((template) => (
-            <li key={template.id}>
-              <Link href={`/plans/${template.id}`} className="underline">
-                {template.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-      <form action={createPlan.bind(null, null)} className="flex gap-2">
+    <div className="flex flex-col gap-5">
+      <section className={card}>
+        {templates.length === 0 ? (
+          <p className={muted}>
+            No templates yet. A template is a plan without a client that you can copy for any client.
+          </p>
+        ) : (
+          <ul className={list}>
+            {templates.map((template) => (
+              <li key={template.id} className="flex min-h-11 items-center py-2">
+                <Link href={`/plans/${template.id}`} className={link}>
+                  {template.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <form action={createPlan.bind(null, null)} className={`${card} sm:flex-row sm:items-center`}>
         <input
           name="name"
           required
           maxLength={120}
           placeholder="New template name"
           aria-label="New template name"
-          className="flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className={`${input} w-full sm:flex-1`}
         />
-        <button className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900">
-          Create template
-        </button>
+        <button className={buttonSecondary}>Create template</button>
       </form>
     </div>
   );
