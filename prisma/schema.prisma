@@ -196,6 +196,8 @@ model NutritionistClient {
   autoRenew        Boolean    @default(false) @map("auto_renew")
   /// Days between check-ins, agreed by the nutritionist. Null until agreed.
   checkInEveryDays Int?       @map("check_in_every_days")
+  /// The nutritionist asks this client (a woman) about her menstrual cycle in check-ins.
+  askCycle         Boolean    @default(false) @map("ask_menstrual_cycle")
   updatedAt        DateTime   @updatedAt @map("updated_at")
   checkIns         CheckIn[]
   meetingRequests  MeetingRequest[]
@@ -280,6 +282,8 @@ model ClientPreferences {
   intolerances    String?      @db.VarChar(500)
   otherConditions String?      @map("other_conditions") @db.VarChar(500)
   notes           String?      @db.Text
+  /// Null only for rows saved before it was asked.
+  sex             Sex?
   updatedAt       DateTime     @updatedAt @map("updated_at")
 
   @@map("client_preferences")
@@ -303,10 +307,17 @@ model CheckIn {
   discomfort        Boolean            @default(false)
   discomfortNotes   String?            @map("discomfort_notes") @db.VarChar(500)
   notes             String?            @db.Text
+  /// On her period or in the week before it. Null when the nutritionist didn't ask.
+  menstruating      Boolean?
   createdAt         DateTime           @default(now()) @map("created_at")
 
   @@index([linkId, createdAt])
   @@map("check_ins")
+}
+
+enum Sex {
+  FEMALE
+  MALE
 }
 
 enum ActivityType {

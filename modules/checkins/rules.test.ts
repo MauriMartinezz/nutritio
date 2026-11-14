@@ -4,6 +4,7 @@ import {
   CheckInRuleError,
   InvalidCheckInError,
   checkInStatus,
+  asksCycle,
   describeCheckInStatus,
   nextCheckInDue,
   parseCheckIn,
@@ -35,6 +36,7 @@ test("a check-in has a weight (comma decimal ok), workouts yes/no, three 1–5 r
     discomfort: true,
     discomfortNotes: "Knee pain",
     notes: "Good week",
+    menstruating: null,
   });
 });
 
@@ -48,6 +50,26 @@ test("gym performance is optional: improved, same or dropped", () => {
   assert.equal(parseCheckIn({ ...valid, gymPerformance: "DROPPED" }).gymPerformance, "DROPPED");
   assert.equal(parseCheckIn({ ...valid, gymPerformance: "" }).gymPerformance, null);
   assert.throws(() => parseCheckIn({ ...valid, gymPerformance: "GREAT" }), InvalidCheckInError);
+});
+
+test("the menstrual cycle question is answered yes/no only when the nutritionist asks it", () => {
+  assert.equal(parseCheckIn({ ...valid, menstruating: "yes" }).menstruating, null);
+  assert.equal(parseCheckIn({ ...valid, menstruating: "yes" }, { askCycle: true }).menstruating, true);
+  assert.equal(parseCheckIn({ ...valid, menstruating: "no" }, { askCycle: true }).menstruating, false);
+  try {
+    parseCheckIn(valid, { askCycle: true });
+    assert.fail("expected InvalidCheckInError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidCheckInError);
+    assert.deepEqual(Object.keys(error.problems), ["menstruating"]);
+  }
+});
+
+test("the cycle question shows only to women whose nutritionist asks it", () => {
+  assert.equal(asksCycle(true, "FEMALE"), true);
+  assert.equal(asksCycle(false, "FEMALE"), false);
+  assert.equal(asksCycle(true, "MALE"), false);
+  assert.equal(asksCycle(true, null), false);
 });
 
 test("discomfort notes are only kept when there was discomfort; empty notes become null", () => {

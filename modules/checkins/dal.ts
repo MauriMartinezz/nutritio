@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { accessState, effectiveAccessUntil, hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
-import { checkInStatus, nextCheckInDue, type CheckInState, type GymPerformance } from "./rules";
+import type { Sex } from "@/modules/clients/preferences";
+import { asksCycle, checkInStatus, nextCheckInDue, type CheckInState, type GymPerformance } from "./rules";
 
 export type CheckInView = {
   id: string;
@@ -19,6 +20,7 @@ export type CheckInView = {
   discomfort: boolean;
   discomfortNotes: string | null;
   notes: string | null;
+  menstruating: boolean | null;
 };
 
 export type CheckInScheduleView = {
@@ -41,6 +43,7 @@ const CHECK_IN_SELECT = {
   discomfort: true,
   discomfortNotes: true,
   notes: true,
+  menstruating: true,
 } as const;
 
 type CheckInRow = Omit<CheckInView, "weightKg"> & { weightKg: { toNumber(): number } };
@@ -64,9 +67,14 @@ function schedule(
  * A client's check-ins and schedule with the signed-in nutritionist. Health
  * data: only through the accepted-link gate (404 otherwise).
  */
-export async function getClientCheckIns(
-  clientId: string,
-): Promise<CheckInScheduleView & { checkIns: CheckInView[] }> {
+export async function getClientCheckIns(clientId: string): Promise<
+  CheckInScheduleView & {
+    checkIns: CheckInView[];
+    askCycle: boolean;
+    /** Null until the client saves it in their profile. */
+    clientSex: Sex | null;
+  }
+> {
   const { nutritionist } = await requireClientAccess(clientId);
 
   const link = await prisma.nutritionistClient.findUniqueOrThrow({
@@ -74,16 +82,25 @@ export async function getClientCheckIns(
     select: {
       checkInEveryDays: true,
       respondedAt: true,
+      askCycle: true,
+      client: { select: { preferences: { select: { sex: true } } } },
       checkIns: { select: CHECK_IN_SELECT, orderBy: { createdAt: "desc" } },
     },
   });
   await connection();
   const checkIns = link.checkIns.map(toView);
-  return { ...schedule(link, checkIns, new Date()), checkIns };
+  return {
+    ...schedule(link, checkIns, new Date()),
+    checkIns,
+    askCycle: link.askCycle,
+    clientSex: link.client.preferences?.sex ?? null,
+  };
 }
 
 export type OwnCheckInLink = CheckInScheduleView & {
   linkId: string;
+  /** Show the menstrual cycle question (asked by the nutritionist, client is a woman). */
+  askCycle: boolean;
   nutritionistName: string;
   /** Newest first. */
   checkIns: CheckInView[];
@@ -96,21 +113,25 @@ export type OwnCheckInLink = CheckInScheduleView & {
 export async function getOwnCheckIns(): Promise<OwnCheckInLink[]> {
   const client = await requireRole("CLIENT");
 
-  const links = await prisma.nutritionistClient.findMany({
-    where: { clientId: client.id, status: "ACCEPTED" },
-    select: {
-      id: true,
-      respondedAt: true,
-      accessAmount: true,
-      accessUnit: true,
-      accessUntil: true,
-      autoRenew: true,
-      checkInEveryDays: true,
-      nutritionist: { select: { name: true } },
-      checkIns: { select: CHECK_IN_SELECT, orderBy: { createdAt: "desc" } },
-    },
-    orderBy: { respondedAt: "asc" },
-  });
+  const [links, preferences] = await Promise.all([
+    prisma.nutritionistClient.findMany({
+      where: { clientId: client.id, status: "ACCEPTED" },
+      select: {
+        id: true,
+        respondedAt: true,
+        accessAmount: true,
+        accessUnit: true,
+        accessUntil: true,
+        autoRenew: true,
+        checkInEveryDays: true,
+        askCycle: true,
+        nutritionist: { select: { name: true } },
+        checkIns: { select: CHECK_IN_SELECT, orderBy: { createdAt: "desc" } },
+      },
+      orderBy: { respondedAt: "asc" },
+    }),
+    prisma.clientPreferences.findUnique({ where: { userId: client.id }, select: { sex: true } }),
+  ]);
   await connection();
   const now = new Date();
 
@@ -121,6 +142,7 @@ export async function getOwnCheckIns(): Promise<OwnCheckInLink[]> {
       return {
         linkId: link.id,
         nutritionistName: link.nutritionist.name,
+        askCycle: asksCycle(link.askCycle, preferences?.sex ?? null),
         ...schedule(link, checkIns, now),
         checkIns,
       };

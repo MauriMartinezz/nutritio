@@ -17,7 +17,7 @@ export async function MyCheckIns() {
 
   return (
     <div className="flex flex-col gap-8">
-      {links.map(({ linkId, nutritionistName, checkIns, due, ...status }) => (
+      {links.map(({ linkId, nutritionistName, checkIns, due, askCycle, ...status }) => (
         <section key={linkId} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <h2 className={h2}>{nutritionistName}</h2>
@@ -31,7 +31,7 @@ export async function MyCheckIns() {
             </p>
           </div>
           <div className={card}>
-            <CheckInForm linkId={linkId} />
+            <CheckInForm linkId={linkId} askCycle={askCycle} />
           </div>
           <div className={card}>
             <h3 className={h3}>History</h3>

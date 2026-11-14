@@ -1,4 +1,4 @@
-import { COMPLETED_WORKOUTS_LABEL, GYM_PERFORMANCE, RATINGS, type RatingField } from "../rules";
+import { COMPLETED_WORKOUTS_LABEL, CYCLE_HISTORY_LABEL, GYM_PERFORMANCE, RATINGS, type RatingField } from "../rules";
 import type { CheckInView } from "../dal";
 import { figure, list, muted } from "@/modules/ui/classes";
 
@@ -27,6 +27,7 @@ export function CheckInHistory({ checkIns }: { checkIns: CheckInView[] }) {
               ...(Object.entries(RATINGS) as [RatingField, string][]).map(
                 ([field, label]) => `${label}: ${checkIn[field]}/5`,
               ),
+              ...(checkIn.menstruating === null ? [] : [`${CYCLE_HISTORY_LABEL}: ${checkIn.menstruating ? "yes" : "no"}`]),
             ].join(" · ")}
           </p>
           {checkIn.discomfort && (

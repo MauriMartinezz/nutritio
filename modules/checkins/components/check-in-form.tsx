@@ -3,38 +3,14 @@
 import { useActionState } from "react";
 import { buttonPrimary, fieldError, fieldHint, input, label as labelClass, textarea } from "@/modules/ui/classes";
 import { submitCheckIn, type SubmitCheckInState } from "../actions";
-import { CHECK_IN_LIMITS, COMPLETED_WORKOUTS_LABEL, GYM_PERFORMANCE, RATINGS } from "../rules";
+import { Segmented, YES_NO } from "@/modules/ui/components/segmented";
+import { CHECK_IN_LIMITS, COMPLETED_WORKOUTS_LABEL, CYCLE_QUESTION, GYM_PERFORMANCE, RATINGS } from "../rules";
 import { DietAdherenceSlider } from "./diet-adherence-slider";
 
 const SCORES = [1, 2, 3, 4, 5];
 const legend = "mb-2 text-sm font-medium";
-/** Radio rendered as one segment of a button group (the input stays focusable). */
-const segment =
-  "flex min-h-11 flex-1 cursor-pointer items-center justify-center px-3 text-sm font-medium text-secondary has-[:checked]:bg-accent has-[:checked]:text-on-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent hover:text-ink";
-const group = "flex divide-x divide-line overflow-hidden rounded-control border border-line-strong bg-surface";
-
-function Segmented({
-  name,
-  options,
-  required,
-}: {
-  name: string;
-  options: { value: string; label: string }[];
-  required?: boolean;
-}) {
-  return (
-    <div className={group}>
-      {options.map((option) => (
-        <label key={option.value} className={segment}>
-          <input type="radio" name={name} value={option.value} required={required} className="sr-only" />
-          {option.label}
-        </label>
-      ))}
-    </div>
-  );
-}
-
-export function CheckInForm({ linkId }: { linkId: string }) {
+/** `askCycle`: the nutritionist asks this client about her menstrual cycle. */
+export function CheckInForm({ linkId, askCycle }: { linkId: string; askCycle: boolean }) {
   const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(
     submitCheckIn.bind(null, linkId),
     {},
@@ -57,14 +33,7 @@ export function CheckInForm({ linkId }: { linkId: string }) {
       <fieldset>
         <legend className={legend}>{COMPLETED_WORKOUTS_LABEL}?</legend>
         <div className="max-w-xs">
-          <Segmented
-            name="completedWorkouts"
-            required
-            options={[
-              { value: "yes", label: "Yes" },
-              { value: "no", label: "No" },
-            ]}
-          />
+          <Segmented name="completedWorkouts" required options={YES_NO} />
         </div>
       </fieldset>
 
@@ -93,6 +62,16 @@ export function CheckInForm({ linkId }: { linkId: string }) {
       </fieldset>
 
       <DietAdherenceSlider />
+
+      {askCycle && (
+        <fieldset>
+          <legend className={legend}>{CYCLE_QUESTION}?</legend>
+          <p className={`${fieldHint} mb-2`}>It can change your weight, energy and performance.</p>
+          <div className="max-w-xs">
+            <Segmented name="menstruating" required options={YES_NO} />
+          </div>
+        </fieldset>
+      )}
 
       {/* The details field only shows once the box is ticked (CSS :has, works without JS). */}
       <div className="group flex flex-col gap-3">

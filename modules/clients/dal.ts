@@ -17,6 +17,7 @@ const PREFERENCES_SELECT = {
   intolerances: true,
   otherConditions: true,
   notes: true,
+  sex: true,
 } as const;
 
 /** The signed-in client's own preferences; null until first saved. */

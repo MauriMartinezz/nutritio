@@ -7,7 +7,7 @@ import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
 import { setFlash } from "@/modules/ui/set-flash";
-import { InvalidCheckInError, parseCheckIn, parseFrequency } from "./rules";
+import { InvalidCheckInError, asksCycle, parseCheckIn, parseFrequency } from "./rules";
 
 /** The nutritionist agrees how often (in days) a client sends a check-in. */
 export async function setCheckInFrequency(clientId: string, formData: FormData) {
@@ -19,6 +19,24 @@ export async function setCheckInFrequency(clientId: string, formData: FormData) 
   await prisma.nutritionistClient.updateMany({
     where: { nutritionistId: nutritionist.id, clientId, status: "ACCEPTED" },
     data: { checkInEveryDays },
+  });
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/check-ins");
+}
+
+/** The nutritionist turns the menstrual cycle question on or off for a client who is a woman. */
+export async function setCycleQuestion(clientId: string, formData: FormData) {
+  const { nutritionist } = await requireClientAccess(clientId);
+  const askCycle = formData.get("askCycle") === "on";
+
+  // Only women can be asked; the client's sex is read from the DB, never from the browser.
+  const preferences = await prisma.clientPreferences.findUnique({ where: { userId: clientId }, select: { sex: true } });
+  if (askCycle && preferences?.sex !== "FEMALE") return;
+
+  await prisma.nutritionistClient.updateMany({
+    where: { nutritionistId: nutritionist.id, clientId, status: "ACCEPTED" },
+    data: { askCycle },
   });
 
   revalidatePath(`/clients/${clientId}`);
@@ -41,7 +59,15 @@ export async function submitCheckIn(
   // The bound link id is tamperable: it must be one of the caller's own links.
   const link = await prisma.nutritionistClient.findFirst({
     where: { id: linkId, clientId: client.id },
-    select: { status: true, accessAmount: true, accessUnit: true, accessUntil: true, autoRenew: true },
+    select: {
+      status: true,
+      accessAmount: true,
+      accessUnit: true,
+      accessUntil: true,
+      autoRenew: true,
+      askCycle: true,
+      client: { select: { preferences: { select: { sex: true } } } },
+    },
   });
   const active =
     link?.status === "ACCEPTED" &&
@@ -50,7 +76,9 @@ export async function submitCheckIn(
 
   let checkIn;
   try {
-    checkIn = parseCheckIn(Object.fromEntries(formData));
+    checkIn = parseCheckIn(Object.fromEntries(formData), {
+      askCycle: asksCycle(link.askCycle, link.client.preferences?.sex ?? null),
+    });
   } catch (error) {
     if (error instanceof InvalidCheckInError) return { problems: error.problems };
     throw error;

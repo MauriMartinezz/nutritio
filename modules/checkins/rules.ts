@@ -35,6 +35,15 @@ export const GYM_PERFORMANCE = {
 } as const;
 export type GymPerformance = keyof typeof GYM_PERFORMANCE;
 
+/** Asked only to women whose nutritionist turned it on. */
+export const CYCLE_QUESTION = "On your period or in the week before it";
+export const CYCLE_HISTORY_LABEL = "Period or week before";
+
+/** The cycle question only shows to women whose nutritionist turned it on. */
+export function asksCycle(askCycle: boolean, sex: "FEMALE" | "MALE" | null): boolean {
+  return askCycle && sex === "FEMALE";
+}
+
 export type CheckInInput = Record<RatingField, number> & {
   weightKg: number;
   completedWorkouts: boolean;
@@ -45,6 +54,8 @@ export type CheckInInput = Record<RatingField, number> & {
   discomfort: boolean;
   discomfortNotes: string | null;
   notes: string | null;
+  /** Null when the nutritionist didn't ask about the menstrual cycle. */
+  menstruating: boolean | null;
 };
 export type CheckInField = keyof CheckInInput;
 
@@ -67,9 +78,13 @@ const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
 
 /**
  * Validates check-in form input (the discomfort checkbox arrives as "on"),
- * reporting every invalid field at once.
+ * reporting every invalid field at once. The menstrual cycle answer is only
+ * read, and then required, when `askCycle` is on.
  */
-export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
+export function parseCheckIn(
+  input: Record<string, unknown>,
+  { askCycle = false }: { askCycle?: boolean } = {},
+): CheckInInput {
   const problems: Partial<Record<CheckInField, string>> = {};
   const { minWeightKg, maxWeightKg, minRating, maxRating } = CHECK_IN_LIMITS;
 
@@ -116,6 +131,12 @@ export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
     problems.notes = `Notes must be at most ${CHECK_IN_LIMITS.notes} characters`;
   }
 
+  let menstruating: boolean | null = null;
+  if (askCycle) {
+    if (input.menstruating === "yes" || input.menstruating === "no") menstruating = input.menstruating === "yes";
+    else problems.menstruating = `${CYCLE_QUESTION}: choose yes or no`;
+  }
+
   if (Object.keys(problems).length > 0) throw new InvalidCheckInError(problems);
 
   return {
@@ -127,6 +148,7 @@ export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
     discomfort,
     discomfortNotes: discomfortNotes || null,
     notes: notes || null,
+    menstruating,
   };
 }
 

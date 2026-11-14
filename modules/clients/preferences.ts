@@ -24,6 +24,9 @@ export const COOKING_STYLE_LABELS: Record<CookingStyle, string> = {
   NO_PREFERENCE: "No preference",
 };
 
+export const SEX_LABELS = { FEMALE: "Woman", MALE: "Man" } as const;
+export type Sex = keyof typeof SEX_LABELS;
+
 export const PREFERENCE_LIMITS = {
   intolerances: 500,
   otherConditions: 500,
@@ -34,7 +37,11 @@ type Flag = keyof typeof PREFERENCE_FLAGS | keyof typeof MEDICAL_FLAGS;
 type TextField = keyof typeof PREFERENCE_LIMITS;
 
 export type ClientPreferences = Record<Flag, boolean> &
-  Record<TextField, string | null> & { cookingStyle: CookingStyle };
+  Record<TextField, string | null> & {
+    cookingStyle: CookingStyle;
+    /** Required when saving; null only for rows saved before it was asked. */
+    sex: Sex | null;
+  };
 export type ClientPreferencesField = keyof ClientPreferences;
 
 export class InvalidClientPreferencesError extends Error {
@@ -76,14 +83,18 @@ export function parseClientPreferences(input: Record<string, unknown>): ClientPr
   const cookingStyle = COOKING_STYLES.find((style) => style === rawStyle);
   if (!cookingStyle) problems.cookingStyle = "Choose basic, elaborate or no preference";
 
+  const rawSex = text(input.sex);
+  const sex = rawSex in SEX_LABELS ? (rawSex as Sex) : null;
+  if (!sex) problems.sex = "Choose woman or man";
+
   if (Object.keys(problems).length > 0) throw new InvalidClientPreferencesError(problems);
 
-  return { ...flags, cookingStyle: cookingStyle!, ...texts };
+  return { ...flags, cookingStyle: cookingStyle!, ...texts, sex };
 }
 
-/** Readable labels for the set preferences, e.g. ["Low carb", "Basic meals", "Intolerant to: lactose"]. */
+/** Readable labels for the set preferences, e.g. ["Woman", "Low carb", "Basic meals", "Intolerant to: lactose"]. */
 export function describePreferences(prefs: ClientPreferences): string[] {
-  const labels: string[] = [];
+  const labels: string[] = prefs.sex ? [SEX_LABELS[prefs.sex]] : [];
   for (const [flag, label] of Object.entries(PREFERENCE_FLAGS)) {
     if (prefs[flag as Flag]) labels.push(label);
   }
