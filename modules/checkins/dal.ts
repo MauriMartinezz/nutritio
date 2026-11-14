@@ -14,6 +14,7 @@ export type CheckInView = {
   trainingAdherence: number;
   energy: number;
   hunger: number;
+  dietAdherence: number | null;
   discomfort: boolean;
   discomfortNotes: string | null;
   notes: string | null;
@@ -34,6 +35,7 @@ const CHECK_IN_SELECT = {
   trainingAdherence: true,
   energy: true,
   hunger: true,
+  dietAdherence: true,
   discomfort: true,
   discomfortNotes: true,
   notes: true,

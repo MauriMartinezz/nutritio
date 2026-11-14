@@ -6,6 +6,9 @@ export const CHECK_IN_LIMITS = {
   maxWeightKg: 400,
   minRating: 1,
   maxRating: 5,
+  /** Diet adherence, in percent (slider step 5). */
+  maxDietAdherence: 100,
+  dietAdherenceStep: 5,
   discomfortNotes: 500,
   notes: 2000,
   minEveryDays: 1,
@@ -25,6 +28,8 @@ export type RatingField = keyof typeof RATINGS;
 
 export type CheckInInput = Record<RatingField, number> & {
   weightKg: number;
+  /** How much of the diet the client could follow, 0–100 %. */
+  dietAdherence: number;
   discomfort: boolean;
   discomfortNotes: string | null;
   notes: string | null;
@@ -72,6 +77,12 @@ export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
     ratings[field] = value;
   }
 
+  const rawAdherence = text(input.dietAdherence);
+  const dietAdherence = Number(rawAdherence);
+  if (!/^\d+$/.test(rawAdherence) || dietAdherence > CHECK_IN_LIMITS.maxDietAdherence) {
+    problems.dietAdherence = `Diet followed must be a percentage from 0 to ${CHECK_IN_LIMITS.maxDietAdherence}`;
+  }
+
   const discomfort = input.discomfort === "on";
   const discomfortNotes = discomfort ? text(input.discomfortNotes) : "";
   if (discomfortNotes.length > CHECK_IN_LIMITS.discomfortNotes) {
@@ -87,6 +98,7 @@ export function parseCheckIn(input: Record<string, unknown>): CheckInInput {
   return {
     weightKg,
     ...ratings,
+    dietAdherence,
     discomfort,
     discomfortNotes: discomfortNotes || null,
     notes: notes || null,

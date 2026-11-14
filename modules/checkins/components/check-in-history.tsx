@@ -12,6 +12,7 @@ export function CheckInHistory({ checkIns }: { checkIns: CheckInView[] }) {
           <p>
             <span className="font-medium">{checkIn.createdAt.toLocaleDateString()}</span> ·{" "}
             {checkIn.weightKg} kg
+            {checkIn.dietAdherence !== null && <> · Diet followed: {checkIn.dietAdherence}%</>}
           </p>
           <p className="text-zinc-600 dark:text-zinc-400">
             {(Object.entries(RATINGS) as [RatingField, string][])

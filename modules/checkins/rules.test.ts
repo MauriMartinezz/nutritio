@@ -18,6 +18,7 @@ const valid = {
   trainingAdherence: "5",
   energy: "3",
   hunger: "2",
+  dietAdherence: "75",
   discomfortNotes: "Knee pain",
   notes: "  Good week  ",
 };
@@ -29,6 +30,7 @@ test("a check-in has a weight (comma decimal ok), four 1–5 ratings, discomfort
     trainingAdherence: 5,
     energy: 3,
     hunger: 2,
+    dietAdherence: 75,
     discomfort: true,
     discomfortNotes: "Knee pain",
     notes: "Good week",
@@ -50,6 +52,7 @@ test("a check-in reports every problem at once", () => {
       trainingAdherence: "6",
       energy: "3.5",
       hunger: "",
+      dietAdherence: "101",
       discomfort: "on",
       discomfortNotes: "x".repeat(501),
       notes: "x".repeat(2001),
@@ -58,6 +61,7 @@ test("a check-in reports every problem at once", () => {
   } catch (error) {
     assert.ok(error instanceof InvalidCheckInError);
     assert.deepEqual(Object.keys(error.problems).sort(), [
+      "dietAdherence",
       "discomfortNotes",
       "energy",
       "hunger",
@@ -105,4 +109,13 @@ test("the status reads as due, days left, or not scheduled", () => {
   assert.equal(describeCheckInStatus({ state: "UPCOMING", daysLeft: 3 }), "Next check-in in 3 days");
   assert.equal(describeCheckInStatus({ state: "UPCOMING", daysLeft: 1 }), "Next check-in in 1 day");
   assert.equal(describeCheckInStatus({ state: "NOT_SCHEDULED", daysLeft: 0 }), "No check-in schedule yet");
+});
+
+test("diet adherence is a whole percentage from 0 to 100", () => {
+  for (const value of ["0", "5", "100"]) {
+    assert.equal(parseCheckIn({ ...valid, dietAdherence: value }).dietAdherence, Number(value));
+  }
+  for (const value of ["101", "-5", "50.5", "", "abc"]) {
+    assert.throws(() => parseCheckIn({ ...valid, dietAdherence: value }), InvalidCheckInError, value);
+  }
 });

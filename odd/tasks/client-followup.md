@@ -31,12 +31,12 @@ Assumptions (portfolio scope, approximate is fine): ratings 1–5; check-in due 
 | T2 | S10 | delegated (context backstop) | done | ceaa1b1 |
 | T3 | S1, S9 | delegated (context backstop) | done | f72ee2c |
 | T4 | S2, S7 | delegated (context backstop) | done | ef04d3c |
-| T5 | S3 | delegated (context backstop) | done | (T5) |
+| T5 | S3 | delegated (context backstop) | done | 6039278 |
 | T6 | S8 | delegated (context backstop) | pending | |
 | T7 | S4 | delegated (context backstop) | pending | |
 | T8 | S5, S6 | delegated (context backstop) | pending | |
 | T9 | S12 | inline | done | 892ddbc |
-| T10 | S9b | inline (after T5, shares schema.prisma) | pending | |
+| T10 | S9b | inline (after T5, shares schema.prisma) | done | (T10) |
 
 Risk: item 2 (client data visible to nutritionists, medical info) → independent verifier at feature end.
 
@@ -54,3 +54,4 @@ Risk: item 2 (client data visible to nutritionists, medical info) → independen
 - **L10** (2026-11-14) — T4 (writer): client home "Your follow-up" per nutritionist (days of access left / expired message, check-in due with link / next in N days, latest weight and change), dependency-free SVG weight chart (aria summary + hidden table) on home and /check-ins. Writer RED→GREEN 100/100, tsc, lint. Parent E2E isolated: 13/13 (empty state, access days, due, weight change, chart, expired message, not shown to nutritionists or signed-out). Dates use server-locale toLocaleDateString (advisory).
 - **L11** (2026-11-14) — "En el seguimiento el asesorado podrá indicar cuánto pudo seguir de la dieta, quizá un slider esté bien" → S9b / T10, done inline after T5 to avoid concurrent schema edits.
 - **L12** (2026-11-14) — T5 (writer): activities (type enum incl. OTHER + custom name, date, minutes, intensity, notes) on /activities with weekly summary and 30-day list, owner-scoped delete; nutritionist "Activity" section via requireClientAccess. Writer RED→GREEN 108/108, tsc, lint. Parent E2E isolated: 11/11 (save, invalid rejected, weekly total, linked/unlinked nutritionist, non-owner delete blocked).
+- **L13** (2026-11-14) — T10 inline: `diet_adherence` (nullable Int, older check-ins have none), required 0–100 whole % in parseCheckIn, slider (step 5, default 50, live value) in the check-in form, "Diet followed: N%" in both histories. RED 3 failing → GREEN 109/109, tsc, lint, build. Live: 8/8 (slider renders, saved, 101 rejected, both histories).

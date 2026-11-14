@@ -289,6 +289,8 @@ model CheckIn {
   trainingAdherence Int                @map("training_adherence")
   energy            Int
   hunger            Int
+  /// % of the diet followed (0–100). Null for check-ins sent before this field existed.
+  dietAdherence     Int?               @map("diet_adherence")
   discomfort        Boolean            @default(false)
   discomfortNotes   String?            @map("discomfort_notes") @db.VarChar(500)
   notes             String?            @db.Text

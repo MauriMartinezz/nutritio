@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { inputClass } from "@/modules/nutritionists/components/profile-fields";
 import { submitCheckIn, type SubmitCheckInState } from "../actions";
 import { CHECK_IN_LIMITS, RATINGS } from "../rules";
+import { DietAdherenceSlider } from "./diet-adherence-slider";
 
 const SCORES = [1, 2, 3, 4, 5];
 
@@ -47,6 +48,8 @@ export function CheckInForm({ linkId }: { linkId: string }) {
           ))}
         </div>
       </fieldset>
+
+      <DietAdherenceSlider />
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="discomfort" />
