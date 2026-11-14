@@ -16,10 +16,10 @@ Assumptions: the app keeps its name "Nutritio" (the design says "nutrio"); UI co
 
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
-| V1 | S2, S3 | inline (foundation: tokens, fonts, ui primitives, app shell) | done | (V1) |
-| V2 | S4 | delegated (parallel unit A: plans, foods) | pending | |
-| V3 | S4 | delegated (parallel unit B: coaching, clients, meetings, nutritionists, identity, admin) | pending | |
-| V4 | S4 | delegated (parallel unit C: checkins, activities, home, theme, remaining app pages) | pending | |
+| V1 | S2, S3 | inline (foundation: tokens, fonts, ui primitives, app shell) | done | 63a7004, 0793e90 |
+| V2 | S4 | delegated (parallel unit A: plans, foods) | done | 408989d |
+| V3 | S4 | delegated (parallel unit B: coaching, clients, meetings, nutritionists, identity, admin) | done | 9a1757e |
+| V4 | S4 | delegated (parallel unit C: checkins, activities, home, theme, remaining app pages) | done | 2ca175e |
 
 Route evidence: V2–V4 are independent units with disjoint edit surfaces, each several files and 100+ changed lines, launched together (Writer trigger a). Risk: item 6 (visual changes have no tests) → live render check per screen; no independent verifier unless a unit touches logic.
 
@@ -27,3 +27,4 @@ Route evidence: V2–V4 are independent units with disjoint edit surfaces, each 
 
 - **L1** (2026-11-14) — "Si arranca aplicando el lenguaje visual" (answer to: apply only the visual language — tokens, IBM Plex, cards, sidebar and responsive — to existing screens first, new design features later one by one). Context: "En la carpeta de nutrio design hay unas bases que estuve haciendo con Claude Design para basarnos en lo que será el diseño: las cards, el responsive, el espaciado, la tipografía, los colores, layouts, etc"
 - **L2** (2026-11-14) — V1 inline: semantic tokens in app/globals.css (light from tokens.css, dark derived) exposed as Tailwind colors (`bg-surface`, `text-ink`, `text-secondary`, `border-line`, `bg-accent`, `text-on-accent`, `bg-accent-tint`, state `danger|warning|success` + `-bg`) and radii (`rounded-card-lg|card|control|badge`); IBM Plex Sans/Mono via next/font; shared classes in `modules/ui/classes.ts`; app shell in app/layout.tsx: 240px sticky sidebar (role nav from `modules/identity/components/app-nav.tsx`, active link via aria-current, user card + sign out) that becomes a top bar with a scrollable link row on mobile; nav links moved out of AccountPanel, which is now a greeting card. tsc, lint, 130/130 tests, build; screenshots checked at 1280 and 390, light and dark.
+- **L3** (2026-11-14) — V2–V4 by 3 parallel writers (disjoint surfaces, same tree): every screen uses tokens and `modules/ui/classes.ts`; no copy, field, or behavior changes; top-level "← Back" links to / removed; no zinc/emerald/red/amber/dark: classes left except the yellow pending badge. Parent seam check: tsc, lint, 130/130 tests, build; earlier E2E suites rerun green (T1 7/7, T2 9/9, T3 15/16 + T1/access only failed on Better Auth sign-up rate limit, T4 13/13, T5 11/11, T6 16/16, T7 9/9, T8 11/11, T10 8/8, access 21/22 rate limit) after switching brittle raw-HTML assertions to visible text and picking the search-result Add form explicitly (streamed forms arrive after "Add meal" in the HTML). Screenshots at 1280/390, light/dark. Fix 0793e90: base element styles moved into `@layer base` (an unlayered `a { color: inherit }` overrode `text-on-accent` on link buttons).
