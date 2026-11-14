@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
+import { formatFee } from "@/modules/nutritionists/public-profile";
 import { requestNutritionist } from "../actions";
 
 const primaryButton =
@@ -14,6 +15,12 @@ export async function NutritionistDirectory() {
     select: {
       id: true,
       name: true,
+      bio: true,
+      education: true,
+      planIncludes: true,
+      feeAmount: true,
+      feeCurrency: true,
+      feeDescription: true,
       clientLinks: { where: { clientId: client.id }, select: { status: true } },
     },
     orderBy: { name: "asc" },
@@ -28,10 +35,33 @@ export async function NutritionistDirectory() {
       {nutritionists.map((nutritionist) => {
         const status = nutritionist.clientLinks[0]?.status;
         const request = requestNutritionist.bind(null, nutritionist.id);
+        const fee = formatFee(nutritionist);
 
         return (
           <li key={nutritionist.id} className="flex flex-wrap items-center justify-between gap-4 py-3">
-            <p className="font-medium">{nutritionist.name}</p>
+            <div className="flex basis-full flex-col gap-1">
+              <p className="font-medium">{nutritionist.name}</p>
+              {nutritionist.bio && (
+                <p className="whitespace-pre-line text-sm text-zinc-700 dark:text-zinc-300">
+                  {nutritionist.bio}
+                </p>
+              )}
+              {nutritionist.education && (
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <span className="font-medium">Education:</span> {nutritionist.education}
+                </p>
+              )}
+              {nutritionist.planIncludes && (
+                <p className="whitespace-pre-line text-sm text-zinc-600 dark:text-zinc-400">
+                  <span className="font-medium">Plan includes:</span> {nutritionist.planIncludes}
+                </p>
+              )}
+              {fee && (
+                <p className="text-sm">
+                  <span className="font-medium">Fee:</span> {fee}
+                </p>
+              )}
+            </div>
             {status === "ACCEPTED" && (
               <span className="text-sm text-emerald-700 dark:text-emerald-400">Working together</span>
             )}

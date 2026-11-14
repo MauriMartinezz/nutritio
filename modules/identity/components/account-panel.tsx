@@ -61,6 +61,12 @@ export async function AccountPanel() {
           Plan templates
         </Link>
       )}
+      {user.role === "NUTRITIONIST" &&
+        (user.nutritionistStatus === "APPROVED" || user.nutritionistStatus === "PENDING") && (
+          <Link href="/profile" className="text-sm underline">
+            My public profile
+          </Link>
+        )}
       {user.role === "ADMIN" && (
         <Link href="/admin" className="text-sm underline">
           Manage nutritionists

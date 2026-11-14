@@ -9,6 +9,7 @@ import {
   changeNutritionistStatus,
   parseAdminNutritionistUpdate,
 } from "./verification";
+import { InvalidPublicProfileError, parsePublicProfile } from "./public-profile";
 
 async function findNutritionistOrThrow(nutritionistId: string) {
   const target = await prisma.user.findUnique({
@@ -85,5 +86,43 @@ export async function updateNutritionist(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/nutritionists/${nutritionistId}`);
+  return { saved: true };
+}
+
+export type UpdatePublicProfileState = {
+  problems?: Record<string, string>;
+  saved?: boolean;
+};
+
+/** The signed-in nutritionist edits their own public profile (used with useActionState). */
+export async function updatePublicProfile(
+  _previous: UpdatePublicProfileState,
+  formData: FormData,
+): Promise<UpdatePublicProfileState> {
+  const nutritionist = await requireRole("NUTRITIONIST");
+
+  let profile;
+  try {
+    profile = parsePublicProfile(Object.fromEntries(formData));
+  } catch (error) {
+    if (error instanceof InvalidPublicProfileError) return { problems: error.problems };
+    throw error;
+  }
+
+  // Only the caller's own row, and only the public profile fields.
+  await prisma.user.update({
+    where: { id: nutritionist.id, role: "NUTRITIONIST" },
+    data: {
+      bio: profile.bio,
+      education: profile.education,
+      planIncludes: profile.planIncludes,
+      feeAmount: profile.feeAmount,
+      feeCurrency: profile.feeCurrency,
+      feeDescription: profile.feeDescription,
+    },
+  });
+
+  revalidatePath("/profile");
+  revalidatePath("/nutritionists");
   return { saved: true };
 }

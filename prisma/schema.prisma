@@ -55,6 +55,11 @@ enum Role {
   CLIENT
 }
 
+enum FeeCurrency {
+  ARS
+  USD
+}
+
 enum NutritionistStatus {
   PENDING
   APPROVED
@@ -81,6 +86,13 @@ model User {
   birthDate          DateTime?            @map("birth_date") @db.Date
   phone              String?              @db.VarChar(20)
   specialty          String?              @db.VarChar(100)
+  /// Public profile, edited by the nutritionist and shown in the directory.
+  bio                String?              @db.Text
+  education          String?              @db.VarChar(500)
+  planIncludes       String?              @map("plan_includes") @db.Text
+  feeAmount          Decimal?             @map("fee_amount") @db.Decimal(10, 2)
+  feeCurrency        FeeCurrency          @default(ARS) @map("fee_currency")
+  feeDescription     String?              @map("fee_description") @db.VarChar(200)
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
   sessions           Session[]
