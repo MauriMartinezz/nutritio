@@ -14,6 +14,9 @@ export const CHECK_IN_LIMITS = {
   notes: 2000,
   minEveryDays: 1,
   maxEveryDays: 90,
+  /** Body measurements, in cm (one decimal). */
+  minMeasurementCm: 10,
+  maxMeasurementCm: 300,
 } as const;
 
 /** Quick values offered when agreeing the frequency. */
@@ -44,6 +47,35 @@ export function asksCycle(askCycle: boolean, sex: "FEMALE" | "MALE" | null): boo
   return askCycle && sex === "FEMALE";
 }
 
+/** Body measurements a nutritionist can add to a client's check-ins, in display order. */
+export const MEASUREMENTS = {
+  CHEST: "Chest",
+  HIPS: "Hips",
+  THIGH: "Thigh",
+  ARM: "Arm",
+  NAVEL: "Navel",
+  WAIST: "Waist",
+  BELOW_NAVEL: "3 cm below the navel",
+} as const;
+export type MeasurementSite = keyof typeof MEASUREMENTS;
+export type Measurement = { site: MeasurementSite; cm: number };
+
+/** Form field of a measurement in the check-in form. */
+export const measurementField = (site: MeasurementSite) => `measurement_${site}` as const;
+
+/** A site from the fixed list (the value comes from the browser). */
+export function parseMeasurementSite(value: unknown): MeasurementSite {
+  if (typeof value === "string" && Object.hasOwn(MEASUREMENTS, value)) return value as MeasurementSite;
+  throw new CheckInRuleError("Unknown measurement");
+}
+
+const SITE_ORDER = Object.keys(MEASUREMENTS) as MeasurementSite[];
+
+/** Sites in the list's order, so forms and history always read the same way. */
+export function sortMeasurementSites(sites: readonly MeasurementSite[]): MeasurementSite[] {
+  return SITE_ORDER.filter((site) => sites.includes(site));
+}
+
 export type CheckInInput = Record<RatingField, number> & {
   weightKg: number;
   completedWorkouts: boolean;
@@ -56,8 +88,10 @@ export type CheckInInput = Record<RatingField, number> & {
   notes: string | null;
   /** Null when the nutritionist didn't ask about the menstrual cycle. */
   menstruating: boolean | null;
+  /** Only the measurements the nutritionist asked for, in list order. */
+  measurements: Measurement[];
 };
-export type CheckInField = keyof CheckInInput;
+export type CheckInField = Exclude<keyof CheckInInput, "measurements"> | ReturnType<typeof measurementField>;
 
 export class InvalidCheckInError extends Error {
   constructor(readonly problems: Partial<Record<CheckInField, string>>) {
@@ -79,11 +113,12 @@ const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
 /**
  * Validates check-in form input (the discomfort checkbox arrives as "on"),
  * reporting every invalid field at once. The menstrual cycle answer is only
- * read, and then required, when `askCycle` is on.
+ * read, and then required, when `askCycle` is on; the same goes for each of
+ * the requested `measurements`.
  */
 export function parseCheckIn(
   input: Record<string, unknown>,
-  { askCycle = false }: { askCycle?: boolean } = {},
+  { askCycle = false, measurements: sites = [] }: { askCycle?: boolean; measurements?: readonly MeasurementSite[] } = {},
 ): CheckInInput {
   const problems: Partial<Record<CheckInField, string>> = {};
   const { minWeightKg, maxWeightKg, minRating, maxRating } = CHECK_IN_LIMITS;
@@ -137,6 +172,18 @@ export function parseCheckIn(
     else problems.menstruating = `${CYCLE_QUESTION}: choose yes or no`;
   }
 
+  const measurements: Measurement[] = [];
+  const { minMeasurementCm, maxMeasurementCm } = CHECK_IN_LIMITS;
+  for (const site of sortMeasurementSites(sites)) {
+    const raw = text(input[measurementField(site)]).replace(",", ".");
+    const cm = Number(raw);
+    if (!/^\d+(\.\d)?$/.test(raw) || cm < minMeasurementCm || cm > maxMeasurementCm) {
+      problems[measurementField(site)] = `${MEASUREMENTS[site]} must be between ${minMeasurementCm} and ${maxMeasurementCm} cm`;
+    } else {
+      measurements.push({ site, cm });
+    }
+  }
+
   if (Object.keys(problems).length > 0) throw new InvalidCheckInError(problems);
 
   return {
@@ -149,6 +196,7 @@ export function parseCheckIn(
     discomfortNotes: discomfortNotes || null,
     notes: notes || null,
     menstruating,
+    measurements,
   };
 }
 

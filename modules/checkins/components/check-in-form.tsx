@@ -4,13 +4,33 @@ import { useActionState } from "react";
 import { buttonPrimary, fieldError, fieldHint, input, label as labelClass, textarea } from "@/modules/ui/classes";
 import { submitCheckIn, type SubmitCheckInState } from "../actions";
 import { Segmented, YES_NO } from "@/modules/ui/components/segmented";
-import { CHECK_IN_LIMITS, COMPLETED_WORKOUTS_LABEL, CYCLE_QUESTION, GYM_PERFORMANCE, RATINGS } from "../rules";
+import {
+  CHECK_IN_LIMITS,
+  COMPLETED_WORKOUTS_LABEL,
+  CYCLE_QUESTION,
+  GYM_PERFORMANCE,
+  MEASUREMENTS,
+  RATINGS,
+  measurementField,
+  type MeasurementSite,
+} from "../rules";
 import { DietAdherenceSlider } from "./diet-adherence-slider";
 
 const SCORES = [1, 2, 3, 4, 5];
 const legend = "mb-2 text-sm font-medium";
-/** `askCycle`: the nutritionist asks this client about her menstrual cycle. */
-export function CheckInForm({ linkId, askCycle }: { linkId: string; askCycle: boolean }) {
+/**
+ * `askCycle`: the nutritionist asks this client about her menstrual cycle.
+ * `measurements`: body measurements the nutritionist asks for, in list order.
+ */
+export function CheckInForm({
+  linkId,
+  askCycle,
+  measurements,
+}: {
+  linkId: string;
+  askCycle: boolean;
+  measurements: MeasurementSite[];
+}) {
   const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(
     submitCheckIn.bind(null, linkId),
     {},
@@ -29,6 +49,27 @@ export function CheckInForm({ linkId, askCycle }: { linkId: string; askCycle: bo
           className={`${input} w-32 font-mono tabular-nums`}
         />
       </label>
+
+      {measurements.length > 0 && (
+        <fieldset>
+          <legend className={legend}>Measurements (cm)</legend>
+          <p className={`${fieldHint} mb-2`}>Measure with a tape, relaxed, at the same time of day each check-in.</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {measurements.map((site) => (
+              <label key={site} className={labelClass}>
+                {MEASUREMENTS[site]}
+                <input
+                  name={measurementField(site)}
+                  inputMode="decimal"
+                  required
+                  placeholder="cm"
+                  className={`${input} w-28 font-mono tabular-nums`}
+                />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <fieldset>
         <legend className={legend}>{COMPLETED_WORKOUTS_LABEL}?</legend>

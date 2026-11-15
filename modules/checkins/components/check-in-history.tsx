@@ -1,4 +1,4 @@
-import { COMPLETED_WORKOUTS_LABEL, CYCLE_HISTORY_LABEL, GYM_PERFORMANCE, RATINGS, type RatingField } from "../rules";
+import { COMPLETED_WORKOUTS_LABEL, CYCLE_HISTORY_LABEL, GYM_PERFORMANCE, MEASUREMENTS, RATINGS, type RatingField } from "../rules";
 import type { CheckInView } from "../dal";
 import { figure, list, muted } from "@/modules/ui/classes";
 
@@ -30,6 +30,17 @@ export function CheckInHistory({ checkIns }: { checkIns: CheckInView[] }) {
               ...(checkIn.menstruating === null ? [] : [`${CYCLE_HISTORY_LABEL}: ${checkIn.menstruating ? "yes" : "no"}`]),
             ].join(" · ")}
           </p>
+          {checkIn.measurements.length > 0 && (
+            <p>
+              <span className="font-medium">Measurements:</span>{" "}
+              {checkIn.measurements.map((m, index) => (
+                <span key={m.site}>
+                  {index > 0 && " · "}
+                  {MEASUREMENTS[m.site]} <span className={figure}>{m.cm} cm</span>
+                </span>
+              ))}
+            </p>
+          )}
           {checkIn.discomfort && (
             <p>
               <span className="font-medium">Discomfort:</span> {checkIn.discomfortNotes ?? "yes"}

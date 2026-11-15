@@ -200,6 +200,8 @@ model NutritionistClient {
   askCycle         Boolean    @default(false) @map("ask_menstrual_cycle")
   updatedAt        DateTime   @updatedAt @map("updated_at")
   checkIns         CheckIn[]
+  /// Body measurements the nutritionist asks for in this client's check-ins.
+  measurements     RequestedMeasurement[]
   meetingRequests  MeetingRequest[]
 
   @@unique([nutritionistId, clientId])
@@ -310,9 +312,41 @@ model CheckIn {
   /// On her period or in the week before it. Null when the nutritionist didn't ask.
   menstruating      Boolean?
   createdAt         DateTime           @default(now()) @map("created_at")
+  measurements      CheckInMeasurement[]
 
   @@index([linkId, createdAt])
   @@map("check_ins")
+}
+
+/// A body measurement a nutritionist added to a client's check-ins.
+model RequestedMeasurement {
+  linkId String             @map("link_id")
+  link   NutritionistClient @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  site   MeasurementSite
+
+  @@id([linkId, site])
+  @@map("requested_measurements")
+}
+
+/// A body measurement reported in a check-in, in cm.
+model CheckInMeasurement {
+  checkInId String          @map("check_in_id")
+  checkIn   CheckIn         @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  site      MeasurementSite
+  cm        Decimal         @db.Decimal(4, 1)
+
+  @@id([checkInId, site])
+  @@map("check_in_measurements")
+}
+
+enum MeasurementSite {
+  CHEST
+  HIPS
+  THIGH
+  ARM
+  NAVEL
+  WAIST
+  BELOW_NAVEL
 }
 
 enum Sex {

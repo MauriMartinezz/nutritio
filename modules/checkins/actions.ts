@@ -7,7 +7,14 @@ import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
 import { setFlash } from "@/modules/ui/set-flash";
-import { InvalidCheckInError, asksCycle, parseCheckIn, parseFrequency } from "./rules";
+import {
+  CheckInRuleError,
+  InvalidCheckInError,
+  asksCycle,
+  parseCheckIn,
+  parseFrequency,
+  parseMeasurementSite,
+} from "./rules";
 
 /** The nutritionist agrees how often (in days) a client sends a check-in. */
 export async function setCheckInFrequency(clientId: string, formData: FormData) {
@@ -43,6 +50,39 @@ export async function setCycleQuestion(clientId: string, formData: FormData) {
   revalidatePath("/check-ins");
 }
 
+/** The nutritionist adds a body measurement to a client's check-ins, or removes it. */
+export async function setRequestedMeasurement(clientId: string, formData: FormData) {
+  const { nutritionist } = await requireClientAccess(clientId);
+  const adding = formData.has("add");
+  let site;
+  try {
+    site = parseMeasurementSite(formData.get(adding ? "add" : "remove"));
+  } catch (error) {
+    if (error instanceof CheckInRuleError) return;
+    throw error;
+  }
+
+  // Only the caller's own accepted link; the nutritionist id never comes from the browser.
+  const link = await prisma.nutritionistClient.findFirst({
+    where: { nutritionistId: nutritionist.id, clientId, status: "ACCEPTED" },
+    select: { id: true },
+  });
+  if (!link) return;
+
+  if (adding) {
+    await prisma.requestedMeasurement.upsert({
+      where: { linkId_site: { linkId: link.id, site } },
+      create: { linkId: link.id, site },
+      update: {},
+    });
+  } else {
+    await prisma.requestedMeasurement.deleteMany({ where: { linkId: link.id, site } });
+  }
+
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/check-ins");
+}
+
 export type SubmitCheckInState = {
   problems?: Record<string, string>;
   error?: string;
@@ -66,6 +106,7 @@ export async function submitCheckIn(
       accessUntil: true,
       autoRenew: true,
       askCycle: true,
+      measurements: { select: { site: true } },
       client: { select: { preferences: { select: { sex: true } } } },
     },
   });
@@ -78,13 +119,15 @@ export async function submitCheckIn(
   try {
     checkIn = parseCheckIn(Object.fromEntries(formData), {
       askCycle: asksCycle(link.askCycle, link.client.preferences?.sex ?? null),
+      measurements: link.measurements.map((row) => row.site),
     });
   } catch (error) {
     if (error instanceof InvalidCheckInError) return { problems: error.problems };
     throw error;
   }
 
-  await prisma.checkIn.create({ data: { linkId, ...checkIn } });
+  const { measurements, ...fields } = checkIn;
+  await prisma.checkIn.create({ data: { linkId, ...fields, measurements: { create: measurements } } });
 
   revalidatePath("/check-ins");
   revalidatePath("/");

@@ -4,8 +4,11 @@ import {
   CheckInRuleError,
   InvalidCheckInError,
   checkInStatus,
+  MEASUREMENTS,
   asksCycle,
   describeCheckInStatus,
+  parseMeasurementSite,
+  sortMeasurementSites,
   nextCheckInDue,
   parseCheckIn,
   parseFrequency,
@@ -37,6 +40,7 @@ test("a check-in has a weight (comma decimal ok), workouts yes/no, three 1–5 r
     discomfortNotes: "Knee pain",
     notes: "Good week",
     menstruating: null,
+    measurements: [],
   });
 });
 
@@ -62,6 +66,45 @@ test("the menstrual cycle question is answered yes/no only when the nutritionist
   } catch (error) {
     assert.ok(error instanceof InvalidCheckInError);
     assert.deepEqual(Object.keys(error.problems), ["menstruating"]);
+  }
+});
+
+test("the nutritionist picks body measurements from a fixed list", () => {
+  assert.deepEqual(Object.values(MEASUREMENTS), [
+    "Chest",
+    "Hips",
+    "Thigh",
+    "Arm",
+    "Navel",
+    "Waist",
+    "3 cm below the navel",
+  ]);
+  assert.equal(parseMeasurementSite("WAIST"), "WAIST");
+  assert.throws(() => parseMeasurementSite("NECK"), CheckInRuleError);
+  assert.throws(() => parseMeasurementSite(null), CheckInRuleError);
+  assert.deepEqual(sortMeasurementSites(["WAIST", "CHEST", "BELOW_NAVEL"]), ["CHEST", "WAIST", "BELOW_NAVEL"]);
+});
+
+test("requested measurements are required in cm (comma decimal ok, one decimal), in list order", () => {
+  const sites = ["WAIST", "CHEST"] as const;
+  assert.deepEqual(
+    parseCheckIn({ ...valid, measurement_WAIST: "80,5", measurement_CHEST: "98", measurement_HIPS: "100" }, { measurements: [...sites] })
+      .measurements,
+    [
+      { site: "CHEST", cm: 98 },
+      { site: "WAIST", cm: 80.5 },
+    ],
+  );
+  // Not requested: ignored.
+  assert.deepEqual(parseCheckIn({ ...valid, measurement_WAIST: "80" }).measurements, []);
+  for (const bad of ["", "9", "301", "80.55", "abc"]) {
+    try {
+      parseCheckIn({ ...valid, measurement_WAIST: bad }, { measurements: ["WAIST"] });
+      assert.fail(`expected InvalidCheckInError for ${JSON.stringify(bad)}`);
+    } catch (error) {
+      assert.ok(error instanceof InvalidCheckInError);
+      assert.deepEqual(error.problems, { measurement_WAIST: "Waist must be between 10 and 300 cm" });
+    }
   }
 });
 

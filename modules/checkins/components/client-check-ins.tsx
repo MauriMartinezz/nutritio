@@ -3,12 +3,13 @@ import { describeCheckInStatus } from "../rules";
 import { CheckInFrequencyForm } from "./check-in-frequency-form";
 import { CheckInHistory } from "./check-in-history";
 import { CycleQuestionForm } from "./cycle-question-form";
+import { MeasurementsForm } from "./measurements-form";
 import { card, h2 } from "@/modules/ui/classes";
 
 /** A client's check-ins, for a nutritionist with an accepted link. Render inside <Suspense>. */
 export async function ClientCheckIns({ params }: { params: Promise<{ clientId: string }> }) {
   const { clientId } = await params;
-  const { checkIns, checkInEveryDays, due, askCycle, clientSex, ...status } = await getClientCheckIns(clientId);
+  const { checkIns, checkInEveryDays, due, askCycle, clientSex, measurements, ...status } = await getClientCheckIns(clientId);
 
   return (
     <section className={card}>
@@ -22,6 +23,7 @@ export async function ClientCheckIns({ params }: { params: Promise<{ clientId: s
       </p>
       <CheckInFrequencyForm clientId={clientId} checkInEveryDays={checkInEveryDays} />
       <CycleQuestionForm clientId={clientId} askCycle={askCycle} clientSex={clientSex} />
+      <MeasurementsForm clientId={clientId} measurements={measurements} />
       <CheckInHistory checkIns={checkIns} />
     </section>
   );

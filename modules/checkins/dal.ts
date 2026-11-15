@@ -5,7 +5,16 @@ import { accessState, effectiveAccessUntil, hasActiveAccess } from "@/modules/co
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
 import type { Sex } from "@/modules/clients/preferences";
-import { asksCycle, checkInStatus, nextCheckInDue, type CheckInState, type GymPerformance } from "./rules";
+import {
+  asksCycle,
+  checkInStatus,
+  nextCheckInDue,
+  sortMeasurementSites,
+  type CheckInState,
+  type GymPerformance,
+  type Measurement,
+  type MeasurementSite,
+} from "./rules";
 
 export type CheckInView = {
   id: string;
@@ -21,6 +30,8 @@ export type CheckInView = {
   discomfortNotes: string | null;
   notes: string | null;
   menstruating: boolean | null;
+  /** In list order; empty when none were asked. */
+  measurements: Measurement[];
 };
 
 export type CheckInScheduleView = {
@@ -44,12 +55,26 @@ const CHECK_IN_SELECT = {
   discomfortNotes: true,
   notes: true,
   menstruating: true,
+  measurements: { select: { site: true, cm: true } },
 } as const;
 
-type CheckInRow = Omit<CheckInView, "weightKg"> & { weightKg: { toNumber(): number } };
+type Decimal = { toNumber(): number };
+type CheckInRow = Omit<CheckInView, "weightKg" | "measurements"> & {
+  weightKg: Decimal;
+  measurements: { site: MeasurementSite; cm: Decimal }[];
+};
 
 // Decimal → number, so the rows can be passed to Client Components.
-const toView = (row: CheckInRow): CheckInView => ({ ...row, weightKg: row.weightKg.toNumber() });
+const toView = (row: CheckInRow): CheckInView => {
+  const cm = new Map(row.measurements.map((m) => [m.site, m.cm.toNumber()]));
+  return {
+    ...row,
+    weightKg: row.weightKg.toNumber(),
+    measurements: sortMeasurementSites([...cm.keys()]).map((site) => ({ site, cm: cm.get(site)! })),
+  };
+};
+
+const requestedSites = (rows: { site: MeasurementSite }[]) => sortMeasurementSites(rows.map((row) => row.site));
 
 function schedule(
   link: { checkInEveryDays: number | null; respondedAt: Date | null },
@@ -71,6 +96,8 @@ export async function getClientCheckIns(clientId: string): Promise<
   CheckInScheduleView & {
     checkIns: CheckInView[];
     askCycle: boolean;
+    /** Body measurements asked in check-ins, in list order. */
+    measurements: MeasurementSite[];
     /** Null until the client saves it in their profile. */
     clientSex: Sex | null;
   }
@@ -83,6 +110,7 @@ export async function getClientCheckIns(clientId: string): Promise<
       checkInEveryDays: true,
       respondedAt: true,
       askCycle: true,
+      measurements: { select: { site: true } },
       client: { select: { preferences: { select: { sex: true } } } },
       checkIns: { select: CHECK_IN_SELECT, orderBy: { createdAt: "desc" } },
     },
@@ -93,6 +121,7 @@ export async function getClientCheckIns(clientId: string): Promise<
     ...schedule(link, checkIns, new Date()),
     checkIns,
     askCycle: link.askCycle,
+    measurements: requestedSites(link.measurements),
     clientSex: link.client.preferences?.sex ?? null,
   };
 }
@@ -101,6 +130,8 @@ export type OwnCheckInLink = CheckInScheduleView & {
   linkId: string;
   /** Show the menstrual cycle question (asked by the nutritionist, client is a woman). */
   askCycle: boolean;
+  /** Body measurements the nutritionist asks for, in list order. */
+  measurements: MeasurementSite[];
   nutritionistName: string;
   /** Newest first. */
   checkIns: CheckInView[];
@@ -125,6 +156,7 @@ export async function getOwnCheckIns(): Promise<OwnCheckInLink[]> {
         autoRenew: true,
         checkInEveryDays: true,
         askCycle: true,
+        measurements: { select: { site: true } },
         nutritionist: { select: { name: true } },
         checkIns: { select: CHECK_IN_SELECT, orderBy: { createdAt: "desc" } },
       },
@@ -143,6 +175,7 @@ export async function getOwnCheckIns(): Promise<OwnCheckInLink[]> {
         linkId: link.id,
         nutritionistName: link.nutritionist.name,
         askCycle: asksCycle(link.askCycle, preferences?.sex ?? null),
+        measurements: requestedSites(link.measurements),
         ...schedule(link, checkIns, now),
         checkIns,
       };
