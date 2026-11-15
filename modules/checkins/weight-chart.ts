@@ -1,34 +1,19 @@
 // Pure helpers for the weight evolution chart (no React, so they are testable).
 
-export type WeightPoint = { date: Date; weightKg: number };
-export type ChartBox = { width: number; height: number; padding: number };
+import { round2, trendAxis, trendPoints, type ChartBox } from "./trend";
 
-const round2 = (value: number) => Math.round(value * 100) / 100;
+export type WeightPoint = { date: Date; weightKg: number };
+export type { ChartBox };
 
 /** "71.5 kg", "70 kg". */
 export const formatKg = (weightKg: number) => `${round2(weightKg)} kg`;
 
 /** Y axis bounds: the data range padded a little and rounded to whole kilograms. */
-export function weightAxis(values: number[]): { min: number; max: number } {
-  const low = Math.min(...values);
-  const high = Math.max(...values);
-  const pad = Math.max(0.5, (high - low) * 0.1);
-  return { min: Math.floor(low - pad), max: Math.ceil(high + pad) };
-}
+export const weightAxis = trendAxis;
 
 /** SVG coordinates for an ascending series: x by date, y by weight (heavier is higher up). */
 export function chartPoints(series: WeightPoint[], box: ChartBox): { x: number; y: number }[] {
-  if (series.length === 0) return [];
-  const { min, max } = weightAxis(series.map((point) => point.weightKg));
-  const first = series[0].date.getTime();
-  const span = series[series.length - 1].date.getTime() - first;
-  const plotWidth = box.width - 2 * box.padding;
-  const plotHeight = box.height - 2 * box.padding;
-
-  return series.map((point) => ({
-    x: round2(span === 0 ? box.width / 2 : box.padding + ((point.date.getTime() - first) / span) * plotWidth),
-    y: round2(box.padding + ((max - point.weightKg) / (max - min)) * plotHeight),
-  }));
+  return trendPoints(series.map((point) => ({ date: point.date, value: point.weightKg })), box);
 }
 
 /** Accessible summary, e.g. "Weight from 74 kg to 71.5 kg over 6 check-ins". */

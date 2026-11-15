@@ -2,6 +2,7 @@ import { getOwnCheckIns } from "../dal";
 import { describeCheckInStatus } from "../rules";
 import { CheckInForm } from "./check-in-form";
 import { CheckInHistory } from "./check-in-history";
+import { MeasurementCharts } from "./measurement-charts";
 import { WeightChart } from "./weight-chart";
 import { callout, card, h2, h3, muted } from "@/modules/ui/classes";
 
@@ -40,6 +41,7 @@ export async function MyCheckIns() {
                 .map((checkIn) => ({ date: checkIn.createdAt, weightKg: checkIn.weightKg }))
                 .reverse()}
             />
+            <MeasurementCharts checkIns={checkIns} />
             <CheckInHistory checkIns={checkIns} />
           </div>
         </section>
