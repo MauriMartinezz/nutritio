@@ -28,14 +28,13 @@ function revalidateMeetingPages() {
 }
 
 /** The signed-in client asks one nutritionist for a meeting (used with useActionState). */
-export async function requestMeeting(
-  linkId: string,
-  _previous: RequestMeetingState,
-  formData: FormData,
-): Promise<RequestMeetingState> {
+export async function requestMeeting(_previous: RequestMeetingState, formData: FormData): Promise<RequestMeetingState> {
   const client = await requireRole("CLIENT");
+  // From the form, not .bind(): a bound useActionState action left the no-JS
+  // response of a rejected submission hanging.
+  const linkId = String(formData.get("linkId") ?? "");
 
-  // The bound link id is tamperable: it must be one of the caller's own links.
+  // The link id comes from the browser: it must be one of the caller's own links.
   const link = await prisma.nutritionistClient.findFirst({
     where: { id: linkId, clientId: client.id },
     select: { status: true, accessAmount: true, accessUnit: true, accessUntil: true, autoRenew: true },

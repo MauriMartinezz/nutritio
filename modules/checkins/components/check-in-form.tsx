@@ -31,14 +31,12 @@ export function CheckInForm({
   askCycle: boolean;
   measurements: MeasurementSite[];
 }) {
-  const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(
-    submitCheckIn.bind(null, linkId),
-    {},
-  );
+  const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(submitCheckIn, {});
   const problems = state.problems ?? {};
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-6">
+      <input type="hidden" name="linkId" value={linkId} />
       <label className={labelClass}>
         Weight (kg)
         <input

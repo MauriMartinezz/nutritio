@@ -33,11 +33,13 @@ export type ReviewNutritionistState = {
  * nutritionist and approves, rejects or just saves (used with useActionState).
  */
 export async function reviewNutritionist(
-  nutritionistId: string,
   _previous: ReviewNutritionistState,
   formData: FormData,
 ): Promise<ReviewNutritionistState> {
   await requireRole("ADMIN");
+  // From the form, not .bind(): a bound useActionState action left the no-JS
+  // response of a rejected submission hanging. Admin-only, and looked up below.
+  const nutritionistId = String(formData.get("nutritionistId") ?? "");
 
   const target = await findNutritionistOrThrow(nutritionistId);
   if (target.role !== "NUTRITIONIST") return { problems: { form: "This user is not a nutritionist" } };

@@ -31,14 +31,12 @@ const SAVED_MESSAGES = {
 
 /** Correct the application, leave a note and decide. Buttons sit at the bottom of the panel. */
 export function ReviewForm({ nutritionist }: { nutritionist: ReviewableNutritionist }) {
-  const [state, formAction, pending] = useActionState<ReviewNutritionistState, FormData>(
-    reviewNutritionist.bind(null, nutritionist.id),
-    {},
-  );
+  const [state, formAction, pending] = useActionState<ReviewNutritionistState, FormData>(reviewNutritionist, {});
   const problems = state.problems ?? {};
 
   return (
     <form action={formAction} className="flex flex-1 flex-col">
+      <input type="hidden" name="nutritionistId" value={nutritionist.id} />
       <div className="flex flex-col gap-4 px-5 pb-6 md:px-6">
         <h3 className={h3}>Application details</h3>
         <p className={fieldHint}>Fix typos here before deciding. Changes are saved with your decision.</p>

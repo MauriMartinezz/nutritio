@@ -88,15 +88,17 @@ export type SubmitCheckInState = {
   error?: string;
 };
 
-/** The signed-in client sends a check-in to one nutritionist (used with useActionState). */
-export async function submitCheckIn(
-  linkId: string,
-  _previous: SubmitCheckInState,
-  formData: FormData,
-): Promise<SubmitCheckInState> {
+/**
+ * The signed-in client sends a check-in to one nutritionist (used with
+ * useActionState). The link id comes in the form, not bound with .bind():
+ * a bound useActionState action left the no-JS response of a rejected
+ * submission hanging.
+ */
+export async function submitCheckIn(_previous: SubmitCheckInState, formData: FormData): Promise<SubmitCheckInState> {
   const client = await requireRole("CLIENT");
+  const linkId = String(formData.get("linkId") ?? "");
 
-  // The bound link id is tamperable: it must be one of the caller's own links.
+  // The link id comes from the browser: it must be one of the caller's own links.
   const link = await prisma.nutritionistClient.findFirst({
     where: { id: linkId, clientId: client.id },
     select: {

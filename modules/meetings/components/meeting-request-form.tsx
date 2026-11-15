@@ -6,14 +6,12 @@ import { requestMeeting, type RequestMeetingState } from "../actions";
 import { MEETING_KINDS, MEETING_LIMITS, meetingKindLabel } from "../rules";
 
 export function MeetingRequestForm({ linkId }: { linkId: string }) {
-  const [state, formAction, pending] = useActionState<RequestMeetingState, FormData>(
-    requestMeeting.bind(null, linkId),
-    {},
-  );
+  const [state, formAction, pending] = useActionState<RequestMeetingState, FormData>(requestMeeting, {});
   const problems = state.problems ?? {};
 
   return (
     <form action={formAction} className="flex w-full max-w-xl flex-col gap-5">
+      <input type="hidden" name="linkId" value={linkId} />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-semibold">Type of meeting</legend>
         <div className="flex flex-wrap gap-x-6">
