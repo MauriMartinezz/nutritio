@@ -86,6 +86,8 @@ export async function setRequestedMeasurement(clientId: string, formData: FormDa
 export type SubmitCheckInState = {
   problems?: Record<string, string>;
   error?: string;
+  /** What was sent, so a rejected form shows it again instead of coming back empty. */
+  values?: Record<string, string>;
 };
 
 /**
@@ -94,6 +96,15 @@ export type SubmitCheckInState = {
  * a bound useActionState action left the no-JS response of a rejected
  * submission hanging.
  */
+/** The text fields the user filled in (React's internal `$ACTION_*` entries left out). */
+function sentValues(formData: FormData): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const [name, value] of formData) {
+    if (typeof value === "string" && !name.startsWith("$") && name !== "linkId") values[name] = value;
+  }
+  return values;
+}
+
 export async function submitCheckIn(_previous: SubmitCheckInState, formData: FormData): Promise<SubmitCheckInState> {
   const client = await requireRole("CLIENT");
   const linkId = String(formData.get("linkId") ?? "");
@@ -124,7 +135,7 @@ export async function submitCheckIn(_previous: SubmitCheckInState, formData: For
       measurements: link.measurements.map((row) => row.site),
     });
   } catch (error) {
-    if (error instanceof InvalidCheckInError) return { problems: error.problems };
+    if (error instanceof InvalidCheckInError) return { problems: error.problems, values: sentValues(formData) };
     throw error;
   }
 

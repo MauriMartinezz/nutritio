@@ -33,6 +33,8 @@ export function CheckInForm({
 }) {
   const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(submitCheckIn, {});
   const problems = state.problems ?? {};
+  // React resets the form after the action; these defaults bring a rejected check-in back as it was sent.
+  const values = state.values ?? {};
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-6">
@@ -43,6 +45,7 @@ export function CheckInForm({
           name="weightKg"
           inputMode="decimal"
           required
+          defaultValue={values.weightKg}
           placeholder="e.g. 72.5"
           className={`${input} w-32 font-mono tabular-nums`}
         />
@@ -60,6 +63,7 @@ export function CheckInForm({
                   name={measurementField(site)}
                   inputMode="decimal"
                   required
+                  defaultValue={values[measurementField(site)]}
                   placeholder="cm"
                   className={`${input} w-28 font-mono tabular-nums`}
                 />
@@ -72,7 +76,7 @@ export function CheckInForm({
       <fieldset>
         <legend className={legend}>{COMPLETED_WORKOUTS_LABEL}?</legend>
         <div className="max-w-xs">
-          <Segmented name="completedWorkouts" required options={YES_NO} />
+          <Segmented name="completedWorkouts" required options={YES_NO} defaultValue={values.completedWorkouts} />
         </div>
       </fieldset>
 
@@ -83,6 +87,7 @@ export function CheckInForm({
         <div className="max-w-md">
           <Segmented
             name="gymPerformance"
+            defaultValue={values.gymPerformance}
             options={Object.entries(GYM_PERFORMANCE).map(([value, label]) => ({ value, label }))}
           />
         </div>
@@ -94,20 +99,25 @@ export function CheckInForm({
           <fieldset key={name} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4">
             <legend className="float-left text-sm font-medium sm:w-24">{label}</legend>
             <div className="max-w-sm flex-1">
-              <Segmented name={name} required options={SCORES.map((score) => ({ value: String(score), label: String(score) }))} />
+              <Segmented
+                name={name}
+                required
+                defaultValue={values[name]}
+                options={SCORES.map((score) => ({ value: String(score), label: String(score) }))}
+              />
             </div>
           </fieldset>
         ))}
       </fieldset>
 
-      <DietAdherenceSlider />
+      <DietAdherenceSlider defaultValue={values.dietAdherence ? Number(values.dietAdherence) : undefined} />
 
       {askCycle && (
         <fieldset>
           <legend className={legend}>{CYCLE_QUESTION}?</legend>
           <p className={`${fieldHint} mb-2`}>It can change your weight, energy and performance.</p>
           <div className="max-w-xs">
-            <Segmented name="menstruating" required options={YES_NO} />
+            <Segmented name="menstruating" required options={YES_NO} defaultValue={values.menstruating} />
           </div>
         </fieldset>
       )}
@@ -115,7 +125,11 @@ export function CheckInForm({
       {/* The details field only shows once the box is ticked (CSS :has, works without JS). */}
       <div className="group flex flex-col gap-3">
         <label className="flex min-h-11 items-center gap-3 text-sm font-medium">
-          <input type="checkbox" name="discomfort" className="size-4 accent-[var(--accent)]" />
+          <input
+            type="checkbox"
+            name="discomfort"
+            defaultChecked={values.discomfort === "on"}
+            className="size-4 accent-[var(--accent)]" />
           I had some discomfort or pain
         </label>
         <label className={`${labelClass} hidden group-has-[input[name=discomfort]:checked]:flex`}>
@@ -123,6 +137,7 @@ export function CheckInForm({
           <input
             name="discomfortNotes"
             maxLength={CHECK_IN_LIMITS.discomfortNotes}
+            defaultValue={values.discomfortNotes}
             placeholder="Where and when"
             className={input}
           />
@@ -135,6 +150,7 @@ export function CheckInForm({
           name="notes"
           rows={3}
           maxLength={CHECK_IN_LIMITS.notes}
+          defaultValue={values.notes}
           placeholder="Anything your nutritionist should know"
           className={textarea}
         />
