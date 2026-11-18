@@ -73,8 +73,8 @@ Restart `pnpm dev` after `pnpm db:generate`: the dev server keeps the previous P
 [Better Auth](https://www.better-auth.com) handles email + password accounts (`lib/auth.ts`, mounted at `/api/auth/*`).
 
 - At sign-up a person chooses **Client** or **Nutritionist**. `ADMIN` can never be chosen at sign-up.
-- Nutritionists start **pending** until an admin verifies them.
-- Role and verification status cannot be changed through the auth API (`/api/auth/update-user` returns 403).
+- Nutritionists also provide DNI, professional license, date of birth, contact phone and an optional specialty, and start **pending** until an admin verifies them. After sign-up only an admin can change that data.
+- Role, verification status and the professional profile cannot be changed through the auth API (`/api/auth/update-user` returns 403).
 - Create the first admin from an existing account: `pnpm admin:promote <email>`. Admins verify nutritionists at `/admin`.
 - Clients find verified nutritionists at `/nutritionists` and request to work with them; a client can work with several nutritionists at once.
 - Nutritionists accept or decline requests at `/clients`. A nutritionist reads a client's data only while their link is accepted (`modules/coaching/dal.ts` → `requireClientAccess`).

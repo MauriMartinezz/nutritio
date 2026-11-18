@@ -15,7 +15,7 @@ export async function requireClientAccess(clientId: string) {
     where: { nutritionistId_clientId: { nutritionistId: nutritionist.id, clientId } },
     select: { status: true, respondedAt: true },
   });
-  if (!canAccessClient(link)) notFound();
+  if (!canAccessClient(nutritionist.nutritionistStatus, link)) notFound();
 
   return { nutritionist, workingSince: link?.respondedAt ?? null };
 }
@@ -30,4 +30,15 @@ export async function getClientProfile(clientId: string) {
   if (!client) notFound();
 
   return { ...client, workingSince };
+}
+
+/** Access settings of the signed-in nutritionist's link with this client. */
+export async function getClientAccess(clientId: string) {
+  const { nutritionist } = await requireClientAccess(clientId);
+  const link = await prisma.nutritionistClient.findUnique({
+    where: { nutritionistId_clientId: { nutritionistId: nutritionist.id, clientId } },
+    select: { id: true, status: true, accessAmount: true, accessUnit: true, accessUntil: true, autoRenew: true },
+  });
+  if (!link) notFound();
+  return link;
 }

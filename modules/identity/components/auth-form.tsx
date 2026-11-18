@@ -4,16 +4,16 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { ProfileFields, inputClass } from "@/modules/nutritionists/components/profile-fields";
+import { buttonPrimary, card, fieldError, fieldHint, h1, label, link, muted } from "@/modules/ui/classes";
 
 type Mode = "sign-in" | "sign-up";
-
-const inputClass =
-  "w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900";
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [role, setRole] = useState<"CLIENT" | "NUTRITIONIST">("CLIENT");
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,7 +30,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
             name: String(form.get("name")),
             email,
             password,
-            role: form.get("role") === "NUTRITIONIST" ? "NUTRITIONIST" : "CLIENT",
+            role,
+            ...(role === "NUTRITIONIST" && {
+              dni: String(form.get("dni")),
+              licenseNumber: String(form.get("licenseNumber")),
+              birthDate: new Date(`${String(form.get("birthDate"))}T00:00:00.000Z`),
+              phone: String(form.get("phone")),
+              specialty: String(form.get("specialty")),
+            }),
           })
         : await authClient.signIn.email({ email, password });
 
@@ -46,33 +53,50 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const isSignUp = mode === "sign-up";
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{isSignUp ? "Create your account" : "Sign in"}</h1>
+    <form onSubmit={handleSubmit} className={`${card} w-full`}>
+      <h1 className={h1}>{isSignUp ? "Create your account" : "Sign in"}</h1>
 
       {isSignUp && (
         <>
-          <label className="flex flex-col gap-1 text-sm">
+          <label className={label}>
             Full name
             <input name="name" required autoComplete="name" className={inputClass} />
           </label>
-          <fieldset className="flex flex-col gap-2 text-sm">
-            <legend className="mb-1">I am a…</legend>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="role" value="CLIENT" defaultChecked /> Client
+          <fieldset className="flex flex-col text-sm">
+            <legend className="mb-1 font-medium">I am a…</legend>
+            <label className="flex min-h-11 flex-wrap items-center gap-x-2">
+              <input
+                type="radio"
+                name="role"
+                value="CLIENT"
+                checked={role === "CLIENT"}
+                onChange={() => setRole("CLIENT")}
+                className="size-4 accent-accent"
+              />{" "}
+              Client
             </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="role" value="NUTRITIONIST" /> Nutritionist
-              <span className="text-zinc-500">(requires admin verification)</span>
+            <label className="flex min-h-11 flex-wrap items-center gap-x-2">
+              <input
+                type="radio"
+                name="role"
+                value="NUTRITIONIST"
+                checked={role === "NUTRITIONIST"}
+                onChange={() => setRole("NUTRITIONIST")}
+                className="size-4 accent-accent"
+              />{" "}
+              Nutritionist
+              <span className={fieldHint}>(requires admin verification)</span>
             </label>
           </fieldset>
+          {role === "NUTRITIONIST" && <ProfileFields />}
         </>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Email
         <input name="email" type="email" required autoComplete="email" className={inputClass} />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={label}>
         Password
         <input
           name="password"
@@ -85,7 +109,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       </label>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className={fieldError}>
           {error}
         </p>
       )}
@@ -93,14 +117,14 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+        className={buttonPrimary}
       >
         {pending ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
       </button>
 
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className={muted}>
         {isSignUp ? "Already have an account? " : "New here? "}
-        <Link href={isSignUp ? "/sign-in" : "/sign-up"} className="underline">
+        <Link href={isSignUp ? "/sign-in" : "/sign-up"} className={link}>
           {isSignUp ? "Sign in" : "Create an account"}
         </Link>
       </p>

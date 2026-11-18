@@ -1,6 +1,15 @@
 import Link from "next/link";
+import {
+  buttonPrimary,
+  buttonSecondary,
+  callout,
+  card,
+  eyebrow,
+  h1,
+  type Tone,
+} from "@/modules/ui/classes";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "../dal";
-import { SignOutButton } from "./sign-out-button";
 
 const ROLE_LABELS = {
   ADMIN: "Administrator",
@@ -10,9 +19,16 @@ const ROLE_LABELS = {
 
 const STATUS_MESSAGES = {
   PENDING: "Your nutritionist profile is waiting for admin verification.",
-  APPROVED: "Your nutritionist profile is verified and listed in the directory.",
+  APPROVED:
+    "Your nutritionist profile is verified and listed in the directory.",
   REJECTED: "Your nutritionist profile was not approved.",
 } as const;
+
+const STATUS_TONES: Record<keyof typeof STATUS_MESSAGES, Tone> = {
+  PENDING: "warning",
+  APPROVED: "success",
+  REJECTED: "danger",
+};
 
 /** Reads the session, so it must be rendered inside a <Suspense> boundary. */
 export async function AccountPanel() {
@@ -20,43 +36,46 @@ export async function AccountPanel() {
 
   if (!user) {
     return (
-      <div className="flex gap-4 text-sm">
-        <Link href="/sign-in" className="underline">
-          Sign in
-        </Link>
-        <Link href="/sign-up" className="underline">
-          Create an account
-        </Link>
-      </div>
+      <section className="flex flex-col gap-5">
+        <h1 className={h1}>Nutritio</h1>
+        <p className="max-w-xl text-lg text-secondary">
+          Nutrition plans and progress tracking for nutritionists and their
+          clients.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/sign-in" className={buttonPrimary}>
+            Sign in
+          </Link>
+          <Link href="/sign-up" className={buttonSecondary}>
+            Create an account
+          </Link>
+        </div>
+      </section>
     );
   }
 
+  // Clients, admins and approved nutritionists get a dashboard (modules/home) instead.
+  if (user.role !== "NUTRITIONIST" || user.nutritionistStatus === "APPROVED") return null;
+
+  const review =
+    user.role === "NUTRITIONIST"
+      ? await prisma.user.findUnique({ where: { id: user.id }, select: { verificationNote: true } })
+      : null;
+
   return (
-    <div className="flex flex-col gap-2">
-      <p>
-        Signed in as <strong>{user.name}</strong> ({ROLE_LABELS[user.role]})
-      </p>
+    <section className={card}>
+      <p className={eyebrow}>{ROLE_LABELS[user.role]}</p>
+      <h1 className={h1}>Hi, {user.name.split(/\s+/)[0]}</h1>
       {user.nutritionistStatus && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {STATUS_MESSAGES[user.nutritionistStatus]}
-        </p>
+        <div className={`${callout(STATUS_TONES[user.nutritionistStatus])} flex flex-col gap-1`}>
+          <p>{STATUS_MESSAGES[user.nutritionistStatus]}</p>
+          {review?.verificationNote && (
+            <p className="whitespace-pre-line">
+              <span className="font-semibold">Note from the admin:</span> {review.verificationNote}
+            </p>
+          )}
+        </div>
       )}
-      {user.role === "CLIENT" && (
-        <Link href="/nutritionists" className="text-sm underline">
-          Find a nutritionist
-        </Link>
-      )}
-      {user.nutritionistStatus === "APPROVED" && (
-        <Link href="/clients" className="text-sm underline">
-          My clients and requests
-        </Link>
-      )}
-      {user.role === "ADMIN" && (
-        <Link href="/admin" className="text-sm underline">
-          Verify nutritionists
-        </Link>
-      )}
-      <SignOutButton />
-    </div>
+    </section>
   );
 }

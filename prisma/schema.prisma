@@ -41,6 +41,7 @@ model Food {
   fatG              Decimal?         @map("fat_g") @db.Decimal(6, 2)
   createdAt         DateTime         @default(now()) @map("created_at")
   updatedAt         DateTime         @updatedAt @map("updated_at")
+  mealItems         MealItem[]
 
   @@index([nameEs])
   @@index([category])
@@ -52,6 +53,11 @@ enum Role {
   ADMIN
   NUTRITIONIST
   CLIENT
+}
+
+enum FeeCurrency {
+  ARS
+  USD
 }
 
 enum NutritionistStatus {
@@ -74,6 +80,22 @@ model User {
   role               Role                 @default(CLIENT)
   /// Only set for nutritionists. Changed exclusively by admins.
   nutritionistStatus NutritionistStatus?  @map("nutritionist_status")
+  /// Admin feedback on the verification request, shown to the nutritionist.
+  verificationNote   String?              @map("verification_note") @db.VarChar(1000)
+  reviewedAt         DateTime?            @map("reviewed_at")
+  /// Nutritionist profile (null for other roles). Set at sign-up, then admin-only.
+  dni                String?              @unique @db.VarChar(8)
+  licenseNumber      String?              @map("license_number") @db.VarChar(30)
+  birthDate          DateTime?            @map("birth_date") @db.Date
+  phone              String?              @db.VarChar(20)
+  specialty          String?              @db.VarChar(100)
+  /// Public profile, edited by the nutritionist and shown in the directory.
+  bio                String?              @db.Text
+  education          String?              @db.VarChar(500)
+  planIncludes       String?              @map("plan_includes") @db.Text
+  feeAmount          Decimal?             @map("fee_amount") @db.Decimal(10, 2)
+  feeCurrency        FeeCurrency          @default(ARS) @map("fee_currency")
+  feeDescription     String?              @map("fee_description") @db.VarChar(200)
   createdAt          DateTime             @default(now()) @map("created_at")
   updatedAt          DateTime             @updatedAt @map("updated_at")
   sessions           Session[]
@@ -82,6 +104,14 @@ model User {
   clientLinks        NutritionistClient[] @relation("NutritionistLinks")
   /// Links where this user is the client.
   nutritionistLinks  NutritionistClient[] @relation("ClientLinks")
+  /// Plans and templates written by this nutritionist.
+  authoredPlans      MealPlan[]           @relation("PlanAuthor")
+  /// Plans assigned to this client.
+  assignedPlans      MealPlan[]           @relation("PlanClient")
+  /// Dietary preferences and medical info of a client (null until saved).
+  preferences        ClientPreferences?
+  /// Physical activities logged by this client.
+  activities         Activity[]
 
   @@index([role, nutritionistStatus])
   @@map("users")
@@ -134,6 +164,12 @@ model Verification {
   @@map("verifications")
 }
 
+enum AccessUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
 enum LinkStatus {
   PENDING
   ACCEPTED
@@ -143,18 +179,253 @@ enum LinkStatus {
 /// Working relationship requested by a client and answered by a nutritionist.
 /// A client may have several nutritionists; one row per pair.
 model NutritionistClient {
-  id             String     @id @default(cuid())
-  nutritionistId String     @map("nutritionist_id")
-  nutritionist   User       @relation("NutritionistLinks", fields: [nutritionistId], references: [id], onDelete: Cascade)
-  clientId       String     @map("client_id")
-  client         User       @relation("ClientLinks", fields: [clientId], references: [id], onDelete: Cascade)
-  status         LinkStatus @default(PENDING)
-  requestedAt    DateTime   @default(now()) @map("requested_at")
-  respondedAt    DateTime?  @map("responded_at")
-  updatedAt      DateTime   @updatedAt @map("updated_at")
+  id               String     @id @default(cuid())
+  nutritionistId   String     @map("nutritionist_id")
+  nutritionist     User       @relation("NutritionistLinks", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  clientId         String     @map("client_id")
+  client           User       @relation("ClientLinks", fields: [clientId], references: [id], onDelete: Cascade)
+  status           LinkStatus @default(PENDING)
+  requestedAt      DateTime   @default(now()) @map("requested_at")
+  respondedAt      DateTime?  @map("responded_at")
+  /// Access period chosen by the nutritionist; also the default for renewals and auto-renewal.
+  accessAmount     Int        @default(1) @map("access_amount")
+  accessUnit       AccessUnit @default(MONTH) @map("access_unit")
+  /// End of the client's access. Null until the request is accepted.
+  accessUntil      DateTime?  @map("access_until")
+  /// When on, an expired end date rolls forward by the period automatically.
+  autoRenew        Boolean    @default(false) @map("auto_renew")
+  /// Days between check-ins, agreed by the nutritionist. Null until agreed.
+  checkInEveryDays Int?       @map("check_in_every_days")
+  /// The nutritionist asks this client (a woman) about her menstrual cycle in check-ins.
+  askCycle         Boolean    @default(false) @map("ask_menstrual_cycle")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+  checkIns         CheckIn[]
+  /// Body measurements the nutritionist asks for in this client's check-ins.
+  measurements     RequestedMeasurement[]
+  meetingRequests  MeetingRequest[]
 
   @@unique([nutritionistId, clientId])
   @@index([clientId, status])
   @@index([nutritionistId, status])
   @@map("nutritionist_clients")
+}
+
+/// A daily meal plan. Without a client it is a reusable template of its nutritionist.
+model MealPlan {
+  id             String   @id @default(cuid())
+  nutritionistId String   @map("nutritionist_id")
+  nutritionist   User     @relation("PlanAuthor", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  clientId       String?  @map("client_id")
+  client         User?    @relation("PlanClient", fields: [clientId], references: [id], onDelete: Cascade)
+  name           String   @db.VarChar(120)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  meals          Meal[]
+
+  @@index([nutritionistId, clientId])
+  @@index([clientId, createdAt])
+  @@map("meal_plans")
+}
+
+/// One meal of a daily plan (Breakfast, Lunch...), ordered by position. A meal is a recipe.
+model Meal {
+  id       String     @id @default(cuid())
+  planId   String     @map("plan_id")
+  plan     MealPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  name     String     @db.VarChar(60)
+  position Int
+  /// Servings the recipe makes; item grams are for the whole recipe.
+  servings Int        @default(1)
+  /// Free-text extras: low-calorie vegetables, condiments...
+  extras   String?    @db.VarChar(500)
+  items    MealItem[]
+
+  @@index([planId, position])
+  @@map("meals")
+}
+
+/// A food and its amount inside a meal. Macros are derived from the food (per 100 g).
+model MealItem {
+  id       String  @id @default(cuid())
+  mealId   String  @map("meal_id")
+  meal     Meal    @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  foodId   Int     @map("food_id")
+  food     Food    @relation(fields: [foodId], references: [id])
+  grams    Int
+  note     String? @db.VarChar(200)
+  position Int
+
+  @@index([mealId, position])
+  @@map("meal_items")
+}
+
+enum CookingStyle {
+  BASIC
+  ELABORATE
+  NO_PREFERENCE
+}
+
+/// Dietary preferences and medical conditions of a client. Medical data: readable
+/// only by the client and by nutritionists with an accepted link.
+model ClientPreferences {
+  userId          String       @id @map("user_id")
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lowCarb         Boolean      @default(false) @map("low_carb")
+  vegan           Boolean      @default(false)
+  vegetarian      Boolean      @default(false)
+  glutenFree      Boolean      @default(false) @map("gluten_free")
+  prefersMealPrep Boolean      @default(false) @map("prefers_meal_prep")
+  cookingStyle    CookingStyle @default(NO_PREFERENCE) @map("cooking_style")
+  diabetic        Boolean      @default(false)
+  celiac          Boolean      @default(false)
+  hypertension    Boolean      @default(false)
+  /// Free text, e.g. "lactose, walnuts".
+  intolerances    String?      @db.VarChar(500)
+  otherConditions String?      @map("other_conditions") @db.VarChar(500)
+  notes           String?      @db.Text
+  /// Null only for rows saved before it was asked.
+  sex             Sex?
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@map("client_preferences")
+}
+
+/// A periodic report of the client to one nutritionist (one link).
+model CheckIn {
+  id                String             @id @default(cuid())
+  linkId            String             @map("link_id")
+  link              NutritionistClient @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  weightKg          Decimal            @map("weight_kg") @db.Decimal(5, 2)
+  /// Ratings from 1 to 5.
+  sleep             Int
+  /// Whether the client could complete the agreed workouts.
+  completedWorkouts Boolean            @map("completed_workouts")
+  gymPerformance    GymPerformance?    @map("gym_performance")
+  energy            Int
+  hunger            Int
+  /// % of the diet followed (0–100). Null for check-ins sent before this field existed.
+  dietAdherence     Int?               @map("diet_adherence")
+  discomfort        Boolean            @default(false)
+  discomfortNotes   String?            @map("discomfort_notes") @db.VarChar(500)
+  notes             String?            @db.Text
+  /// On her period or in the week before it. Null when the nutritionist didn't ask.
+  menstruating      Boolean?
+  createdAt         DateTime           @default(now()) @map("created_at")
+  measurements      CheckInMeasurement[]
+
+  @@index([linkId, createdAt])
+  @@map("check_ins")
+}
+
+/// A body measurement a nutritionist added to a client's check-ins.
+model RequestedMeasurement {
+  linkId String             @map("link_id")
+  link   NutritionistClient @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  site   MeasurementSite
+
+  @@id([linkId, site])
+  @@map("requested_measurements")
+}
+
+/// A body measurement reported in a check-in, in cm.
+model CheckInMeasurement {
+  checkInId String          @map("check_in_id")
+  checkIn   CheckIn         @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+  site      MeasurementSite
+  cm        Decimal         @db.Decimal(4, 1)
+
+  @@id([checkInId, site])
+  @@map("check_in_measurements")
+}
+
+enum MeasurementSite {
+  CHEST
+  HIPS
+  THIGH
+  ARM
+  NAVEL
+  WAIST
+  BELOW_NAVEL
+}
+
+enum Sex {
+  FEMALE
+  MALE
+}
+
+enum ActivityType {
+  STRENGTH
+  GYM
+  CALISTHENICS
+  FOOTBALL
+  RUNNING
+  CYCLING
+  SWIMMING
+  WALKING
+  YOGA
+  OTHER
+}
+
+enum ActivityIntensity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/// A physical activity logged by a client. Readable by the client and by
+/// nutritionists with an accepted link.
+model Activity {
+  id              String            @id @default(cuid())
+  userId          String            @map("user_id")
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            ActivityType
+  /// Only for OTHER, e.g. "Padel".
+  customName      String?           @map("custom_name") @db.VarChar(60)
+  performedOn     DateTime          @map("performed_on") @db.Date
+  durationMinutes Int               @map("duration_minutes")
+  intensity       ActivityIntensity
+  notes           String?           @db.VarChar(500)
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  @@index([userId, performedOn])
+  @@map("activities")
+}
+
+enum MeetingKind {
+  VIDEO_CALL
+  IN_PERSON
+}
+
+enum MeetingStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+/// A meeting or visit asked by a client to one nutritionist (one link).
+/// The nutritionist accepts it with a date or declines it.
+model MeetingRequest {
+  id             String             @id @default(cuid())
+  linkId         String             @map("link_id")
+  link           NutritionistClient @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  kind           MeetingKind
+  message        String?            @db.VarChar(1000)
+  /// Free text, e.g. "weekday evenings".
+  preferredTimes String?            @map("preferred_times") @db.VarChar(300)
+  status         MeetingStatus      @default(PENDING)
+  /// Set when the nutritionist accepts.
+  scheduledFor   DateTime?          @map("scheduled_for")
+  responseNote   String?            @map("response_note") @db.VarChar(500)
+  createdAt      DateTime           @default(now()) @map("created_at")
+  respondedAt    DateTime?          @map("responded_at")
+
+  @@index([linkId, status])
+  @@map("meeting_requests")
+}
+
+enum GymPerformance {
+  IMPROVED
+  SAME
+  DROPPED
 }

@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { buttonSecondary } from "@/modules/ui/classes";
 
-export function SignOutButton() {
+export function SignOutButton({ className = "" }: { className?: string }) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -13,7 +14,7 @@ export function SignOutButton() {
   }
 
   return (
-    <button type="button" onClick={handleSignOut} className="text-sm underline">
+    <button type="button" onClick={handleSignOut} className={`${buttonSecondary} ${className}`}>
       Sign out
     </button>
   );

@@ -31,16 +31,26 @@ export function decideLinkRequest(
   return "REOPEN";
 }
 
-/** The nutritionist answers a pending request. */
+/** The nutritionist answers a pending request. Only approved nutritionists may answer. */
 export function respondToLinkRequest(
+  nutritionistStatus: NutritionistStatus | null,
   link: { status: LinkStatus },
   response: LinkResponse,
 ): Exclude<LinkStatus, "PENDING"> {
+  if (nutritionistStatus !== "APPROVED") {
+    throw new LinkRuleError("Your profile must be verified to answer requests");
+  }
   if (link.status !== "PENDING") throw new LinkRuleError("Only pending requests can be answered");
   return response === "ACCEPT" ? "ACCEPTED" : "REJECTED";
 }
 
-/** A nutritionist may read a client's data only while their link is accepted. */
-export function canAccessClient(link: { status: LinkStatus } | null): boolean {
-  return link?.status === "ACCEPTED";
+/**
+ * A nutritionist may read a client's data only while approved and while their link is accepted.
+ * Revoking a nutritionist keeps the link, so re-approval restores access.
+ */
+export function canAccessClient(
+  nutritionistStatus: NutritionistStatus | null,
+  link: { status: LinkStatus } | null,
+): boolean {
+  return nutritionistStatus === "APPROVED" && link?.status === "ACCEPTED";
 }

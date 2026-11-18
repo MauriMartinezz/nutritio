@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test \"{scripts,modules}/**/*.test.ts\"",
+    "test": "tsx --test \"{lib,scripts,modules}/**/*.test.ts\"",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
@@ -17,6 +17,9 @@
     "foods:names-es": "tsx scripts/foods/apply-spanish-names.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/sortable": "10.0.0",
+    "@dnd-kit/utilities": "3.2.2",
     "@prisma/adapter-mariadb": "7.10.1",
     "@prisma/client": "7.10.1",
     "better-auth": "1.7.21",

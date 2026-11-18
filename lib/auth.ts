@@ -2,9 +2,12 @@ import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
+import { InvalidDisplayNameError, normalizeNameUpdate } from "@/modules/identity/account";
+import { InvalidProfileError } from "@/modules/nutritionists/profile";
 import {
   InvalidRoleError,
   NUTRITIONIST_STATUSES,
+  UnexpectedProfileError,
   PrivilegedFieldChangeError,
   ROLES,
   assertNoPrivilegedChanges,
@@ -30,20 +33,37 @@ export const auth = betterAuth({
         required: false,
         input: false,
       },
+      // Nutritionist profile: accepted only at sign-up (validated in the create
+      // hook); the update hook rejects any later change through the auth API.
+      dni: { type: "string", required: false, input: true },
+      licenseNumber: { type: "string", required: false, input: true },
+      birthDate: { type: "date", required: false, input: true },
+      phone: { type: "string", required: false, input: true },
+      specialty: { type: "string", required: false, input: true },
     },
   },
   databaseHooks: {
     user: {
       create: {
         before: async (user) => {
+          let prepared;
           try {
-            return { data: { ...user, ...prepareNewUser({ role: user.role }) } };
+            prepared = prepareNewUser(user);
           } catch (error) {
-            if (error instanceof InvalidRoleError) {
+            if (
+              error instanceof InvalidRoleError ||
+              error instanceof InvalidProfileError ||
+              error instanceof UnexpectedProfileError
+            ) {
               throw new APIError("BAD_REQUEST", { message: error.message });
             }
             throw error;
           }
+          if ("dni" in prepared) {
+            const taken = await prisma.user.findUnique({ where: { dni: prepared.dni } });
+            if (taken) throw new APIError("BAD_REQUEST", { message: "DNI is already registered" });
+          }
+          return { data: { ...user, ...prepared } };
         },
       },
       update: {
@@ -53,6 +73,15 @@ export const auth = betterAuth({
           } catch (error) {
             if (error instanceof PrivilegedFieldChangeError) {
               throw new APIError("FORBIDDEN", { message: error.message });
+            }
+            throw error;
+          }
+          // Name edits from the profile page go through updateUser.
+          try {
+            return normalizeNameUpdate(update);
+          } catch (error) {
+            if (error instanceof InvalidDisplayNameError) {
+              throw new APIError("BAD_REQUEST", { message: error.message });
             }
             throw error;
           }

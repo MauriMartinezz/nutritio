@@ -1,5 +1,10 @@
 // Identity domain rules: roles and nutritionist verification at sign-up.
 // Pure functions, no framework imports, so they can be unit tested.
+import {
+  PROFILE_FIELDS,
+  parseNutritionistProfile,
+  type NutritionistProfile,
+} from "@/modules/nutritionists/profile";
 
 export const ROLES = ["ADMIN", "NUTRITIONIST", "CLIENT"] as const;
 export type Role = (typeof ROLES)[number];
@@ -11,13 +16,20 @@ export type NutritionistStatus = (typeof NUTRITIONIST_STATUSES)[number];
 export const SELF_ASSIGNABLE_ROLES = ["CLIENT", "NUTRITIONIST"] as const;
 export type SelfAssignableRole = (typeof SELF_ASSIGNABLE_ROLES)[number];
 
-/** Fields only the system (admin actions, sign-up rules) may set. */
-const PRIVILEGED_FIELDS = ["role", "nutritionistStatus"] as const;
+/** Fields only the system (admin actions, sign-up rules) may set after sign-up. */
+const PRIVILEGED_FIELDS = ["role", "nutritionistStatus", ...PROFILE_FIELDS] as const;
 
 export class InvalidRoleError extends Error {
   constructor(role: unknown) {
     super(`Role "${String(role)}" cannot be chosen at sign-up`);
     this.name = "InvalidRoleError";
+  }
+}
+
+export class UnexpectedProfileError extends Error {
+  constructor() {
+    super("Only nutritionists can provide professional profile data");
+    this.name = "UnexpectedProfileError";
   }
 }
 
@@ -33,20 +45,28 @@ function isSelfAssignableRole(value: unknown): value is SelfAssignableRole {
 }
 
 /**
- * Decides the role and verification status of a user being created.
+ * Decides the role, verification status and profile of a user being created.
  * Whatever status the input carries is ignored: nutritionists always start PENDING.
+ * Nutritionists must provide a valid profile; clients must not send profile fields.
  */
-export function prepareNewUser(input: { role?: unknown; nutritionistStatus?: unknown }): {
-  role: SelfAssignableRole;
-  nutritionistStatus: NutritionistStatus | null;
-} {
+export function prepareNewUser(
+  input: Record<string, unknown>,
+  today: Date = new Date(),
+):
+  | { role: "CLIENT"; nutritionistStatus: null }
+  | ({ role: "NUTRITIONIST"; nutritionistStatus: "PENDING" } & NutritionistProfile) {
   const role = input.role ?? "CLIENT";
   if (!isSelfAssignableRole(role)) throw new InvalidRoleError(role);
 
-  return {
-    role,
-    nutritionistStatus: role === "NUTRITIONIST" ? "PENDING" : null,
-  };
+  if (role === "CLIENT") {
+    const sentProfile = PROFILE_FIELDS.some(
+      (field) => input[field] !== undefined && input[field] !== null && input[field] !== "",
+    );
+    if (sentProfile) throw new UnexpectedProfileError();
+    return { role, nutritionistStatus: null };
+  }
+
+  return { role, nutritionistStatus: "PENDING", ...parseNutritionistProfile(input, today) };
 }
 
 /** Rejects user updates (coming from the auth API) that touch privileged fields. */

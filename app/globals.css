@@ -1,26 +1,146 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* `dark:` follows data-theme on <html> (set before paint by the theme script);
+   without JavaScript it falls back to the system preference. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Design tokens (nutrio-design/tokens.css). Components use the semantic
+   utilities below (bg-surface, text-ink, border-line, bg-accent…), so the
+   dark theme only redefines these variables. */
+:root {
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --surface-muted: #efefea;
+  --surface-active: #ecece7;
+  --placeholder: #e6e6e0;
+  --ink: #1a1a17;
+  --text-secondary: #5f5f58;
+  --text-tertiary: #66665f;
+  --border: #e3e3de;
+  --border-strong: #ddddd6;
+  --divider: #edede8;
+  --accent: #1f5c4a;
+  --accent-hover: #16443a;
+  --accent-tint: #eaf1ee;
+  --on-accent: #ffffff;
+  --danger: #a3341c;
+  --danger-bg: #fbede8;
+  --warning: #8a5a00;
+  --warning-bg: #f8f0dc;
+  --success: #1f6b45;
+  --success-bg: #e8f2ec;
+}
+
+/* Dark palette: derived from the light tokens (the design defines none). */
+:root[data-theme="dark"] {
+  --bg: #141412;
+  --surface: #1c1c19;
+  --surface-muted: #262622;
+  --surface-active: #2c2c28;
+  --placeholder: #33332e;
+  --ink: #edede8;
+  --text-secondary: #a9a9a1;
+  --text-tertiary: #9c9c94;
+  --border: #2f2f2b;
+  --border-strong: #3b3b36;
+  --divider: #282824;
+  --accent: #6db89c;
+  --accent-hover: #86c9b0;
+  --accent-tint: #1c2f28;
+  --on-accent: #0f1f1a;
+  --danger: #f0907a;
+  --danger-bg: #3a1f18;
+  --warning: #e3b863;
+  --warning-bg: #352a13;
+  --success: #74c79b;
+  --success-bg: #17301f;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #141412;
+    --surface: #1c1c19;
+    --surface-muted: #262622;
+    --surface-active: #2c2c28;
+    --placeholder: #33332e;
+    --ink: #edede8;
+    --text-secondary: #a9a9a1;
+    --text-tertiary: #9c9c94;
+    --border: #2f2f2b;
+    --border-strong: #3b3b36;
+    --divider: #282824;
+    --accent: #6db89c;
+    --accent-hover: #86c9b0;
+    --accent-tint: #1c2f28;
+    --on-accent: #0f1f1a;
+    --danger: #f0907a;
+    --danger-bg: #3a1f18;
+    --warning: #e3b863;
+    --warning-bg: #352a13;
+    --success: #74c79b;
+    --success-bg: #17301f;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-active: var(--surface-active);
+  --color-placeholder: var(--placeholder);
+  --color-ink: var(--ink);
+  --color-secondary: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-divider: var(--divider);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-tint: var(--accent-tint);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --radius-card-lg: 12px;
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --radius-badge: 4px;
+}
+
+/* In the base layer so Tailwind utilities always win. */
+@layer base {
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-plex-sans), system-ui, sans-serif;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
 }
