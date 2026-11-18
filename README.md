@@ -68,6 +68,13 @@ pnpm db:studio     # browse data with Prisma Studio
 
 Restart `pnpm dev` after `pnpm db:generate`: the dev server keeps the previous Prisma client in memory.
 
+### Production
+
+```bash
+pnpm db:deploy   # apply pending migrations (prisma migrate deploy); never use db:migrate in production
+pnpm build       # runs prisma generate, then next build (generated/ is git-ignored)
+```
+
 ## Authentication and roles
 
 [Better Auth](https://www.better-auth.com) handles email + password accounts (`lib/auth.ts`, mounted at `/api/auth/*`).
