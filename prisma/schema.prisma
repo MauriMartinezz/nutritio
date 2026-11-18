@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum FoodPreparation {
+  RAW
+  COOKED
+}
+
+enum FoodSource {
+  USDA_FOUNDATION
+  USDA_SR_LEGACY
+}
+
+/// Shared food catalog. Nutrient values are per 100 g of edible portion.
+model Food {
+  id                Int              @id @default(autoincrement())
+  source            FoodSource
+  /// USDA FoodData Central id. Nullable so non-USDA foods can be added later.
+  fdcId             Int?             @unique @map("fdc_id")
+  nameEn            String           @map("name_en") @db.VarChar(255)
+  /// Spanish display name, curated on top of the USDA data (prisma/seed/food-names-es.json).
+  nameEs            String?          @map("name_es") @db.VarChar(255)
+  category          String?          @db.VarChar(100)
+  /// Spanish category from the curated list.
+  categoryEs        String?          @map("category_es") @db.VarChar(100)
+  /// Groups the raw/cooked variants of the same food (powers the raw/cooked toggle).
+  groupKey          String?          @map("group_key") @db.VarChar(100)
+  /// RAW or COOKED; null for foods used as they are (fruit, yogurt, oil...).
+  preparation       FoodPreparation?
+  /// Cooking method of a COOKED variant, in Spanish (e.g. "hervido", "asada").
+  preparationNoteEs String?          @map("preparation_note_es") @db.VarChar(50)
+  kcal              Decimal?         @db.Decimal(7, 2)
+  proteinG          Decimal?         @map("protein_g") @db.Decimal(6, 2)
+  carbsG            Decimal?         @map("carbs_g") @db.Decimal(6, 2)
+  fatG              Decimal?         @map("fat_g") @db.Decimal(6, 2)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  @@index([nameEs])
+  @@index([category])
+  @@index([groupKey])
+  @@map("foods")
+}
+
+enum Role {
+  ADMIN
+  NUTRITIONIST
+  CLIENT
+}
+
+enum NutritionistStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth core tables (user, session, account, verification).
+// Field names must match Better Auth; table/column names are mapped.
+// ---------------------------------------------------------------------------
+
+model User {
+  id                 String               @id
+  name               String               @db.VarChar(255)
+  email              String               @unique @db.VarChar(255)
+  emailVerified      Boolean              @default(false) @map("email_verified")
+  image              String?              @db.Text
+  role               Role                 @default(CLIENT)
+  /// Only set for nutritionists. Changed exclusively by admins.
+  nutritionistStatus NutritionistStatus?  @map("nutritionist_status")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  sessions           Session[]
+  accounts           Account[]
+  /// Links where this user is the nutritionist.
+  clientLinks        NutritionistClient[] @relation("NutritionistLinks")
+  /// Links where this user is the client.
+  nutritionistLinks  NutritionistClient[] @relation("ClientLinks")
+
+  @@index([role, nutritionistStatus])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique @db.VarChar(255)
+  ipAddress String?  @map("ip_address") @db.VarChar(255)
+  userAgent String?  @map("user_agent") @db.Text
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id") @db.VarChar(255)
+  providerId            String    @map("provider_id") @db.VarChar(255)
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token") @db.Text
+  refreshToken          String?   @map("refresh_token") @db.Text
+  idToken               String?   @map("id_token") @db.Text
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?   @db.Text
+  password              String?   @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Verification {
+  id         String   @id
+  identifier String   @db.VarChar(255)
+  value      String   @db.Text
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verifications")
+}
+
+enum LinkStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+/// Working relationship requested by a client and answered by a nutritionist.
+/// A client may have several nutritionists; one row per pair.
+model NutritionistClient {
+  id             String     @id @default(cuid())
+  nutritionistId String     @map("nutritionist_id")
+  nutritionist   User       @relation("NutritionistLinks", fields: [nutritionistId], references: [id], onDelete: Cascade)
+  clientId       String     @map("client_id")
+  client         User       @relation("ClientLinks", fields: [clientId], references: [id], onDelete: Cascade)
+  status         LinkStatus @default(PENDING)
+  requestedAt    DateTime   @default(now()) @map("requested_at")
+  respondedAt    DateTime?  @map("responded_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  @@unique([nutritionistId, clientId])
+  @@index([clientId, status])
+  @@index([nutritionistId, status])
+  @@map("nutritionist_clients")
+}
