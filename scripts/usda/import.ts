@@ -3,7 +3,7 @@
 import "dotenv/config";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
 import { mapUsdaFood, type UsdaFood, type UsdaSource } from "./map-food";
 
@@ -41,7 +41,7 @@ async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is not set");
 
-  const prisma = new PrismaClient({ adapter: new PrismaMariaDb(databaseUrl) });
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
 
   try {
     for (const { prefix, rootKey, source } of DATASETS) {

@@ -15,7 +15,7 @@ import {
 } from "@/modules/identity/roles";
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, { provider: "mysql" }),
+  database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true },
   telemetry: { enabled: false },
   user: {

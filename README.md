@@ -37,25 +37,27 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Local database
 
-MySQL 8.4 and the Adminer web client run with Docker Compose:
+PostgreSQL 17 and the Adminer web client run with Docker Compose:
 
 ```bash
 docker compose up -d     # start
-docker compose down      # stop (data persists in the mysql-data volume)
+docker compose down      # stop (data persists in the postgres-data volume)
 ```
 
-- MySQL: `localhost:3306`, database `nutritio`, user `nutritio` / password `nutritio` (root password: `root`).
-- Adminer: http://localhost:8080 (server `mysql`, same credentials).
+- PostgreSQL: `localhost:5432`, database `nutritio`, user `nutritio` / password `nutritio`.
+- Adminer: http://localhost:8080 (system `PostgreSQL`, server `postgres`, same credentials).
 
-Defaults are dev-only; override them with `MYSQL_*`, `MYSQL_PORT` and `ADMINER_PORT` environment variables.
-On first start, `docker/mysql/init/` grants the app user the privileges Prisma needs for its shadow database.
+Defaults are dev-only; override them with `POSTGRES_*`, `POSTGRES_PORT` and `ADMINER_PORT` environment variables.
+
+Production runs on Prisma Postgres (Vercel). Use its direct `postgres://` connection string as `DATABASE_URL`:
+the app connects through `@prisma/adapter-pg`, which does not accept `prisma+postgres://` URLs.
 
 ## Prisma
 
 Create a `.env` file (git-ignored):
 
 ```bash
-DATABASE_URL="mysql://nutritio:nutritio@localhost:3306/nutritio"
+DATABASE_URL="postgresql://nutritio:nutritio@localhost:5432/nutritio"
 BETTER_AUTH_SECRET="<generate with: openssl rand -base64 32>"
 BETTER_AUTH_URL="http://localhost:3000"
 ```

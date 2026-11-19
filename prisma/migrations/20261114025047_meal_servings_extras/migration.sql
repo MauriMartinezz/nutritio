@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE `meals` ADD COLUMN `extras` VARCHAR(500) NULL,
-    ADD COLUMN `servings` INTEGER NOT NULL DEFAULT 1;

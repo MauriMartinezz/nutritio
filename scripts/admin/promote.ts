@@ -7,7 +7,7 @@ async function main() {
   if (!email) throw new Error("Usage: pnpm admin:promote <email>");
 
   const { count } = await prisma.user.updateMany({
-    where: { email },
+    where: { email: { equals: email, mode: "insensitive" } },
     data: { role: "ADMIN", nutritionistStatus: null },
   });
   if (count === 0) throw new Error(`No user found with email ${email}`);
