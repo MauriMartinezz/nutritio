@@ -7,6 +7,7 @@ import {
   copyPlanForClient,
   dailyTotals,
   itemTotals,
+  foldSearchTerm,
   parseMealExtras,
   parseReorder,
   parseServings,
@@ -273,4 +274,10 @@ test("shopping grams show whole grams below 1 kg and kilograms with one decimal 
   assert.equal(formatShoppingGrams(999), "999 g");
   assert.equal(formatShoppingGrams(1000), "1.0 kg");
   assert.equal(formatShoppingGrams(1750), "1.8 kg");
+});
+
+test("foldSearchTerm lowercases and drops accents so 'limon' matches 'Limón'", () => {
+  assert.equal(foldSearchTerm("Limón"), "limon");
+  assert.equal(foldSearchTerm("  ÑOQUIS de Calabaza "), "noquis de calabaza");
+  assert.equal(foldSearchTerm("pingüino"), "pinguino");
 });

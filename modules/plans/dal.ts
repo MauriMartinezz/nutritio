@@ -6,6 +6,7 @@ import { requireRole, type CurrentUser } from "@/modules/identity/dal";
 import {
   canEditPlan,
   dailyTotals,
+  foldSearchTerm,
   itemTotals,
   perServing,
   sumTotals,
@@ -183,23 +184,34 @@ export async function listTemplates() {
   });
 }
 
-/** Catalog search: curated Spanish names first, then English USDA names. */
+// Accented letters folded by the food search; keep in sync with foldSearchTerm.
+const FOLDED_FROM = "áàäâãéèëêíìïîóòöôõúùüûñç";
+const FOLDED_TO = "aaaaaeeeeiiiiooooouuuunc";
+
+/**
+ * Catalog search: curated Spanish names first, then English USDA names.
+ * Matching ignores case and accents ("limon" finds "Limón").
+ */
 export async function searchFoods(query: string) {
   await requireRole("NUTRITIONIST");
-  const term = query.trim().slice(0, 60);
+  const term = foldSearchTerm(query.slice(0, 60));
   if (term.length < 2) return [];
 
   const select = { ...FOOD_SELECT } as const;
+  const spanishIds = await prisma.$queryRaw<{ id: number }[]>`
+    SELECT id FROM foods
+    WHERE strpos(translate(lower(name_es), ${FOLDED_FROM}, ${FOLDED_TO}), ${term}) > 0
+    ORDER BY name_es
+    LIMIT 15`;
   const spanish = await prisma.food.findMany({
-    where: { nameEs: { contains: term } },
+    where: { id: { in: spanishIds.map((row) => row.id) } },
     select,
     orderBy: { nameEs: "asc" },
-    take: 15,
   });
   const english =
     spanish.length < 15
       ? await prisma.food.findMany({
-          where: { nameEn: { contains: term }, id: { notIn: spanish.map((food) => food.id) } },
+          where: { nameEn: { contains: term, mode: "insensitive" }, id: { notIn: spanish.map((food) => food.id) } },
           select,
           orderBy: { nameEn: "asc" },
           take: 15 - spanish.length,

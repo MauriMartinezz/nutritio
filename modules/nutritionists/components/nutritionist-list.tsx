@@ -42,10 +42,10 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
     ...(status !== "ALL" && { nutritionistStatus: status }),
     ...(query && {
       OR: [
-        { name: { contains: query } },
-        { email: { contains: query } },
-        { dni: { contains: query } },
-        { licenseNumber: { contains: query } },
+        { name: { contains: query, mode: "insensitive" } },
+        { email: { contains: query, mode: "insensitive" } },
+        { dni: { contains: query, mode: "insensitive" } },
+        { licenseNumber: { contains: query, mode: "insensitive" } },
       ],
     }),
   };
