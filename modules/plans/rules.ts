@@ -30,6 +30,14 @@ function requiredText(value: unknown, label: string, max: number): string {
 export const parsePlanName = (value: unknown) => requiredText(value, "Plan name", 120);
 export const parseMealName = (value: unknown) => requiredText(value, "Meal name", 60);
 
+/**
+ * Accent- and case-insensitive form of a catalog search term ("Limón" -> "limon").
+ * Must fold the same characters as FOLDED_FROM / FOLDED_TO in the food search query.
+ */
+export function foldSearchTerm(value: string): string {
+  return value.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+}
+
 export function parseNote(value: unknown): string | null {
   const note = text(value);
   if (note.length > 200) throw new PlanRuleError("Note must be at most 200 characters");
