@@ -7,7 +7,7 @@ import { TableSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "My clients · Nutritio" };
 
-export default function Page({ searchParams }: PageProps<"/clients">) {
+export default function Page({ searchParams }: PageProps<"/[lang]/clients">) {
   return (
     <main className={page}>
       <h1 className={`${h1} flex flex-wrap items-center`}>

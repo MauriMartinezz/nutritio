@@ -1,40 +1,38 @@
 import Link from "next/link";
+import { getMessages } from "@/lib/i18n/server";
 import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
 import { getCurrentUser, type CurrentUser } from "../dal";
+import { navMessages, roleMessages } from "../nav-messages";
 import { NavLinks, ProfileLink, type NavItem } from "./nav-links";
 
-const ROLE_LABELS = {
-  ADMIN: "Administrator",
-  NUTRITIONIST: "Nutritionist",
-  CLIENT: "Client",
-} as const;
+type NavText = (typeof navMessages)["en"];
 
-function navItems(user: CurrentUser | null): NavItem[] {
+function navItems(user: CurrentUser | null, t: NavText): NavItem[] {
   if (!user) {
     return [
-      { href: "/", label: "Home" },
-      { href: "/sign-in", label: "Sign in" },
-      { href: "/sign-up", label: "Create an account" },
+      { href: "/", label: t.home },
+      { href: "/sign-in", label: t.signIn },
+      { href: "/sign-up", label: t.createAccount },
     ];
   }
-  const items: NavItem[] = [{ href: "/", label: "Home" }];
+  const items: NavItem[] = [{ href: "/", label: t.home }];
   if (user.role === "CLIENT") {
     items.push(
-      { href: "/my-plans", label: "My meal plans" },
-      { href: "/check-ins", label: "Check-ins" },
-      { href: "/activities", label: "Activities" },
-      { href: "/meetings", label: "Meetings" },
-      { href: "/nutritionists", label: "Find a nutritionist" },
+      { href: "/my-plans", label: t.myPlans },
+      { href: "/check-ins", label: t.checkIns },
+      { href: "/activities", label: t.activities },
+      { href: "/meetings", label: t.meetings },
+      { href: "/nutritionists", label: t.findNutritionist },
     );
   }
   if (user.nutritionistStatus === "APPROVED") {
     items.push(
-      { href: "/clients", label: "My clients", badge: <PendingActions /> },
-      { href: "/plans", label: "Plan templates" },
+      { href: "/clients", label: t.myClients, badge: <PendingActions /> },
+      { href: "/plans", label: t.planTemplates },
     );
   }
   if (user.role === "ADMIN") {
-    items.push({ href: "/admin", label: "Nutritionists" });
+    items.push({ href: "/admin", label: t.nutritionists });
   }
   return items;
 }
@@ -63,14 +61,16 @@ export function Brand() {
 /** Role-based navigation. Reads the session: render inside <Suspense>. */
 export async function AppNav() {
   const user = await getCurrentUser();
+  const t = await getMessages(navMessages);
+  const roles = await getMessages(roleMessages);
   return (
     <>
-      <NavLinks items={navItems(user)} />
+      <NavLinks items={navItems(user, t)} />
       {user && (
         <ProfileLink
           name={user.name}
           initials={initials(user.name)}
-          roleLabel={ROLE_LABELS[user.role]}
+          roleLabel={roles[user.role]}
         />
       )}
     </>

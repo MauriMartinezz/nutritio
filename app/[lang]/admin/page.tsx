@@ -6,7 +6,7 @@ import { TableSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "Admin · Nutritio" };
 
-export default function AdminPage({ searchParams }: PageProps<"/admin">) {
+export default function AdminPage({ searchParams }: PageProps<"/[lang]/admin">) {
   return (
     <main className={page}>
       <h1 className={h1}>Nutritionists</h1>

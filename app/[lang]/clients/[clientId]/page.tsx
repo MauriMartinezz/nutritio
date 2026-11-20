@@ -11,7 +11,7 @@ import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "Client · Nutritio" };
 
-export default function Page({ params }: PageProps<"/clients/[clientId]">) {
+export default function Page({ params }: PageProps<"/[lang]/clients/[clientId]">) {
   return (
     <main className={page}>
       <Link href="/clients" className={`${link} self-start text-sm`}>

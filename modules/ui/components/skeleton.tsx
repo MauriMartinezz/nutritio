@@ -2,6 +2,7 @@
 // Server-safe markup (no hooks); the pulse is skipped when reduced motion is preferred.
 
 import { card } from "@/modules/ui/classes";
+import { LoadingLabel } from "./loading-label";
 
 const block = "rounded-badge bg-surface-muted motion-safe:animate-pulse";
 
@@ -14,7 +15,7 @@ export function Skeleton({ className = "h-4 w-full" }: { className?: string }) {
 function Loading({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <div role="status" aria-busy="true" className={className}>
-      <span className="sr-only">Loading…</span>
+      <LoadingLabel />
       {children}
     </div>
   );

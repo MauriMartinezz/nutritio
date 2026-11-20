@@ -8,6 +8,7 @@ import { AccountForm } from "@/modules/identity/components/account-form";
 import { ChangePasswordForm } from "@/modules/identity/components/change-password-form";
 import { SignOutButton } from "@/modules/identity/components/sign-out-button";
 import { PublicProfileForm } from "@/modules/nutritionists/components/public-profile-form";
+import { LanguageSwitcher } from "@/modules/theme/language-switcher";
 import { ThemeToggle } from "@/modules/theme/theme-toggle";
 import { card, h1, h2, muted, pageNarrow } from "@/modules/ui/classes";
 import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
@@ -98,6 +99,7 @@ async function OwnProfile() {
       <Section id="appearance" title="Appearance">
         <div className={card}>
           <ThemeToggle />
+          <LanguageSwitcher />
         </div>
       </Section>
 

@@ -6,7 +6,7 @@ import { ListSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "Shopping list · Nutritio" };
 
-export default function Page({ params, searchParams }: PageProps<"/my-plans/[planId]/shopping-list">) {
+export default function Page({ params, searchParams }: PageProps<"/[lang]/my-plans/[planId]/shopping-list">) {
   return (
     <main className={page}>
       <Suspense fallback={<ListSkeleton rows={6} />}>

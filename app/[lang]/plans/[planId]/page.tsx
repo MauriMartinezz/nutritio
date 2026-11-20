@@ -6,7 +6,7 @@ import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "Meal plan · Nutritio" };
 
-export default function Page({ params, searchParams }: PageProps<"/plans/[planId]">) {
+export default function Page({ params, searchParams }: PageProps<"/[lang]/plans/[planId]">) {
   return (
     <main className={page}>
       <Suspense fallback={<SectionsSkeleton fields={3} />}>

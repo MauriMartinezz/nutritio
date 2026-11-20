@@ -3,10 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { useMessages } from "@/lib/i18n/client";
+import { LOCALES } from "@/lib/i18n/negotiate";
+import { navMessages } from "../nav-messages";
 
 export type NavItem = { href: string; label: string; badge?: ReactNode };
 
-function isActive(pathname: string, href: string) {
+// The URL never shows the locale, but a rewritten path may carry it: ignore it.
+const LOCALE_PREFIX = new RegExp(`^/(${LOCALES.join("|")})(?=/|$)`);
+
+function isActive(rawPathname: string, href: string) {
+  const pathname = rawPathname.replace(LOCALE_PREFIX, "") || "/";
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -43,6 +50,7 @@ type ProfileLinkProps = { name: string; initials: string; roleLabel: string };
  * the sidebar, and an avatar in the top bar on mobile.
  */
 export function ProfileLink({ name, initials, roleLabel }: ProfileLinkProps) {
+  const t = useMessages(navMessages);
   const active = isActive(usePathname(), "/profile");
   const avatar = (
     <span
@@ -64,13 +72,13 @@ export function ProfileLink({ name, initials, roleLabel }: ProfileLinkProps) {
         {avatar}
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-semibold">{name}</span>
-          <span className="text-xs text-tertiary">{roleLabel} · Profile</span>
+          <span className="text-xs text-tertiary">{roleLabel} · {t.profile}</span>
         </span>
       </Link>
       <Link
         href="/profile"
         aria-current={active ? "page" : undefined}
-        aria-label={`Profile (${name})`}
+        aria-label={t.profileOf(name)}
         className="absolute top-3 right-4 flex min-h-11 items-center md:hidden"
       >
         {avatar}
