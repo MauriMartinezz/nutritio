@@ -1,12 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
-import { buttonPrimary, fieldError, formSuccess, input, label, textarea } from "@/modules/ui/classes";
+import { useLocale, useMessages } from "@/lib/i18n/client";
+import { buttonPrimary, buttonSecondary, fieldError, formSuccess, input, label, textarea } from "@/modules/ui/classes";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { logActivity, type LogActivityState } from "../actions";
-import { ACTIVITY_LIMITS, ACTIVITY_TYPES, INTENSITIES } from "../rules";
+import { activityMessages } from "../messages";
+import { ACTIVITY_LIMITS, ACTIVITY_TYPES, INTENSITIES, activityTypeLabel, intensityLabel } from "../rules";
 
-/** `today` and `earliest` are "YYYY-MM-DD" (the server's calendar day). */
-export function ActivityForm({ today, earliest }: { today: string; earliest: string }) {
+const TYPES = Object.keys(ACTIVITY_TYPES) as (keyof typeof ACTIVITY_TYPES)[];
+const LEVELS = Object.keys(INTENSITIES) as (keyof typeof INTENSITIES)[];
+
+/**
+ * `today` and `earliest` are "YYYY-MM-DD" (the server's calendar day). With
+ * `doneHref`, a saved activity offers a "Done" link (e.g. to close a dialog).
+ */
+export function ActivityForm({ today, earliest, doneHref }: { today: string; earliest: string; doneHref?: string }) {
+  const t = useMessages(activityMessages);
+  const locale = useLocale();
   const [state, formAction, pending] = useActionState<LogActivityState, FormData>(logActivity, {});
   const problems = state.problems ?? {};
 
@@ -14,29 +26,29 @@ export function ActivityForm({ today, earliest }: { today: string; earliest: str
     <form action={formAction} className="flex w-full flex-col gap-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className={label}>
-          Activity
+          {t.typeLabel}
           <select name="type" required defaultValue="" className={input}>
             <option value="" disabled>
-              Choose…
+              {t.choose}
             </option>
-            {Object.entries(ACTIVITY_TYPES).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
+            {TYPES.map((type) => (
+              <option key={type} value={type}>
+                {activityTypeLabel(type, locale)}
               </option>
             ))}
           </select>
         </label>
         <label className={label}>
-          Name (only for Other)
+          {t.customName}
           <input
             name="customName"
             maxLength={ACTIVITY_LIMITS.customName}
-            placeholder="e.g. Padel"
+            placeholder={t.customNamePlaceholder}
             className={input}
           />
         </label>
         <label className={label}>
-          Date
+          {t.dateLabel}
           <input
             type="date"
             name="performedOn"
@@ -48,7 +60,7 @@ export function ActivityForm({ today, earliest }: { today: string; earliest: str
           />
         </label>
         <label className={label}>
-          Duration (minutes)
+          {t.durationLabel}
           <input
             type="number"
             name="durationMinutes"
@@ -56,28 +68,28 @@ export function ActivityForm({ today, earliest }: { today: string; earliest: str
             min={ACTIVITY_LIMITS.minDurationMinutes}
             max={ACTIVITY_LIMITS.maxDurationMinutes}
             step={1}
-            placeholder="e.g. 60"
+            placeholder={t.durationPlaceholder}
             className={input}
           />
         </label>
         <label className={label}>
-          Intensity
+          {t.intensityField}
           <select name="intensity" required defaultValue="MEDIUM" className={input}>
-            {Object.entries(INTENSITIES).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
+            {LEVELS.map((level) => (
+              <option key={level} value={level}>
+                {intensityLabel(level, locale)}
               </option>
             ))}
           </select>
         </label>
       </div>
       <label className={label}>
-        Notes
+        {t.notesField}
         <textarea
           name="notes"
           rows={2}
           maxLength={ACTIVITY_LIMITS.notes}
-          placeholder="Optional: what you did, how you felt"
+          placeholder={t.notesPlaceholder}
           className={textarea}
         />
       </label>
@@ -91,17 +103,22 @@ export function ActivityForm({ today, earliest }: { today: string; earliest: str
       )}
       {state.saved && (
         <p role="status" className={formSuccess}>
-          Activity logged.
+          {t.saved}
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className={`${buttonPrimary} self-start`}
-      >
-        {pending ? "Saving…" : "Log activity"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={pending} className={buttonPrimary}>
+          <ButtonLabel pending={pending} pendingText={t.saving}>
+            {t.logActivity}
+          </ButtonLabel>
+        </button>
+        {state.saved && doneHref && (
+          <Link href={doneHref} scroll={false} className={buttonSecondary}>
+            {t.done}
+          </Link>
+        )}
+      </div>
     </form>
   );
 }

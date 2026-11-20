@@ -1,6 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useMessages } from "@/lib/i18n/client";
 import { eyebrow as eyebrowClass, h2 } from "@/modules/ui/classes";
+import { uiMessages } from "../messages";
 import { CloseOnEscape } from "./close-on-escape";
 
 /**
@@ -18,10 +22,11 @@ export function Dialog({
   closeHref: string;
   children: ReactNode;
 }) {
+  const t = useMessages(uiMessages);
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center sm:items-center sm:p-4">
       <CloseOnEscape href={closeHref} />
-      <Link href={closeHref} scroll={false} aria-label="Close" className="absolute inset-0 bg-black/40" />
+      <Link href={closeHref} scroll={false} aria-label={t.close} className="absolute inset-0 bg-black/40" />
       <div
         role="dialog"
         aria-modal="true"
@@ -41,7 +46,7 @@ export function Dialog({
             className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-control text-xl text-secondary hover:bg-surface-muted hover:text-ink"
           >
             <span aria-hidden="true">×</span>
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t.close}</span>
           </Link>
         </header>
         <div className="flex flex-col gap-5 px-5 py-5">{children}</div>

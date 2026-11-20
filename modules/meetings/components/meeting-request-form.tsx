@@ -1,11 +1,16 @@
 "use client";
 
 import { useActionState } from "react";
+import { useLocale, useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, callout, fieldError, formSuccess, input, label, textarea } from "@/modules/ui/classes";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { requestMeeting, type RequestMeetingState } from "../actions";
+import { meetingMessages } from "../messages";
 import { MEETING_KINDS, MEETING_LIMITS, meetingKindLabel } from "../rules";
 
 export function MeetingRequestForm({ linkId }: { linkId: string }) {
+  const t = useMessages(meetingMessages);
+  const locale = useLocale();
   const [state, formAction, pending] = useActionState<RequestMeetingState, FormData>(requestMeeting, {});
   const problems = state.problems ?? {};
 
@@ -13,32 +18,32 @@ export function MeetingRequestForm({ linkId }: { linkId: string }) {
     <form action={formAction} className="flex w-full max-w-xl flex-col gap-5">
       <input type="hidden" name="linkId" value={linkId} />
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold">Type of meeting</legend>
+        <legend className="mb-1 text-sm font-semibold">{t.typeOfMeeting}</legend>
         <div className="flex flex-wrap gap-x-6">
           {MEETING_KINDS.map((kind, index) => (
             <label key={kind} className="flex min-h-11 items-center gap-3 text-sm">
               <input type="radio" name="kind" value={kind} defaultChecked={index === 0} required className="size-4 accent-accent" />
-              {meetingKindLabel(kind)}
+              {meetingKindLabel(kind, locale)}
             </label>
           ))}
         </div>
       </fieldset>
       <label className={label}>
-        Preferred times
+        {t.preferredTimes}
         <input
           name="preferredTimes"
           maxLength={MEETING_LIMITS.preferredTimes}
-          placeholder="e.g. weekday evenings"
+          placeholder={t.preferredTimesPlaceholder}
           className={input}
         />
       </label>
       <label className={label}>
-        Message
+        {t.message}
         <textarea
           name="message"
           rows={3}
           maxLength={MEETING_LIMITS.message}
-          placeholder="What would you like to talk about?"
+          placeholder={t.messagePlaceholder}
           className={textarea}
         />
       </label>
@@ -57,7 +62,7 @@ export function MeetingRequestForm({ linkId }: { linkId: string }) {
       )}
       {state.saved && (
         <p role="status" className={formSuccess}>
-          Meeting request sent.
+          {t.sent}
         </p>
       )}
 
@@ -66,7 +71,9 @@ export function MeetingRequestForm({ linkId }: { linkId: string }) {
         disabled={pending}
         className={`${buttonPrimary} self-start`}
       >
-        {pending ? "Sending…" : "Request meeting"}
+        <ButtonLabel pending={pending} pendingText={t.sending}>
+          {t.request}
+        </ButtonLabel>
       </button>
     </form>
   );

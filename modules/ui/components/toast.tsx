@@ -2,28 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { FLASH_COOKIE, flashMessage } from "../flash";
+import { useMessages } from "@/lib/i18n/client";
+import { FLASH_COOKIE, flashMessage, type FlashKey } from "../flash";
+import { uiMessages } from "../messages";
 
 const VISIBLE_MS = 5000;
 
-function takeFlash(): string | null {
+/** The notice's key, only when it is a known one (flashMessage validates it). */
+function takeFlash(): FlashKey | null {
   const match = document.cookie.match(new RegExp(`(?:^|; )${FLASH_COOKIE}=([^;]*)`));
   if (!match) return null;
   document.cookie = `${FLASH_COOKIE}=; Max-Age=0; path=/`;
-  return flashMessage(decodeURIComponent(match[1]));
+  const key = decodeURIComponent(match[1]);
+  return flashMessage(key) === null ? null : (key as FlashKey);
 }
 
 /** Shows the one-time notice a Server Action left before redirecting here. */
 export function Toast() {
   const pathname = usePathname();
-  const [message, setMessage] = useState<string | null>(null);
+  const t = useMessages(uiMessages);
+  const [key, setKey] = useState<FlashKey | null>(null);
+  const message = key ? t.flash[key] : null;
 
   useEffect(() => {
     // Runs after each navigation: the redirect target picks up the notice.
     const next = takeFlash();
     if (!next) return;
-    const show = setTimeout(() => setMessage(next), 0);
-    const hide = setTimeout(() => setMessage(null), VISIBLE_MS);
+    const show = setTimeout(() => setKey(next), 0);
+    const hide = setTimeout(() => setKey(null), VISIBLE_MS);
     return () => {
       clearTimeout(show);
       clearTimeout(hide);
@@ -43,8 +49,8 @@ export function Toast() {
           {message}
           <button
             type="button"
-            onClick={() => setMessage(null)}
-            aria-label="Dismiss"
+            onClick={() => setKey(null)}
+            aria-label={t.dismiss}
             className="-mr-1 inline-flex min-h-8 min-w-8 items-center justify-center rounded-control text-bg/70 hover:text-bg"
           >
             ×
