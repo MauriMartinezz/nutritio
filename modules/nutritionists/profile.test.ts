@@ -148,3 +148,14 @@ test("accepts the full ISO string the sign-up client sends for a birth date", ()
   assert.deepEqual(profile.birthDate, new Date("1990-05-20T00:00:00.000Z"));
   assert.ok(problemsOf({ ...valid, birthDate: "1990-05-20T15:30:00.000Z" }).birthDate);
 });
+
+test("profile errors can be reported in Spanish", () => {
+  try {
+    parseNutritionistProfile({ ...valid, dni: "999999" }, today, "es");
+    assert.fail("expected an InvalidProfileError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidProfileError);
+    assert.equal(error.problems.dni, "El DNI tiene que estar entre 1.000.000 y 999.999.999");
+  }
+  assert.deepEqual(buildPhone("+54 11", "123", "es"), { error: "El número tiene que tener entre 6 y 8 dígitos" });
+});

@@ -119,3 +119,13 @@ test("prices always carry $ after the currency", () => {
   assert.equal(formatPrice("150000.50", "ARS"), "ARS $150.000,50");
   assert.equal(formatPrice(200, "USD"), "USD $200");
 });
+
+test("public profile errors can be reported in Spanish", () => {
+  try {
+    parsePublicProfile({ ...valid, feeCurrency: "EUR" }, "es");
+    assert.fail("expected an InvalidPublicProfileError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidPublicProfileError);
+    assert.equal(error.problems.feeCurrency, "La moneda tiene que ser ARS o USD");
+  }
+});

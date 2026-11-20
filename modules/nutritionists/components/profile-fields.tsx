@@ -4,6 +4,7 @@
 // Inputs stay uncontrolled; the masks only reformat what the person types.
 
 import type { ChangeEvent } from "react";
+import { useMessages } from "@/lib/i18n/client";
 import { fieldHint, input, label } from "@/modules/ui/classes";
 import {
   formatDni,
@@ -13,6 +14,7 @@ import {
   maskPhonePrefixInput,
   splitPhone,
 } from "../profile";
+import { nutritionistMessages } from "../messages";
 
 /** Full-width text input (kept as an export: other forms import it). */
 export const inputClass = `${input} w-full`;
@@ -32,26 +34,27 @@ function masked(mask: (raw: string) => string) {
 }
 
 export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) {
+  const t = useMessages(nutritionistMessages);
   const phone = splitPhone(values.phone);
 
   return (
     <>
       <label className={label}>
-        DNI
+        {t.dni}
         <input
           name="dni"
           required
           inputMode="numeric"
           placeholder="30.123.456"
           pattern="[1-9]\d{0,2}(\.\d{3}){2}"
-          title="Between 1.000.000 and 999.999.999"
+          title={t.dniTitle}
           defaultValue={values.dni ? formatDni(values.dni) : ""}
           onChange={masked(maskDniInput)}
           className={inputClass}
         />
       </label>
       <label className={label}>
-        Professional license (MN / MP)
+        {t.license}
         <input
           name="licenseNumber"
           required
@@ -61,33 +64,33 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
         />
       </label>
       <label className={label}>
-        Date of birth
+        {t.dateOfBirth}
         <input
           name="birthDate"
           required
           inputMode="numeric"
-          placeholder="dd/mm/yyyy"
+          placeholder={t.datePlaceholder}
           pattern="\d{2}/\d{2}/\d{4}"
-          title="dd/mm/yyyy"
+          title={t.datePlaceholder}
           autoComplete="bday"
           defaultValue={values.birthDate ?? ""}
           onChange={masked(maskDateInput)}
           className={inputClass}
         />
-        <span className={fieldHint}>You must be at least 18 years old.</span>
+        <span className={fieldHint}>{t.minAgeHint}</span>
       </label>
       <fieldset className="flex flex-col gap-1 text-sm">
-        <legend className="mb-1 font-medium">Contact phone</legend>
+        <legend className="mb-1 font-medium">{t.contactPhone}</legend>
         <div className="flex gap-2">
           <label className="w-28 shrink-0">
-            <span className="sr-only">Prefix</span>
+            <span className="sr-only">{t.prefix}</span>
             <input
               name="phonePrefix"
               required
               inputMode="tel"
               placeholder="+54 11"
               pattern="\+\d{1,4}( \d{1,4}){0,2}"
-              title="Country and area code, e.g. +54 11"
+              title={t.prefixTitle}
               autoComplete="tel-country-code"
               defaultValue={phone.prefix}
               onChange={masked(maskPhonePrefixInput)}
@@ -95,7 +98,7 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
             />
           </label>
           <label className="min-w-0 flex-1">
-            <span className="sr-only">Number</span>
+            <span className="sr-only">{t.number}</span>
             <input
               name="phoneNumber"
               required
@@ -108,11 +111,11 @@ export function ProfileFields({ values = {} }: { values?: ProfileFieldValues }) 
             />
           </label>
         </div>
-        <span className={fieldHint}>Prefix with country and area code, then the number.</span>
+        <span className={fieldHint}>{t.phoneHint}</span>
       </fieldset>
       <label className={label}>
         <span>
-          Specialty <span className={fieldHint}>(optional)</span>
+          {t.specialty} <span className={fieldHint}>{t.optional}</span>
         </span>
         <input
           name="specialty"

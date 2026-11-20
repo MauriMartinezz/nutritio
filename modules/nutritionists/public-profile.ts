@@ -1,4 +1,6 @@
 // Public profile a nutritionist edits and clients see in the directory before requesting.
+import type { Locale } from "@/lib/i18n/negotiate";
+import { nutritionistErrors } from "./messages";
 
 export const FEE_CURRENCIES = ["ARS", "USD"] as const;
 export type FeeCurrency = (typeof FEE_CURRENCIES)[number];
@@ -35,22 +37,16 @@ const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
 // Digits with an optional dot or comma and up to 2 decimals; no thousands separators.
 const AMOUNT = /^\d+(?:[.,]\d{1,2})?$/;
 
-const LABELS: Record<keyof typeof PUBLIC_PROFILE_LIMITS, string> = {
-  bio: "About you",
-  education: "Education",
-  planIncludes: "What your plan includes",
-  feeDescription: "Fee description",
-};
-
 /** Validates and normalizes public profile input, reporting every invalid field at once. */
-export function parsePublicProfile(input: Record<string, unknown>): PublicProfile {
+export function parsePublicProfile(input: Record<string, unknown>, locale: Locale = "en"): PublicProfile {
+  const t = nutritionistErrors[locale];
   const problems: Partial<Record<PublicProfileField, string>> = {};
 
   const texts = {} as Record<keyof typeof PUBLIC_PROFILE_LIMITS, string | null>;
   for (const field of Object.keys(PUBLIC_PROFILE_LIMITS) as (keyof typeof PUBLIC_PROFILE_LIMITS)[]) {
     const value = text(input[field]);
     const limit = PUBLIC_PROFILE_LIMITS[field];
-    if (value.length > limit) problems[field] = `${LABELS[field]} must be at most ${limit} characters`;
+    if (value.length > limit) problems[field] = t.textTooLong(t.publicFields[field], limit);
     texts[field] = value || null;
   }
 
@@ -59,7 +55,7 @@ export function parsePublicProfile(input: Record<string, unknown>): PublicProfil
   if (rawAmount) {
     const amount = AMOUNT.test(rawAmount) ? Number(rawAmount.replace(",", ".")) : NaN;
     if (!(amount > 0 && amount <= MAX_FEE)) {
-      problems.feeAmount = "Fee must be a positive amount up to 10,000,000 with at most 2 decimals";
+      problems.feeAmount = t.feeAmount;
     } else {
       feeAmount = amount.toFixed(2);
     }
@@ -67,7 +63,7 @@ export function parsePublicProfile(input: Record<string, unknown>): PublicProfil
 
   const rawCurrency = text(input.feeCurrency) || "ARS";
   const feeCurrency = FEE_CURRENCIES.find((currency) => currency === rawCurrency);
-  if (!feeCurrency) problems.feeCurrency = "Currency must be ARS or USD";
+  if (!feeCurrency) problems.feeCurrency = t.feeCurrency;
 
   if (Object.keys(problems).length > 0) throw new InvalidPublicProfileError(problems);
 

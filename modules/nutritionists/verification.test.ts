@@ -78,3 +78,17 @@ test("only a rejected application can be sent again; a pending one blocks a new 
   );
   assert.throws(() => assertCanResubmit(null), InvalidVerificationError);
 });
+
+test("verification errors can be reported in Spanish", () => {
+  assert.throws(
+    () => assertCanResubmit("PENDING", "es"),
+    (error) => error instanceof InvalidVerificationError && error.message === "Tu solicitud ya está esperando revisión",
+  );
+  try {
+    parseAdminNutritionistUpdate({ ...form, email: "nope" }, today, "es");
+    assert.fail("expected an InvalidAdminUpdateError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidAdminUpdateError);
+    assert.equal(error.problems.email, "Ingresá un email válido");
+  }
+});
