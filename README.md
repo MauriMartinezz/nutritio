@@ -85,6 +85,7 @@ pnpm build       # runs prisma generate, then next build (generated/ is git-igno
 - Nutritionists also provide DNI, professional license, date of birth, contact phone and an optional specialty, and start **pending** until an admin verifies them. After sign-up only an admin can change that data.
 - Role, verification status and the professional profile cannot be changed through the auth API (`/api/auth/update-user` returns 403).
 - Create the first admin from an existing account: `pnpm admin:promote <email>`. Admins verify nutritionists at `/admin`.
+- Change an existing user's role: `pnpm admin:set-role <email> <ADMIN|NUTRITIONIST|CLIENT>`. `NUTRITIONIST` is set as already approved; `CLIENT` clears the verification state. Profile data is kept.
 - Clients find verified nutritionists at `/nutritionists` and request to work with them; a client can work with several nutritionists at once.
 - Nutritionists accept or decline requests at `/clients`. A nutritionist reads a client's data only while their link is accepted (`modules/coaching/dal.ts` → `requireClientAccess`).
 - Server code reads the user through `modules/identity/dal.ts` (`getCurrentUser`, `requireUser`, `requireRole`).
