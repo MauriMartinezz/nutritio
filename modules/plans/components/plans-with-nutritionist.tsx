@@ -65,7 +65,7 @@ export async function PlansWithNutritionist({
   nutritionistId: string;
   nutritionistName: string;
 }) {
-  const work = await getMyWorkWith(nutritionistId);
+  const work = await getMyWorkWith(nutritionistId, await getLocale());
   if (!work) return null;
   const t = await getMessages(withNutritionistMessages);
   const accessExpired = work.expired;

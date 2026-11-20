@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getMessages } from "@/lib/i18n/server";
+import { planMessages } from "@/modules/plans/messages";
 import { PlanEditor } from "@/modules/plans/components/plan-editor";
 import { page } from "@/modules/ui/classes";
 import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
 
-export const metadata: Metadata = { title: "Meal plan · Nutritio" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getMessages(planMessages);
+  return { title: `${t.titles.plan} · Nutritio` };
+}
 
 export default function Page({ params, searchParams }: PageProps<"/[lang]/plans/[planId]">) {
   return (
