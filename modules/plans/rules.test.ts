@@ -4,6 +4,7 @@ import {
   DEFAULT_MEALS,
   PlanRuleError,
   canEditPlan,
+  macroSplit,
   copyPlanForClient,
   dailyTotals,
   itemTotals,
@@ -280,4 +281,14 @@ test("foldSearchTerm lowercases and drops accents so 'limon' matches 'Limón'", 
   assert.equal(foldSearchTerm("Limón"), "limon");
   assert.equal(foldSearchTerm("  ÑOQUIS de Calabaza "), "noquis de calabaza");
   assert.equal(foldSearchTerm("pingüino"), "pinguino");
+});
+
+test("macroSplit: share of the day's calories from protein, carbs and fat", () => {
+  // 150 g P = 600 kcal, 200 g C = 800 kcal, 67 g F = 603 kcal → 2003 kcal from macros.
+  assert.deepEqual(macroSplit({ kcal: 2000, proteinG: 150, carbsG: 200, fatG: 67, incomplete: false }), {
+    proteinPct: 30,
+    carbsPct: 40,
+    fatPct: 30,
+  });
+  assert.equal(macroSplit({ kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, incomplete: false }), null);
 });

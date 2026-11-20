@@ -263,3 +263,18 @@ export function shoppingList(meals: ShoppingMeal[], period: ShoppingPeriod) {
 export function formatShoppingGrams(grams: number): string {
   return grams >= 1000 ? `${(Math.round(grams / 100) / 10).toFixed(1)} kg` : `${grams} g`;
 }
+
+/**
+ * Share of the day's calories that comes from each macro (4 kcal/g protein and
+ * carbs, 9 kcal/g fat), rounded so the three add up to 100. Null for an empty plan.
+ */
+export function macroSplit(totals: Totals): { proteinPct: number; carbsPct: number; fatPct: number } | null {
+  const protein = totals.proteinG * 4;
+  const carbs = totals.carbsG * 4;
+  const fat = totals.fatG * 9;
+  const sum = protein + carbs + fat;
+  if (sum <= 0) return null;
+  const proteinPct = Math.round((protein / sum) * 100);
+  const carbsPct = Math.round((carbs / sum) * 100);
+  return { proteinPct, carbsPct, fatPct: 100 - proteinPct - carbsPct };
+}

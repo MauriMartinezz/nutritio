@@ -244,6 +244,19 @@ export async function listMyPlans() {
   return { plans: loaded.filter((plan): plan is PlanView => plan !== null), expired };
 }
 
+/**
+ * What the client has with one nutritionist: null without an accepted link,
+ * otherwise whether access expired and, while active, that nutritionist's plans.
+ */
+export async function getMyWorkWith(nutritionistId: string) {
+  const client = await requireRole("CLIENT");
+  const { active, expiredIds } = await myNutritionistAccess(client.id);
+  if (expiredIds.includes(nutritionistId)) return { expired: true, plans: [] as PlanView[] };
+  if (!active.includes(nutritionistId)) return null;
+  const { plans } = await listMyPlans();
+  return { expired: false, plans: plans.filter((plan) => plan.nutritionist.id === nutritionistId) };
+}
+
 /** One of the client's own plans under the same visibility rule as listMyPlans, else null. */
 export async function getMyPlan(planId: string) {
   const client = await requireRole("CLIENT");
@@ -272,6 +285,8 @@ async function myNutritionistAccess(clientId: string) {
   const isActive = (link: (typeof links)[number]) =>
     hasActiveAccess({ ...link, amount: link.accessAmount, unit: link.accessUnit }, now);
   const active = links.filter(isActive).map((link) => link.nutritionistId);
-  const expired = links.filter((link) => !isActive(link)).map((link) => link.nutritionist.name);
-  return { active, expired };
+  const expiredLinks = links.filter((link) => !isActive(link));
+  const expired = expiredLinks.map((link) => link.nutritionist.name);
+  const expiredIds = expiredLinks.map((link) => link.nutritionistId);
+  return { active, expired, expiredIds };
 }
