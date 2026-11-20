@@ -4,6 +4,7 @@ import { card, h1, h2, muted } from "@/modules/ui/classes";
 import { getDirectoryProfile } from "../directory-dal";
 import { FeeBox, NutritionistFacts } from "./nutritionist-facts";
 import { RequestNutritionist } from "./request-nutritionist";
+import { PlansWithNutritionist } from "@/modules/plans/components/plans-with-nutritionist";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -34,6 +35,10 @@ export async function NutritionistPublicProfile({ params }: { params: Promise<{ 
           <RequestNutritionist nutritionist={nutritionist} />
         </div>
       </div>
+
+      {nutritionist.linkStatus === "ACCEPTED" && (
+        <PlansWithNutritionist nutritionistId={nutritionist.id} nutritionistName={nutritionist.name} />
+      )}
 
       {nutritionist.bio && <Section title="About">{nutritionist.bio}</Section>}
       {nutritionist.planIncludes && <Section title="What the plan includes">{nutritionist.planIncludes}</Section>}

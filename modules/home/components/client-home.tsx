@@ -78,7 +78,7 @@ export async function ClientHome() {
               ? `P ${Math.round(plan.totals.proteinG)} g · C ${Math.round(plan.totals.carbsG)} g · F ${Math.round(plan.totals.fatG)} g`
               : "No plan yet"
           }
-          href={plan ? `/my-plans/${plan.id}` : undefined}
+          href={plan ? `/nutritionists/${plan.nutritionist.id}#plan` : undefined}
         />
         <Kpi
           label="Latest weight"
@@ -128,7 +128,7 @@ export async function ClientHome() {
                   ))}
                 </ul>
                 <div className="flex flex-wrap gap-2">
-                  <Link href={`/my-plans/${plan.id}`} className={buttonSecondary}>
+                  <Link href={`/nutritionists/${plan.nutritionist.id}#plan`} className={buttonSecondary}>
                     Open plan
                   </Link>
                   <Link href={`/my-plans/${plan.id}/shopping-list`} className={buttonSecondary}>
@@ -172,7 +172,14 @@ function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
   return (
     <article className={card}>
       <div className="flex flex-col gap-1">
-        <h3 className="text-lg font-semibold tracking-tight">{link.nutritionistName}</h3>
+        <h3 className="flex flex-wrap items-center justify-between gap-2 text-lg font-semibold tracking-tight">
+          <Link href={`/nutritionists/${link.nutritionistId}`} className="hover:text-accent hover:underline">
+            {link.nutritionistName}
+          </Link>
+          <Link href={`/nutritionists/${link.nutritionistId}#plan`} className={buttonSecondary}>
+            Plan, macros and shopping list
+          </Link>
+        </h3>
         <p className={link.accessExpired ? `${callout("danger")} font-medium` : muted}>
           {describeAccess({ expired: link.accessExpired, daysLeft }, link.nutritionistName)}
           {!link.accessExpired && link.accessUntil && ` (until ${link.accessUntil.toLocaleDateString()})`}

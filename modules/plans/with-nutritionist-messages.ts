@@ -1,0 +1,36 @@
+import { defineMessages } from "@/lib/i18n/messages";
+
+export const withNutritionistMessages = defineMessages({
+  en: {
+    title: (name: string) => `Your work with ${name}`,
+    noPlan: "Your nutritionist hasn't shared a plan yet.",
+    expired: "Your access has expired. Ask your nutritionist to renew it to see your plan again.",
+    macros: "Daily macros",
+    perDay: "per day",
+    protein: "Protein",
+    carbs: "Carbs",
+    fat: "Fat",
+    ofCalories: (pct: number) => `${pct}% of calories`,
+    incomplete: "Some foods have no data for a value; it was counted as 0.",
+    shoppingList: "Shopping list",
+    checkIns: "Check-ins",
+    meetings: "Meetings",
+    planFrom: (plan: string) => `Plan: ${plan}`,
+  },
+  es: {
+    title: (name: string) => `Tu trabajo con ${name}`,
+    noPlan: "Tu nutricionista todavía no compartió un plan.",
+    expired: "Tu acceso venció. Pedile a tu nutricionista que lo renueve para volver a ver tu plan.",
+    macros: "Macros del día",
+    perDay: "por día",
+    protein: "Proteínas",
+    carbs: "Carbohidratos",
+    fat: "Grasas",
+    ofCalories: (pct: number) => `${pct}% de las calorías`,
+    incomplete: "Algunos alimentos no tienen datos de algún valor; se contó como 0.",
+    shoppingList: "Lista de compras",
+    checkIns: "Controles",
+    meetings: "Reuniones",
+    planFrom: (plan: string) => `Plan: ${plan}`,
+  },
+});

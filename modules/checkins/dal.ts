@@ -211,6 +211,7 @@ export async function getClientCheckInSummary(): Promise<ClientCheckInSummary[]>
 
 export type ClientHomeLink = CheckInScheduleView & {
   linkId: string;
+  nutritionistId: string;
   nutritionistName: string;
   /** End of access in force (auto-renew applied); null if never granted. */
   accessUntil: Date | null;
@@ -238,7 +239,7 @@ export async function getClientHome(): Promise<{ now: Date; links: ClientHomeLin
       accessUntil: true,
       autoRenew: true,
       checkInEveryDays: true,
-      nutritionist: { select: { name: true } },
+      nutritionist: { select: { id: true, name: true } },
       checkIns: { select: { createdAt: true, weightKg: true }, orderBy: { createdAt: "desc" } },
     },
     orderBy: { respondedAt: "asc" },
@@ -257,6 +258,7 @@ export async function getClientHome(): Promise<{ now: Date; links: ClientHomeLin
       );
       return {
         linkId: link.id,
+        nutritionistId: link.nutritionist.id,
         nutritionistName: link.nutritionist.name,
         accessUntil: effectiveAccessUntil(access, now),
         accessExpired: accessState(access, now) === "EXPIRED",

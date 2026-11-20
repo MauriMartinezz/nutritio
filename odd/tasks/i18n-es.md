@@ -24,7 +24,9 @@ Objective: the whole app available in Spanish (es-AR focus) and English. Branch:
 | U2 | L7 | inline: admin dashboard of clients to fix their data (e.g. name) | done | (this commit) |
 | U3 | L8 | inline: Contact section (title + description) → admin inbox, reply, close as completed; admin user profile with request history (shares the admin user page with U2) | done | (this commit) |
 | U4 | L11 | inline: hide check-ins, meetings and meal plans from clients who never had a nutritionist | done | (this commit) |
-| U5 | L12 | inline: client home shortcut to their nutritionist; nutritionist page shows the client everything with them: plan, plan macro summary, shopping list | todo | |
+| U5 | L12 | inline: client home shortcut to their nutritionist; nutritionist page shows the client everything with them: plan, plan macro summary, shopping list | done | (this commit) |
+| U6 | L14 | inline: check-ins table with dates and a detail view, plus a dashboard/history of body changes (weight, measurements); a "new check-in" button opens the form | todo | |
+| U7 | L16 | inline: activities history table, dashboard and a "log activity" button that opens the form | todo | |
 | T7 | S1-S5 | inline: seam check, full suite, build, manual check of both languages | todo | |
 
 Route evidence: T2-T6 are independent units with disjoint edit surfaces (one module group each, several files and well over 100 changed lines each), launched together after T1 fixes the shared pattern (Writer trigger a).
@@ -51,3 +53,7 @@ Route evidence: T2-T6 are independent units with disjoint edit surfaces (one mod
 - L11 (2026-11-20, user): "No tiene sentido que un usuario tenga Check-ins, meetings, y meal plans si nunca tuvo un nutricionista." — tracked as U4.
 - L12 (2026-11-20, user): "En el home, el cliente debe tener un acceso directo a su nutricionista: en el perfil del nutricionista el cliente debe poder acceder a todo lo relacionado a él: el plan, un resumen de los macros del plan, lista de compras que armó el nutricionista, etc"
 - L13 (2026-11-20): U4 verified: a new client (Playwright, es) sees Inicio | Actividades | Buscar nutricionista | Contacto. "Had a nutritionist" = any ACCEPTED link, even expired (unit tested; no such client in the local DB).
+- L14 (2026-11-20, user): "En check-ins debe haber una tabla con los distintos check-ins, cuando fueron, entrar a ver los detalles, y debe haber un dashboard y un historial, para ver cuánto cambió su cuerpo, peso, medidas, etc"
+- L15 (2026-11-20, user): "También en check-ins debe haber un botón para hacer un check-in, no debe ser simplemente el formulario"
+- L16 (2026-11-20, user): "En activities, debe haber una tabla con el historial, un dashboard y un botón para logear una actividad, no simplemente el formulario"
+- L17 (2026-11-20): U5 verified with Playwright on seeded local data (approved nutritionist, accepted link, plan): nav shows Controles, home links to the nutritionist, profile shows "Tu trabajo con …" with daily macros and split, plan and shopping list. Also fixed home links to /my-plans/<id>, a page that never existed (404); they now open the nutritionist page at #plan.

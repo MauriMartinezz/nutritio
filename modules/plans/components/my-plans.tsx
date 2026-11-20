@@ -45,7 +45,7 @@ export async function MyPlans() {
   );
 }
 
-function PlanCard({ plan }: { plan: PlanView }) {
+export function PlanCard({ plan }: { plan: PlanView }) {
   return (
     <article className={card}>
       <header className="flex flex-col gap-3">
