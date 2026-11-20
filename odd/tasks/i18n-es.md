@@ -15,21 +15,21 @@ Objective: the whole app available in Spanish (es-AR focus) and English. Branch:
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
 | T1 | S2-S5, S1 for app shell | inline: locale negotiation (pure, tested), `proxy.ts` rewrite to `app/[lang]`, `next/root-params`, message pattern, selector, shell translated | done | (this commit) |
-| T2 | S1 | delegated W1: identity (rest), home (rest), clients/preferences + home/profile/preferences routes | done (uncommitted) | |
-| T3 | S1 | delegated W2: nutritionists module + /admin (nutritionist review) route | done (uncommitted) | |
-| T4 | S1 | delegated W3: coaching + clients and nutritionists routes (done, uncommitted); W4: checkins (with U6) | in progress | |
-| T5 | S1 | delegated W5: plans, foods + plans/my-plans routes | done (uncommitted) | |
-| T6 | S1 | delegated W6: activities (with U7), meetings, ui + their routes | done (uncommitted) | |
+| T2 | S1 | delegated W1: identity (rest), home (rest), clients/preferences + home/profile/preferences routes | done | cbe301b, 5e142df |
+| T3 | S1 | delegated W2: nutritionists module + /admin (nutritionist review) route | done | cc86314 |
+| T4 | S1 | delegated W3: coaching + clients and nutritionists routes; W4: checkins (with U6) | done | 72e3407, 132eeeb |
+| T5 | S1 | delegated W5: plans, foods + plans/my-plans routes | done | 8272b70 |
+| T6 | S1 | delegated W6: activities (with U7), meetings, ui + their routes | done | 7d7a604 |
 | U1 | L5 | inline: landing page, no sidebar on sign-in/sign-up, sign-out clears the login form, "remember me", button spinners | done (spinner component + identity forms; other modules adopt it in T2-T6) | (this commit) |
 | U2 | L7 | inline: admin dashboard of clients to fix their data (e.g. name) | done | (this commit) |
 | U3 | L8 | inline: Contact section (title + description) → admin inbox, reply, close as completed; admin user profile with request history (shares the admin user page with U2) | done | (this commit) |
 | U4 | L11 | inline: hide check-ins, meetings and meal plans from clients who never had a nutritionist | done | (this commit) |
 | U5 | L12 | inline: client home shortcut to their nutritionist; nutritionist page shows the client everything with them: plan, plan macro summary, shopping list | done | (this commit) |
-| U6 (in W4) | L14 | inline: check-ins table with dates and a detail view, plus a dashboard/history of body changes (weight, measurements); a "new check-in" button opens the form | todo | |
-| U7 (in W6) | L16 | inline: activities history table, dashboard and a "log activity" button that opens the form | done (uncommitted, 20 browser checks es/en) | |
-| U8a (in W5) | L19 | plan editor: one "Save changes" button at the end of the page instead of several | done (uncommitted, checked with no-JS posts on the dev server) | |
-| U8b (in W3) | L19 | access: hide the auto-renew period unless auto-renew is checked; "Renew access" stays on the current page | done (uncommitted, rules tested, not clicked) | |
-| T7 | S1-S5 | inline: seam check, full suite, build, manual check of both languages | todo | |
+| U6 (in W4) | L14 | inline: check-ins table with dates and a detail view, plus a dashboard/history of body changes (weight, measurements); a "new check-in" button opens the form | done | 132eeeb |
+| U7 (in W6) | L16 | inline: activities history table, dashboard and a "log activity" button that opens the form | done | 7d7a604 |
+| U8a (in W5) | L19 | plan editor: one "Save changes" button at the end of the page instead of several | done | 8272b70 |
+| U8b (in W3) | L19 | access: hide the auto-renew period unless auto-renew is checked; "Renew access" stays on the current page | done | 72e3407 |
+| T7 | S1-S5 | inline: seam check, full suite, build, manual check of both languages | done | 5e142df + this commit |
 
 Route evidence: T2-T6 are independent units with disjoint edit surfaces (one module group each, several files and well over 100 changed lines each), launched together after T1 fixes the shared pattern (Writer trigger a).
 
@@ -66,3 +66,4 @@ Route evidence: T2-T6 are independent units with disjoint edit surfaces (one mod
 - L22 (2026-11-20): W3 done: coaching translated, 221 tests pass, tsc clean; U8b: auto-renew period shown only when checked (CSS group-has, works without JS; parseAutoRenew ignores the period when off), Renew access opens a dialog on /clients/[clientId] and returns there (renewReturnHref, no browser-supplied URL). For T7: modules/ui/flash.ts toasts and dialog aria-label are English; nutritionist-home concatenates "Access " + timeLeftLabel; formatFee has no locale; a hidden required period field can block saving with auto-renew off.
 - L23 (2026-11-20): W5 done: plans and foods translated; U8a: the plan editor is one form (form= attribute) with a single save at the bottom; structural buttons save pending edits first; one editPlan action in a transaction replaces 10 one-field actions; parsePlanEdits/parsePlanIntent tested first. 221 tests pass, tsc clean. For T7: client-home still has 3 English strings (All plans, no plan yet, renew access), and the w5 scratch must be removed.
 - L24 (2026-11-20): W6 done: activities, meetings and ui translated; U7 dashboard (week vs last week, top activity, 8-week bar chart), history table (12 months), "Log activity" opens the dialog at /activities?log=1. 221 tests pass, tsc clean. For T7: callers in home/check-ins/coaching should use activityTypeLabel, meetingKindLabel(kind, locale) and yesNo(locale) instead of English constants; remove the w6 scratch.
+- L25 (2026-11-20): T7 seam check: tsc and eslint clean, 223 tests pass, `next build` passes. Spanish sweep with Playwright (client and nutritionist, 17 pages) found no English text. Fixed at the seam: sign-up and name-update errors follow the request language (localeFromHeaders, tested), auth-form passes the locale to buildPhone, InvalidProfileError message has no English prefix, neutral "Tu paciente" wording, and the hidden auto-renew amount is no longer required. Screenshots confirmed one Save changes button, the renew dialog on the client page, and the auto-renew period hidden when unchecked. Each of the 7 commits typechecks on its own (scratch worktree with next typegen).
