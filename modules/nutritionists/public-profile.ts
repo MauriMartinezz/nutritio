@@ -81,19 +81,24 @@ export function parsePublicProfile(input: Record<string, unknown>): PublicProfil
   };
 }
 
-/** "ARS 25.000 · per month"; null when no fee amount is set. */
+/** "ARS $150.000,50" or "USD $200": decimals only when the amount has cents. */
+export function formatPrice(amount: string | number | { toString(): string }, currency: string): string {
+  const value = Number(amount.toString());
+  const decimals = Number.isInteger(value) ? 0 : 2;
+  const number = new Intl.NumberFormat("es-AR", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+  return `${currency} $${number}`;
+}
+
+/** "ARS $25.000 · per month"; null when no fee amount is set. */
 export function formatFee(fee: {
   feeAmount: string | number | { toString(): string } | null;
   feeCurrency: string;
   feeDescription: string | null;
 }): string | null {
   if (fee.feeAmount === null) return null;
-  const amount = Number(fee.feeAmount.toString());
-  const decimals = Number.isInteger(amount) ? 0 : 2;
-  const number = new Intl.NumberFormat("es-AR", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(amount);
-  const price = `${fee.feeCurrency} ${number}`;
+  const price = formatPrice(fee.feeAmount, fee.feeCurrency);
   return fee.feeDescription ? `${price} · ${fee.feeDescription}` : price;
 }

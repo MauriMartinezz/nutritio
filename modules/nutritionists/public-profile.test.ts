@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { InvalidPublicProfileError, formatFee, parsePublicProfile } from "./public-profile";
+import { InvalidPublicProfileError, formatFee, formatPrice, parsePublicProfile } from "./public-profile";
 
 const valid = {
   bio: " Sports nutritionist with 10 years of experience. ",
@@ -109,8 +109,13 @@ test("reports every invalid field at once", () => {
 test("formats a fee with its currency and description", () => {
   assert.equal(
     formatFee({ feeAmount: "25000.00", feeCurrency: "ARS", feeDescription: "per month" }),
-    "ARS 25.000 · per month",
+    "ARS $25.000 · per month",
   );
-  assert.equal(formatFee({ feeAmount: "49.9", feeCurrency: "USD", feeDescription: null }), "USD 49,90");
+  assert.equal(formatFee({ feeAmount: "49.9", feeCurrency: "USD", feeDescription: null }), "USD $49,90");
   assert.equal(formatFee({ feeAmount: null, feeCurrency: "ARS", feeDescription: "per month" }), null);
+});
+
+test("prices always carry $ after the currency", () => {
+  assert.equal(formatPrice("150000.50", "ARS"), "ARS $150.000,50");
+  assert.equal(formatPrice(200, "USD"), "USD $200");
 });

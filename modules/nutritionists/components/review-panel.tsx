@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { badge, eyebrow, figure, h2, h3, muted } from "@/modules/ui/classes";
 import { CloseOnEscape } from "@/modules/ui/components/close-on-escape";
 import { formatBirthDate, formatDni } from "../profile";
+import { formatPrice } from "../public-profile";
 import { STATUS_LABELS, STATUS_TONES } from "./status";
 import { ReviewForm } from "./review-form";
 
@@ -123,7 +124,7 @@ export async function ReviewPanel({ id, closeHref }: { id: string; closeHref: st
                 {nutritionist.feeAmount && (
                   <>
                     <span className={figure}>
-                      {nutritionist.feeCurrency} {nutritionist.feeAmount.toString()}
+                      {formatPrice(nutritionist.feeAmount, nutritionist.feeCurrency)}
                     </span>
                     {nutritionist.feeDescription && ` · ${nutritionist.feeDescription}`}
                   </>
