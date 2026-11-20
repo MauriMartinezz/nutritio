@@ -23,7 +23,8 @@ Objective: the whole app available in Spanish (es-AR focus) and English. Branch:
 | U1 | L5 | inline: landing page, no sidebar on sign-in/sign-up, sign-out clears the login form, "remember me", button spinners | done (spinner component + identity forms; other modules adopt it in T2-T6) | (this commit) |
 | U2 | L7 | inline: admin dashboard of clients to fix their data (e.g. name) | done | (this commit) |
 | U3 | L8 | inline: Contact section (title + description) → admin inbox, reply, close as completed; admin user profile with request history (shares the admin user page with U2) | done | (this commit) |
-| U4 | L11 | inline: hide check-ins, meetings and meal plans from clients who never had a nutritionist | todo | |
+| U4 | L11 | inline: hide check-ins, meetings and meal plans from clients who never had a nutritionist | done | (this commit) |
+| U5 | L12 | inline: client home shortcut to their nutritionist; nutritionist page shows the client everything with them: plan, plan macro summary, shopping list | todo | |
 | T7 | S1-S5 | inline: seam check, full suite, build, manual check of both languages | todo | |
 
 Route evidence: T2-T6 are independent units with disjoint edit surfaces (one module group each, several files and well over 100 changed lines each), launched together after T1 fixes the shared pattern (Writer trigger a).
@@ -48,3 +49,5 @@ Route evidence: T2-T6 are independent units with disjoint edit surfaces (one mod
 - L9 (2026-11-20): U1 verified on the local dev server: landing screenshots desktop/mobile (es, en); sign-in has no sidebar; rememberMe=false → session cookie without Max-Age, true → Max-Age=604800. Sign-out now does a full page load so no cached page keeps typed credentials (reasoned, not reproduced in a real browser).
 - L10 (2026-11-20): U2+U3 verified with a Playwright run on the local dev server (Spanish browser): client sends a contact request, form clears, list shows it waiting; admin sees Pedidos (no Contacto), answers and marks it completed, fixes the client name, history and search show it; client sees the answer; after sign-out the sign-in form is empty and has no sidebar. New table support_requests (additive migration 20261120153704).
 - L11 (2026-11-20, user): "No tiene sentido que un usuario tenga Check-ins, meetings, y meal plans si nunca tuvo un nutricionista." — tracked as U4.
+- L12 (2026-11-20, user): "En el home, el cliente debe tener un acceso directo a su nutricionista: en el perfil del nutricionista el cliente debe poder acceder a todo lo relacionado a él: el plan, un resumen de los macros del plan, lista de compras que armó el nutricionista, etc"
+- L13 (2026-11-20): U4 verified: a new client (Playwright, es) sees Inicio | Actividades | Buscar nutricionista | Contacto. "Had a nutritionist" = any ACCEPTED link, even expired (unit tested; no such client in the local DB).

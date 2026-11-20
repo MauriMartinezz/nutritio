@@ -1,40 +1,39 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { prisma } from "@/lib/prisma";
 import { getMessages } from "@/lib/i18n/server";
 import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
 import { OpenRequestsBadge } from "@/modules/support/components/open-requests-badge";
 import { getCurrentUser, type CurrentUser } from "../dal";
+import { navSections, type NavSection } from "../nav";
 import { navMessages, roleMessages } from "../nav-messages";
 import { NavLinks, ProfileLink, type NavItem } from "./nav-links";
 
 type NavText = (typeof navMessages)["en"];
 
-function navItems(user: CurrentUser, t: NavText): NavItem[] {
-  const items: NavItem[] = [{ href: "/", label: t.home }];
-  if (user.role === "CLIENT") {
-    items.push(
-      { href: "/my-plans", label: t.myPlans },
-      { href: "/check-ins", label: t.checkIns },
-      { href: "/activities", label: t.activities },
-      { href: "/meetings", label: t.meetings },
-      { href: "/nutritionists", label: t.findNutritionist },
-    );
-  }
-  if (user.nutritionistStatus === "APPROVED") {
-    items.push(
-      { href: "/clients", label: t.myClients, badge: <PendingActions /> },
-      { href: "/plans", label: t.planTemplates },
-    );
-  }
-  if (user.role === "ADMIN") {
-    items.push(
-      { href: "/admin", label: t.nutritionists },
-      { href: "/admin/users", label: t.users },
-      { href: "/admin/requests", label: t.requests, badge: <OpenRequestsBadge /> },
-    );
-  } else {
-    items.push({ href: "/contact", label: t.contact });
-  }
-  return items;
+const SECTIONS: Record<NavSection, { href: string; label: (t: NavText) => string; badge?: ReactNode }> = {
+  home: { href: "/", label: (t) => t.home },
+  myPlans: { href: "/my-plans", label: (t) => t.myPlans },
+  checkIns: { href: "/check-ins", label: (t) => t.checkIns },
+  activities: { href: "/activities", label: (t) => t.activities },
+  meetings: { href: "/meetings", label: (t) => t.meetings },
+  findNutritionist: { href: "/nutritionists", label: (t) => t.findNutritionist },
+  myClients: { href: "/clients", label: (t) => t.myClients, badge: <PendingActions /> },
+  planTemplates: { href: "/plans", label: (t) => t.planTemplates },
+  nutritionists: { href: "/admin", label: (t) => t.nutritionists },
+  users: { href: "/admin/users", label: (t) => t.users },
+  requests: { href: "/admin/requests", label: (t) => t.requests, badge: <OpenRequestsBadge /> },
+  contact: { href: "/contact", label: (t) => t.contact },
+};
+
+async function navItems(user: CurrentUser, t: NavText): Promise<NavItem[]> {
+  const hadNutritionist =
+    user.role === "CLIENT" &&
+    (await prisma.nutritionistClient.count({ where: { clientId: user.id, status: "ACCEPTED" } })) > 0;
+  return navSections(user, { hadNutritionist }).map((section) => {
+    const { href, label, badge } = SECTIONS[section];
+    return { href, label: label(t), badge };
+  });
 }
 
 function initials(name: string) {
@@ -73,7 +72,7 @@ export async function AppNav() {
       className="relative flex flex-col gap-4 border-b border-line bg-surface px-4 py-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:gap-8 md:border-r md:border-b-0 md:px-[18px] md:py-7"
     >
       <Brand />
-      <NavLinks items={navItems(user, t)} />
+      <NavLinks items={await navItems(user, t)} />
       <ProfileLink name={user.name} initials={initials(user.name)} roleLabel={roles[user.role]} />
     </nav>
   );
