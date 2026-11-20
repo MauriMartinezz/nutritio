@@ -80,3 +80,14 @@ export function reviewStatus(decision: unknown, current: NutritionistStatus | nu
   if (decision === "APPROVED" || decision === "REJECTED") return decision;
   throw new InvalidVerificationError(`Unknown decision "${String(decision)}"`);
 }
+
+/**
+ * A nutritionist has a single application: they can send it again only after
+ * it was rejected, so there is never more than one pending.
+ */
+export function assertCanResubmit(status: NutritionistStatus | null): void {
+  if (status === "REJECTED") return;
+  if (status === "PENDING") throw new InvalidVerificationError("Your application is already waiting for review");
+  if (status === "APPROVED") throw new InvalidVerificationError("Your application is already approved");
+  throw new InvalidVerificationError("Only nutritionists can send an application");
+}
