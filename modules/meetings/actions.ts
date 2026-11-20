@@ -60,6 +60,8 @@ export async function requestMeeting(_previous: RequestMeetingState, formData: F
   await prisma.meetingRequest.create({ data: { linkId, ...request } });
 
   revalidateMeetingPages();
+  // The refreshed page replaces the form with the "pending" notice: the toast comes from the flash.
+  await setFlash("meeting-requested");
   return { saved: true };
 }
 

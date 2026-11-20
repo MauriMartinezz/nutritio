@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, card, fieldError, fieldHint, formSuccess, input, label } from "@/modules/ui/classes";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { MAX_NAME_LENGTH } from "@/modules/identity/account";
 import { updateUserByAdmin, type SupportFormState } from "../actions";
@@ -12,6 +13,9 @@ export function AdminUserForm({ user }: { user: { id: string; name: string; emai
   const t = useMessages(supportMessages);
   const [state, formAction, pending] = useActionState<SupportFormState, FormData>(updateUserByAdmin, {});
   const problems = state.problems ?? {};
+  useActionToast(state, (next) =>
+    next.saved === "user" ? { text: t.userSaved } : next.problems?.form ? { text: next.problems.form, tone: "error" } : null,
+  );
 
   return (
     <form action={formAction} className={card}>

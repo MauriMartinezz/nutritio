@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { uniqueViolationIndex } from "@/lib/prisma-errors";
 import { getActionLocale } from "@/lib/i18n/server";
 import { requireRole } from "@/modules/identity/dal";
+import { setFlash } from "@/modules/ui/set-flash";
 import { nutritionistErrors } from "./messages";
 import {
   InvalidAdminUpdateError,
@@ -180,5 +181,7 @@ export async function resubmitApplication(
 
   revalidatePath("/");
   revalidatePath("/admin");
+  // The refreshed panel drops the form (no longer rejected): the toast comes from the flash.
+  await setFlash("application-sent");
   return { sent: true };
 }

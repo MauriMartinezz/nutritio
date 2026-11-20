@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useLocale, useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, buttonSecondary, fieldError, formSuccess, input, label, textarea } from "@/modules/ui/classes";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { logActivity, type LogActivityState } from "../actions";
 import { activityMessages } from "../messages";
@@ -21,6 +22,7 @@ export function ActivityForm({ today, earliest, doneHref }: { today: string; ear
   const locale = useLocale();
   const [state, formAction, pending] = useActionState<LogActivityState, FormData>(logActivity, {});
   const problems = state.problems ?? {};
+  useActionToast(state, (next) => (next.saved ? { text: t.saved } : null));
 
   return (
     <form action={formAction} className="flex w-full flex-col gap-5">

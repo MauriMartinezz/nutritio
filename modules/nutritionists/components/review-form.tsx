@@ -13,6 +13,7 @@ import {
   label,
   textarea,
 } from "@/modules/ui/classes";
+import { SubmitButton, useActionToast } from "@/modules/ui/components/action-feedback";
 import { reviewNutritionist, type ReviewNutritionistState } from "../actions";
 import { REVIEW_NOTE_MAX } from "../verification";
 import { nutritionistMessages } from "../messages";
@@ -27,10 +28,13 @@ export type ReviewableNutritionist = ProfileFieldValues & {
 
 /** Correct the application, leave a note and decide. Buttons sit at the bottom of the panel. */
 export function ReviewForm({ nutritionist }: { nutritionist: ReviewableNutritionist }) {
-  const [state, formAction, pending] = useActionState<ReviewNutritionistState, FormData>(reviewNutritionist, {});
+  const [state, formAction] = useActionState<ReviewNutritionistState, FormData>(reviewNutritionist, {});
   const problems = state.problems ?? {};
   const t = useMessages(nutritionistMessages);
   const savedMessages = { APPROVED: t.savedApproved, REJECTED: t.savedRejected, PENDING: t.savedPending };
+  useActionToast(state, (next) =>
+    next.saved ? { text: savedMessages[next.saved] } : next.problems?.form ? { text: next.problems.form, tone: "error" } : null,
+  );
 
   return (
     <form action={formAction} className="flex flex-1 flex-col">
@@ -76,16 +80,16 @@ export function ReviewForm({ nutritionist }: { nutritionist: ReviewableNutrition
       </div>
 
       <div className="sticky bottom-0 mt-auto flex flex-wrap items-center gap-2 border-t border-line bg-surface px-5 py-4 md:px-6">
-        <button name="decision" value="save" disabled={pending} className={buttonSecondary}>
+        <SubmitButton name="decision" value="save" pendingText={t.saving} className={buttonSecondary}>
           {t.saveChanges}
-        </button>
+        </SubmitButton>
         <span className="flex-1" />
-        <button name="decision" value="REJECTED" disabled={pending} className={buttonDanger}>
+        <SubmitButton name="decision" value="REJECTED" pendingText={t.saving} className={buttonDanger}>
           {t.reject}
-        </button>
-        <button name="decision" value="APPROVED" disabled={pending} className={buttonPrimary}>
+        </SubmitButton>
+        <SubmitButton name="decision" value="APPROVED" pendingText={t.saving} className={buttonPrimary}>
           {t.approve}
-        </button>
+        </SubmitButton>
       </div>
     </form>
   );

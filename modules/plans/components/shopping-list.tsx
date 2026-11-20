@@ -7,13 +7,14 @@ import {
   figure,
   h1,
   h2,
-  link,
   list as listClass,
   muted,
 } from "@/modules/ui/classes";
 import type { Locale } from "@/lib/i18n/negotiate";
 import { formatNumber } from "@/lib/i18n/format";
 import { getLocale, getMessages } from "@/lib/i18n/server";
+import { navMessages } from "@/modules/identity/nav-messages";
+import { Breadcrumbs, type BreadcrumbItem } from "@/modules/ui/components/breadcrumbs";
 import { getMyPlan, getPlanForEditor, type PlanView } from "../dal";
 import { planMessages } from "../messages";
 import {
@@ -47,7 +48,17 @@ export async function MyShoppingList({ params, searchParams }: Props) {
   if (!plan) notFound();
   const period = await readPeriod(searchParams);
   return (
-    <ShoppingListView plan={plan} period={period} locale={locale} path={`/my-plans/${plan.id}/shopping-list`} back="/my-plans" />
+    <ShoppingListView
+      plan={plan}
+      period={period}
+      locale={locale}
+      path={`/my-plans/${plan.id}/shopping-list`}
+      trail={[
+        { label: navMessages[locale].myPlans, href: "/my-plans" },
+        // The client sees a plan in full on their nutritionist's page.
+        { label: plan.name, href: `/nutritionists/${plan.nutritionist.id}#plan` },
+      ]}
+    />
   );
 }
 
@@ -59,7 +70,21 @@ export async function PlanShoppingList({ params, searchParams }: Props) {
   if (!plan) notFound();
   const period = await readPeriod(searchParams);
   return (
-    <ShoppingListView plan={plan} period={period} locale={locale} path={`/plans/${plan.id}/shopping-list`} back={`/plans/${plan.id}`} />
+    <ShoppingListView
+      plan={plan}
+      period={period}
+      locale={locale}
+      path={`/plans/${plan.id}/shopping-list`}
+      trail={[
+        ...(plan.client
+          ? [
+              { label: navMessages[locale].myClients, href: "/clients" },
+              { label: plan.client.name, href: `/clients/${plan.client.id}` },
+            ]
+          : [{ label: navMessages[locale].planTemplates, href: "/plans" }]),
+        { label: plan.name, href: `/plans/${plan.id}` },
+      ]}
+    />
   );
 }
 
@@ -68,22 +93,21 @@ async function ShoppingListView({
   period,
   locale,
   path,
-  back,
+  trail,
 }: {
   plan: PlanView;
   period: ShoppingPeriod;
   locale: Locale;
   path: string;
-  back: string;
+  /** Breadcrumb items above the list; the list itself is appended as the current page. */
+  trail: BreadcrumbItem[];
 }) {
   const t = await getMessages(planMessages);
   const list = shoppingList(plan.meals, period);
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <Link href={back} className={`${link} self-start text-sm`}>
-          {t.backToPlan}
-        </Link>
+        <Breadcrumbs items={[...trail, { label: t.shoppingList }]} />
         <h1 className={h1}>{t.shoppingList}</h1>
         <p className={muted}>
           {plan.name} · <span className="font-mono font-medium tabular-nums">{formatNumber(list.days, locale)}</span>

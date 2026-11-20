@@ -59,6 +59,8 @@ async function main() {
               update: values,
             }),
           ),
+          // Remote databases add latency per statement; the 5 s default is too short.
+          { timeout: 120_000 },
         );
       }
       console.log(`${source}: ${foods.length} foods imported`);

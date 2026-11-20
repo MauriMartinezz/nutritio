@@ -5,6 +5,7 @@ import { authClient } from "@/lib/auth-client";
 import { useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, buttonSecondary, fieldError, fieldHint, formSuccess, input, label } from "@/modules/ui/classes";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
+import { notify } from "@/modules/ui/components/toast";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "../account";
 import { accountMessages } from "../messages";
 
@@ -45,6 +46,7 @@ export function ChangePasswordForm() {
     formElement.reset();
     setOpen(false);
     setSaved(true);
+    notify(t.passwordChanged);
   }
 
   if (!open) {

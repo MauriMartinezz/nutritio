@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { formatDay } from "@/lib/i18n/format";
 import { getLocale, getMessages } from "@/lib/i18n/server";
-import { roleMessages } from "@/modules/identity/nav-messages";
+import { navMessages, roleMessages } from "@/modules/identity/nav-messages";
 import { AdminUserForm } from "@/modules/support/components/admin-user-form";
 import { RequestCard } from "@/modules/support/components/request-card";
 import { getUserForAdmin } from "@/modules/support/dal";
 import { supportMessages } from "@/modules/support/messages";
 import { badge, card, h1, h2, link, list, muted, pageNarrow } from "@/modules/ui/classes";
+import { Breadcrumbs } from "@/modules/ui/components/breadcrumbs";
 import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,16 +19,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function UserProfile({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params;
-  const [user, t, roles, locale] = await Promise.all([
+  const [user, t, roles, nav, locale] = await Promise.all([
     getUserForAdmin(userId),
     getMessages(supportMessages),
     getMessages(roleMessages),
+    getMessages(navMessages),
     getLocale(),
   ]);
   if (!user) notFound();
 
   return (
     <>
+      <Breadcrumbs items={[{ label: nav.users, href: "/admin/users" }, { label: user.name }]} />
       <div className="flex flex-col gap-2">
         <h1 className={`${h1} flex flex-wrap items-center gap-3`}>
           {user.name}
@@ -65,13 +68,9 @@ async function UserProfile({ params }: { params: Promise<{ userId: string }> }) 
   );
 }
 
-export default async function Page({ params }: PageProps<"/[lang]/admin/users/[userId]">) {
-  const t = await getMessages(supportMessages);
+export default function Page({ params }: PageProps<"/[lang]/admin/users/[userId]">) {
   return (
     <main className={pageNarrow}>
-      <Link href="/admin/users" className={`${link} text-sm`}>
-        {t.backToUsers}
-      </Link>
       <Suspense fallback={<SectionsSkeleton sections={2} />}>
         <UserProfile params={params} />
       </Suspense>

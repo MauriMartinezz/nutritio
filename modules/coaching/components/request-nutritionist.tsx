@@ -1,5 +1,6 @@
 import { getMessages } from "@/lib/i18n/server";
 import { badge, buttonPrimary, muted } from "@/modules/ui/classes";
+import { FlashNotice } from "@/modules/ui/components/action-feedback";
 import { requestNutritionist } from "../actions";
 import type { DirectoryNutritionist } from "../directory-dal";
 import { coachingMessages } from "../messages";
@@ -9,8 +10,16 @@ import { SubmitButton } from "./submit-button";
 export async function RequestNutritionist({ nutritionist }: { nutritionist: DirectoryNutritionist }) {
   const t = await getMessages(coachingMessages);
   const status = nutritionist.linkStatus;
+  // The form is replaced by the "request sent" badge, so the notice is shown from outside it.
   if (status === "ACCEPTED") return <span className={badge("success")}>{t.workingTogether}</span>;
-  if (status === "PENDING") return <span className={badge("warning")}>{t.requestSent}</span>;
+  if (status === "PENDING") {
+    return (
+      <>
+        <span className={badge("warning")}>{t.requestSent}</span>
+        <FlashNotice />
+      </>
+    );
+  }
 
   return (
     <form action={requestNutritionist.bind(null, nutritionist.id)} className="flex flex-wrap items-center gap-3">

@@ -2,6 +2,7 @@ import { connection } from "next/server";
 import { formatDate } from "../dates";
 import { getLocale } from "@/lib/i18n/server";
 import { badge, buttonSecondary, card, figure, h2, muted } from "@/modules/ui/classes";
+import { FlashNotice } from "@/modules/ui/components/action-feedback";
 import { effectiveAccessUntil } from "../access";
 import Link from "next/link";
 import { setAutoRenew } from "../actions";
@@ -73,6 +74,7 @@ export async function ClientAccess({
         </span>
         <SubmitButton className={buttonSecondary}>{t.save}</SubmitButton>
       </form>
+      <FlashNotice />
       {renewing && (
         <RenewDialog
           row={{ id: link.id, linkStatus: link.status, access, period, until, client: link.client }}

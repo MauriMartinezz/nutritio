@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, buttonSecondary, fieldError, formSuccess, label, textarea } from "@/modules/ui/classes";
-import { Spinner } from "@/modules/ui/components/spinner";
+import { SubmitButton, useActionToast } from "@/modules/ui/components/action-feedback";
 import { answerSupportRequest, type SupportFormState } from "../actions";
 import { supportMessages } from "../messages";
 import { SUPPORT_LIMITS } from "../support";
@@ -11,8 +11,15 @@ import { SUPPORT_LIMITS } from "../support";
 /** The admin's answer: send it, or send it and close the request as completed. */
 export function ReplyForm({ requestId, reply, resolved }: { requestId: string; reply: string | null; resolved: boolean }) {
   const t = useMessages(supportMessages);
-  const [state, formAction, pending] = useActionState<SupportFormState, FormData>(answerSupportRequest, {});
+  const [state, formAction] = useActionState<SupportFormState, FormData>(answerSupportRequest, {});
   const problems = state.problems ?? {};
+  useActionToast(state, (next) =>
+    next.saved
+      ? { text: next.saved === "resolved" ? t.resolvedSaved : t.replySaved }
+      : next.problems?.form
+        ? { text: next.problems.form, tone: "error" }
+        : null,
+  );
 
   return (
     <form action={formAction} className="flex flex-col gap-3 border-t border-divider pt-4">
@@ -41,15 +48,13 @@ export function ReplyForm({ requestId, reply, resolved }: { requestId: string; r
       )}
       <div className="flex flex-wrap gap-3">
         {!resolved && (
-          <button name="decision" value="resolve" disabled={pending} className={buttonPrimary}>
-            {pending && <Spinner />}
+          <SubmitButton name="decision" value="resolve" pendingText={t.saving} className={buttonPrimary}>
             {t.resolve}
-          </button>
+          </SubmitButton>
         )}
-        <button name="decision" value="reply" disabled={pending} className={resolved ? buttonPrimary : buttonSecondary}>
-          {pending && resolved && <Spinner />}
+        <SubmitButton name="decision" value="reply" pendingText={t.sending} className={resolved ? buttonPrimary : buttonSecondary}>
           {t.sendReply}
-        </button>
+        </SubmitButton>
       </div>
     </form>
   );

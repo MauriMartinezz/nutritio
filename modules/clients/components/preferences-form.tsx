@@ -11,6 +11,7 @@ import {
   label as labelClass,
   textarea,
 } from "@/modules/ui/classes";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { saveClientPreferences, type SaveClientPreferencesState } from "../actions";
 import { preferenceLabels, preferencesFormMessages } from "../messages";
@@ -48,6 +49,7 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
   const problems = state.problems ?? {};
   const t = useMessages(preferencesFormMessages);
   const labels = useMessages(preferenceLabels);
+  useActionToast(state, (next) => (next.saved ? { text: t.saved } : null));
 
   return (
     <form action={formAction} className={`${card} w-full gap-6`}>
