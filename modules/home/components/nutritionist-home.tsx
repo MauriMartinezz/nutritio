@@ -24,7 +24,7 @@ export async function NutritionistHome() {
   const [data, locale, t] = await Promise.all([getNutritionistDashboard(user), getLocale(), getMessages(homeMessages)]);
   const describe = (detail: FeedDetail) =>
     detail.kind === "checkIn"
-      ? t.checkedInAt(formatNumber(detail.weightKg, locale, { maximumFractionDigits: 1 }))
+      ? t.checkedInAt(formatNumber(detail.weightKg, locale, { maximumFractionDigits: 2 }))
       : t.logged(activityLabel(detail, locale), detail.minutes);
   const { now } = data;
   const needsAction = data.pendingRequests.length + data.meetingRequests.length;
