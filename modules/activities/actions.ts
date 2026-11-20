@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import { InvalidActivityError, parseActivity } from "./rules";
@@ -16,7 +17,7 @@ export async function logActivity(_previous: LogActivityState, formData: FormDat
 
   let activity;
   try {
-    activity = parseActivity(Object.fromEntries(formData), new Date());
+    activity = parseActivity(Object.fromEntries(formData), new Date(), await getActionLocale());
   } catch (error) {
     if (error instanceof InvalidActivityError) return { problems: error.problems };
     throw error;

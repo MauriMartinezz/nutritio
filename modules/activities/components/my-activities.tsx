@@ -1,26 +1,45 @@
-import { getOwnActivities } from "../dal";
+import { getMessages } from "@/lib/i18n/server";
+import { card, h2, muted } from "@/modules/ui/classes";
+import { Dialog } from "@/modules/ui/components/dialog";
+import { getOwnActivityLog } from "../dal";
+import { activityMessages } from "../messages";
 import { toDateInputValue } from "../rules";
+import { ActivityDashboard } from "./activity-dashboard";
 import { ActivityForm } from "./activity-form";
-import { ActivityList } from "./activity-list";
-import { ActivitySummary } from "./activity-summary";
-import { card, h2 } from "@/modules/ui/classes";
+import { ActivityHistory } from "./activity-history";
 
-/** The signed-in client's activity log. Render inside <Suspense>. */
-export async function MyActivities() {
-  const { now, summary, activities } = await getOwnActivities();
+/** Where the "Log activity" dialog opens and closes. */
+export const LOG_ACTIVITY_HREF = "/activities?log=1";
+const CLOSE_HREF = "/activities";
+
+/**
+ * The signed-in client's dashboard and history; `?log=1` opens the log form in
+ * a dialog. Render inside <Suspense>.
+ */
+export async function MyActivities({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [{ now, dashboard, activities }, { log }, t] = await Promise.all([
+    getOwnActivityLog(),
+    searchParams,
+    getMessages(activityMessages),
+  ]);
   const earliest = new Date(now);
   earliest.setFullYear(earliest.getFullYear() - 1);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className={card}>
-        <ActivityForm today={toDateInputValue(now)} earliest={toDateInputValue(earliest)} />
-      </div>
-      <ActivitySummary summary={summary} />
+      <ActivityDashboard dashboard={dashboard} />
       <section className={card}>
-        <h2 className={h2}>Last 30 days</h2>
-        <ActivityList activities={activities} deletable />
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className={h2}>{t.history}</h2>
+          <p className={muted}>{t.historyHint}</p>
+        </div>
+        <ActivityHistory activities={activities} />
       </section>
+      {log === "1" && (
+        <Dialog title={t.logTitle} closeHref={CLOSE_HREF}>
+          <ActivityForm today={toDateInputValue(now)} earliest={toDateInputValue(earliest)} doneHref={CLOSE_HREF} />
+        </Dialog>
+      )}
     </div>
   );
 }

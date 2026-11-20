@@ -1,5 +1,7 @@
 // Meeting requests: a client asks one of their nutritionists for a video call
 // or an in-person visit; the nutritionist accepts it with a date or declines it.
+import type { Locale } from "@/lib/i18n/negotiate";
+import { meetingTerms } from "./messages";
 
 export const MEETING_KINDS = ["VIDEO_CALL", "IN_PERSON"] as const;
 export type MeetingKind = (typeof MEETING_KINDS)[number];
@@ -11,19 +13,8 @@ export const MEETING_LIMITS = {
   responseNote: 500,
 } as const;
 
-const KIND_LABELS: Record<MeetingKind, string> = {
-  VIDEO_CALL: "Video call",
-  IN_PERSON: "In-person visit",
-};
-
-const STATUS_LABELS: Record<MeetingStatus, string> = {
-  PENDING: "Waiting for an answer",
-  ACCEPTED: "Accepted",
-  DECLINED: "Declined",
-};
-
-export const meetingKindLabel = (kind: MeetingKind) => KIND_LABELS[kind];
-export const meetingStatusLabel = (status: MeetingStatus) => STATUS_LABELS[status];
+export const meetingKindLabel = (kind: MeetingKind, locale: Locale = "en") => meetingTerms[locale].kinds[kind];
+export const meetingStatusLabel = (status: MeetingStatus, locale: Locale = "en") => meetingTerms[locale].statuses[status];
 
 export type MeetingRequestInput = {
   kind: MeetingKind;
@@ -49,20 +40,21 @@ export class MeetingRuleError extends Error {
 const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
 
 /** Validates the client's request form, reporting every invalid field at once. */
-export function parseMeetingRequest(input: Record<string, unknown>): MeetingRequestInput {
+export function parseMeetingRequest(input: Record<string, unknown>, locale: Locale = "en"): MeetingRequestInput {
+  const t = meetingTerms[locale].errors;
   const problems: Partial<Record<MeetingRequestField, string>> = {};
 
   const kind = input.kind;
   if (!(MEETING_KINDS as readonly unknown[]).includes(kind)) {
-    problems.kind = "Choose a video call or an in-person visit";
+    problems.kind = t.kind;
   }
   const message = text(input.message);
   if (message.length > MEETING_LIMITS.message) {
-    problems.message = `Message must be at most ${MEETING_LIMITS.message} characters`;
+    problems.message = t.message(MEETING_LIMITS.message);
   }
   const preferredTimes = text(input.preferredTimes);
   if (preferredTimes.length > MEETING_LIMITS.preferredTimes) {
-    problems.preferredTimes = `Preferred times must be at most ${MEETING_LIMITS.preferredTimes} characters`;
+    problems.preferredTimes = t.preferredTimes(MEETING_LIMITS.preferredTimes);
   }
 
   if (Object.keys(problems).length > 0) throw new InvalidMeetingRequestError(problems);
@@ -70,9 +62,9 @@ export function parseMeetingRequest(input: Record<string, unknown>): MeetingRequ
 }
 
 /** At most one pending request per client and nutritionist. */
-export function ensureCanRequestMeeting(pendingWithThisNutritionist: number): void {
+export function ensureCanRequestMeeting(pendingWithThisNutritionist: number, locale: Locale = "en"): void {
   if (pendingWithThisNutritionist > 0) {
-    throw new MeetingRuleError("You already have a pending meeting request with this nutritionist");
+    throw new MeetingRuleError(meetingTerms[locale].errors.alreadyPending);
   }
 }
 
@@ -108,19 +100,20 @@ export type MeetingResponse =
   | { status: "DECLINED"; scheduledFor: null; responseNote: string | null };
 
 /** The nutritionist's answer: accept with a future date, or decline. The note is optional. */
-export function parseMeetingResponse(input: Record<string, unknown>, now: Date): MeetingResponse {
+export function parseMeetingResponse(input: Record<string, unknown>, now: Date, locale: Locale = "en"): MeetingResponse {
+  const t = meetingTerms[locale].errors;
   const responseNote = text(input.responseNote);
   if (responseNote.length > MEETING_LIMITS.responseNote) {
-    throw new MeetingRuleError(`Note must be at most ${MEETING_LIMITS.responseNote} characters`);
+    throw new MeetingRuleError(t.responseNote(MEETING_LIMITS.responseNote));
   }
   const note = responseNote || null;
 
   if (input.decision === "decline") return { status: "DECLINED", scheduledFor: null, responseNote: note };
-  if (input.decision !== "accept") throw new MeetingRuleError("Accept or decline the request");
+  if (input.decision !== "accept") throw new MeetingRuleError(t.decision);
 
   const scheduledFor = parseDateTimeLocal(input.scheduledFor);
-  if (!scheduledFor) throw new MeetingRuleError("Choose a date and time for the meeting");
-  if (scheduledFor <= now) throw new MeetingRuleError("The meeting must be in the future");
+  if (!scheduledFor) throw new MeetingRuleError(t.scheduledFor);
+  if (scheduledFor <= now) throw new MeetingRuleError(t.past);
   return { status: "ACCEPTED", scheduledFor, responseNote: note };
 }
 
@@ -131,5 +124,4 @@ export const pendingActionCount = ({ pendingLinkRequests, pendingMeetingRequests
   pendingLinkRequests + pendingMeetingRequests;
 
 /** Accessible label of the badge, e.g. "3 pending actions". */
-export const pendingActionsLabel = (count: number) =>
-  `${count} pending ${count === 1 ? "action" : "actions"}`;
+export const pendingActionsLabel = (count: number, locale: Locale = "en") => meetingTerms[locale].pendingActions(count);

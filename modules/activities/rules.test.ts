@@ -138,3 +138,20 @@ test("dates helpers: local calendar day as UTC midnight, input value and readabl
   assert.equal(formatDuration(60), "1 h");
   assert.equal(formatDuration(195), "3 h 15 min");
 });
+
+test("in Spanish, labels and validation errors read in Spanish", () => {
+  assert.equal(activityLabel({ type: "FOOTBALL", customName: null }, "es"), "Fútbol");
+  assert.equal(activityLabel({ type: "OTHER", customName: "Pádel" }, "es"), "Pádel");
+  try {
+    parseActivity({ type: "", performedOn: "2026-11-14", durationMinutes: "0", intensity: "" }, today, "es");
+    assert.fail("expected InvalidActivityError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidActivityError);
+    assert.deepEqual(error.problems, {
+      type: "Elegí un tipo de actividad",
+      performedOn: "La fecha tiene que estar entre hace un año y hoy",
+      durationMinutes: "La duración tiene que ser un número entero de minutos entre 1 y 600",
+      intensity: "Elegí una intensidad",
+    });
+  }
+});

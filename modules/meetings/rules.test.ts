@@ -120,3 +120,21 @@ test("kinds and statuses have readable labels", () => {
   assert.equal(meetingStatusLabel("ACCEPTED"), "Accepted");
   assert.equal(meetingStatusLabel("DECLINED"), "Declined");
 });
+
+test("in Spanish, labels and errors read in Spanish", () => {
+  assert.equal(meetingKindLabel("VIDEO_CALL", "es"), "Videollamada");
+  assert.equal(meetingStatusLabel("PENDING", "es"), "Esperando respuesta");
+  assert.equal(pendingActionsLabel(1, "es"), "1 acción pendiente");
+  assert.equal(pendingActionsLabel(3, "es"), "3 acciones pendientes");
+  assert.throws(
+    () => parseMeetingRequest({ kind: "PHONE" }, "es"),
+    (error: unknown) =>
+      error instanceof InvalidMeetingRequestError && error.problems.kind === "Elegí videollamada o reunión presencial",
+  );
+  assert.throws(() => ensureCanRequestMeeting(1, "es"), {
+    message: "Ya tenés un pedido de reunión pendiente con este nutricionista",
+  });
+  assert.throws(() => parseMeetingResponse({ decision: "accept", scheduledFor: "" }, new Date(), "es"), {
+    message: "Elegí fecha y hora para la reunión",
+  });
+});
