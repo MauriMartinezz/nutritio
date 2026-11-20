@@ -7,7 +7,7 @@ import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
-import { findEditablePlan, planContentIds } from "./dal";
+import { findEditablePlan, planContentIds, searchFoods } from "./dal";
 import { defaultMealNames, planErrors } from "./messages";
 import {
   PlanEditsError,
@@ -108,6 +108,11 @@ export async function createPlanFromTemplate(clientId: string, formData: FormDat
   redirect(`/plans/${plan.id}`);
 }
 
+/** Food search for the plan editor's add-food box (nutritionists only, via searchFoods). */
+export async function findFoods(query: unknown) {
+  return searchFoods(typeof query === "string" ? query : "", await getActionLocale());
+}
+
 /** Saves the meal order after a drag and drop. */
 export async function reorderMeals(planId: string, orderedIds: unknown) {
   const locale = await getActionLocale();
@@ -129,6 +134,8 @@ export type PlanEditorState = {
   /** What was sent, so a rejected form shows it again after React resets the fields. */
   values?: Record<string, string>;
   saved?: boolean;
+  /** What the clicked button did, for the confirmation toast. */
+  notice?: "saved" | "foodAdded" | "foodRemoved" | "mealAdded" | "mealRemoved" | "switched";
 };
 
 const sentValues = (formData: FormData) =>
@@ -202,19 +209,22 @@ export async function editPlan(planId: string, _previous: PlanEditorState, formD
   switch (intent.kind) {
     case "save":
       refresh(planId);
-      return { saved: true };
+      return { saved: true, notice: "saved" };
     case "addMeal": {
       const last = await prisma.meal.findFirst({ where: { planId }, orderBy: { position: "desc" }, select: { position: true } });
       const name = parseMealName(formData.get("newMeal"), locale);
       await prisma.meal.create({ data: { planId, name, position: (last?.position ?? -1) + 1 } });
-      break;
+      refresh(planId);
+      return { saved: true, notice: "mealAdded" };
     }
     case "removeMeal":
       await prisma.meal.delete({ where: { id: intent.mealId } });
-      break;
+      refresh(planId);
+      return { saved: true, notice: "mealRemoved" };
     case "removeItem":
       await prisma.mealItem.delete({ where: { id: intent.itemId } });
-      break;
+      refresh(planId);
+      return { saved: true, notice: "foodRemoved" };
     case "toggle": {
       const item = await prisma.mealItem.findUniqueOrThrow({
         where: { id: intent.itemId },
@@ -229,14 +239,13 @@ export async function editPlan(planId: string, _previous: PlanEditorState, formD
       const toggle = variantToggle(item.food, variants);
       if (!toggle) return { problems: { form: t.noVariant } };
       await prisma.mealItem.update({ where: { id: intent.itemId }, data: { foodId: toggle.foodId } });
-      break;
-    }
-    case "search": {
       refresh(planId);
-      const q = String(formData.get(`search.${intent.mealId}`) ?? "").trim();
-      const search = new URLSearchParams({ meal: intent.mealId, q });
-      redirect(`/plans/${planId}?${search}`);
+      return { saved: true, notice: "switched" };
     }
+    case "search":
+      // The editor now searches without submitting; kept for old clients: just save.
+      refresh(planId);
+      return { saved: true, notice: "saved" };
     case "addItem": {
       const food = await prisma.food.findUnique({ where: { id: intent.foodId }, select: { id: true } });
       if (!food) return { problems: { form: t.foodNotFound } };
@@ -249,8 +258,9 @@ export async function editPlan(planId: string, _previous: PlanEditorState, formD
       await prisma.mealItem.create({
         data: { mealId: intent.mealId, foodId: food.id, grams, position: (last?.position ?? -1) + 1 },
       });
+      // No redirect: the page stays put, so the add-food box keeps its search for the next one.
       refresh(planId);
-      redirect(`/plans/${planId}`);
+      return { saved: true, notice: "foodAdded" };
     }
   }
   refresh(planId);

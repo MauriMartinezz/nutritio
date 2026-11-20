@@ -5,14 +5,15 @@
 // buttons (add, remove, switch, search) submit the same form with an `intent`, so the
 // pending edits are saved before they run.
 
-import { createContext, use, useActionState, useState, type ComponentProps, type KeyboardEvent } from "react";
+import { createContext, use, useActionState, useEffect, useRef, useState, type ComponentProps, type KeyboardEvent } from "react";
 import { useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, callout, cardAccent, fieldError, formSuccess } from "@/modules/ui/classes";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
+import { notify } from "@/modules/ui/components/toast";
 import type { PlanEditorState } from "../actions";
 import { planMessages } from "../messages";
 
-const FORM_ID = "plan-edits";
+export const FORM_ID = "plan-edits";
 
 type EditorContext = {
   state: PlanEditorState;
@@ -23,6 +24,9 @@ type EditorContext = {
 
 const Context = createContext<EditorContext>({ state: {}, pending: false, active: null, setActive: () => {} });
 
+/** The editor's state for custom controls (e.g. the add-food box). */
+export const EditorStateContext = Context;
+
 type Action = (state: PlanEditorState, formData: FormData) => Promise<PlanEditorState>;
 
 export function PlanEditsForm({ action, children }: { action: Action; children: React.ReactNode }) {
@@ -31,6 +35,14 @@ export function PlanEditsForm({ action, children }: { action: Action; children: 
   const [active, setActive] = useState<string | null>(null);
   const problems = state.problems ?? {};
   const hasProblems = Object.keys(problems).length > 0;
+
+  // Every submit gets visible feedback: a toast, besides the status next to the button.
+  const firstState = useRef(state);
+  useEffect(() => {
+    if (state === firstState.current) return;
+    if (Object.keys(state.problems ?? {}).length > 0) notify(state.problems?.form ?? t.fixFields, "error");
+    else if (state.saved) notify(t.notices[state.notice ?? "saved"]);
+  }, [state, t]);
 
   return (
     <Context value={{ state, pending, active, setActive }}>
