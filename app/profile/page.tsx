@@ -4,12 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { PreferencesForm } from "@/modules/clients/components/preferences-form";
 import { getOwnPreferences } from "@/modules/clients/dal";
 import { requireUser, type CurrentUser } from "@/modules/identity/dal";
-import { AccountNameForm } from "@/modules/identity/components/account-name-form";
+import { AccountForm } from "@/modules/identity/components/account-form";
 import { ChangePasswordForm } from "@/modules/identity/components/change-password-form";
 import { SignOutButton } from "@/modules/identity/components/sign-out-button";
 import { PublicProfileForm } from "@/modules/nutritionists/components/public-profile-form";
 import { ThemeToggle } from "@/modules/theme/theme-toggle";
-import { card, h1, h2, label, muted, pageNarrow } from "@/modules/ui/classes";
+import { card, h1, h2, muted, pageNarrow } from "@/modules/ui/classes";
 
 export const metadata: Metadata = { title: "Profile · Nutritio" };
 
@@ -33,11 +33,6 @@ function Section({ id, title, hint, children }: { id: string; title: string; hin
   );
 }
 
-async function NutritionPreferences() {
-  const preferences = await getOwnPreferences();
-  return <PreferencesForm preferences={preferences} />;
-}
-
 async function PublicProfile({ user }: { user: CurrentUser }) {
   const profile = await prisma.user.findUniqueOrThrow({
     where: { id: user.id },
@@ -58,22 +53,18 @@ async function OwnProfile() {
   const user = await requireUser();
   const hasPublicProfile =
     user.role === "NUTRITIONIST" && (user.nutritionistStatus === "APPROVED" || user.nutritionistStatus === "PENDING");
+  const preferences = user.role === "CLIENT" ? await getOwnPreferences() : null;
 
   return (
     <>
       <Section id="account" title="Account">
         <div className={card}>
-          <AccountNameForm name={user.name} />
-          <dl className="grid gap-4 border-t border-divider pt-4 sm:grid-cols-2">
-            <div className={label}>
-              <dt>Email</dt>
-              <dd className="font-normal text-secondary">{user.email}</dd>
-            </div>
-            <div className={label}>
-              <dt>Role</dt>
-              <dd className="font-normal text-secondary">{ROLE_LABELS[user.role]}</dd>
-            </div>
-          </dl>
+          <AccountForm
+            name={user.name}
+            email={user.email}
+            role={ROLE_LABELS[user.role]}
+            sex={user.role === "CLIENT" ? (preferences?.sex ?? null) : undefined}
+          />
         </div>
       </Section>
 
@@ -83,7 +74,7 @@ async function OwnProfile() {
           title="Nutrition preferences"
           hint="Only the nutritionists you work with can see this."
         >
-          <NutritionPreferences />
+          <PreferencesForm preferences={preferences} />
         </Section>
       )}
 

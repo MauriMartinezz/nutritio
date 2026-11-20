@@ -10,7 +10,6 @@ import {
   label as labelClass,
   textarea,
 } from "@/modules/ui/classes";
-import { Segmented } from "@/modules/ui/components/segmented";
 import { saveClientPreferences, type SaveClientPreferencesState } from "../actions";
 import {
   COOKING_STYLES,
@@ -18,7 +17,6 @@ import {
   MEDICAL_FLAGS,
   PREFERENCE_FLAGS,
   PREFERENCE_LIMITS,
-  SEX_LABELS,
   type ClientPreferences,
 } from "../preferences";
 
@@ -55,21 +53,6 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
 
   return (
     <form action={formAction} className={`${card} w-full gap-6`}>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold">I am a</legend>
-        <div className="max-w-xs">
-          <Segmented
-            name="sex"
-            required
-            defaultValue={preferences?.sex}
-            options={Object.entries(SEX_LABELS).map(([value, label]) => ({ value, label }))}
-          />
-        </div>
-        <p className="text-xs text-secondary">
-          Women and men have different needs; your nutritionist may also ask about your menstrual cycle.
-        </p>
-      </fieldset>
-
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-semibold">Diet</legend>
         <Checkboxes flags={PREFERENCE_FLAGS} values={preferences} />
