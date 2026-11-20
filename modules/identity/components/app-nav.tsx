@@ -7,14 +7,7 @@ import { NavLinks, ProfileLink, type NavItem } from "./nav-links";
 
 type NavText = (typeof navMessages)["en"];
 
-function navItems(user: CurrentUser | null, t: NavText): NavItem[] {
-  if (!user) {
-    return [
-      { href: "/", label: t.home },
-      { href: "/sign-in", label: t.signIn },
-      { href: "/sign-up", label: t.createAccount },
-    ];
-  }
+function navItems(user: CurrentUser, t: NavText): NavItem[] {
   const items: NavItem[] = [{ href: "/", label: t.home }];
   if (user.role === "CLIENT") {
     items.push(
@@ -58,21 +51,23 @@ export function Brand() {
   );
 }
 
-/** Role-based navigation. Reads the session: render inside <Suspense>. */
+/**
+ * Role-based sidebar, only for signed-in people: the landing and the sign-in
+ * pages have no app to navigate. Reads the session: render inside <Suspense>.
+ */
 export async function AppNav() {
   const user = await getCurrentUser();
+  if (!user) return null;
   const t = await getMessages(navMessages);
   const roles = await getMessages(roleMessages);
   return (
-    <>
+    <nav
+      aria-label={t.mainNav}
+      className="relative flex flex-col gap-4 border-b border-line bg-surface px-4 py-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:gap-8 md:border-r md:border-b-0 md:px-[18px] md:py-7"
+    >
+      <Brand />
       <NavLinks items={navItems(user, t)} />
-      {user && (
-        <ProfileLink
-          name={user.name}
-          initials={initials(user.name)}
-          roleLabel={roles[user.role]}
-        />
-      )}
-    </>
+      <ProfileLink name={user.name} initials={initials(user.name)} roleLabel={roles[user.role]} />
+    </nav>
   );
 }

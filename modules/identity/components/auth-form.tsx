@@ -2,25 +2,33 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useMessages } from "@/lib/i18n/client";
 import { ProfileFields, inputClass } from "@/modules/nutritionists/components/profile-fields";
 import { buildPhone, parseBirthDateInput } from "@/modules/nutritionists/profile";
 import { buttonPrimary, card, fieldError, fieldHint, h1, label, link, muted } from "@/modules/ui/classes";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
+import { authMessages } from "../auth-messages";
 
 type Mode = "sign-in" | "sign-up";
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
+  const t = useMessages(authMessages);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [role, setRole] = useState<"CLIENT" | "NUTRITIONIST">("CLIENT");
+  // The landing links "I'm a nutritionist" to /sign-up?role=NUTRITIONIST.
+  const [role, setRole] = useState<"CLIENT" | "NUTRITIONIST">(
+    useSearchParams().get("role") === "NUTRITIONIST" ? "NUTRITIONIST" : "CLIENT",
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const email = String(form.get("email"));
     const password = String(form.get("password"));
 
@@ -28,7 +36,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
     if (mode === "sign-up" && role === "NUTRITIONIST") {
       const birthDate = parseBirthDateInput(String(form.get("birthDate")));
       if (!birthDate) {
-        setError("Date of birth must be a real date as dd/mm/yyyy.");
+        setError(t.invalidBirthDate);
         return;
       }
       const phone = buildPhone(String(form.get("phonePrefix")), String(form.get("phoneNumber")));
@@ -56,13 +64,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
             role,
             ...nutritionistFields,
           })
-        : await authClient.signIn.email({ email, password });
+        : await authClient.signIn.email({ email, password, rememberMe: form.get("rememberMe") === "on" });
 
     setPending(false);
     if (error) {
-      setError(error.message ?? "Something went wrong. Please try again.");
+      setError(error.message ?? t.genericError);
       return;
     }
+    // The page can stay mounted in the router's cache: never keep credentials in it.
+    formElement.reset();
     router.push("/");
     router.refresh();
   }
@@ -71,16 +81,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <form onSubmit={handleSubmit} className={`${card} w-full`}>
-      <h1 className={h1}>{isSignUp ? "Create your account" : "Sign in"}</h1>
+      <h1 className={h1}>{isSignUp ? t.signUpTitle : t.signInTitle}</h1>
 
       {isSignUp && (
         <>
           <label className={label}>
-            Full name
+            {t.fullName}
             <input name="name" required autoComplete="name" className={inputClass} />
           </label>
           <fieldset className="flex flex-col text-sm">
-            <legend className="mb-1 font-medium">I am a…</legend>
+            <legend className="mb-1 font-medium">{t.iAmA}</legend>
             <label className="flex min-h-11 flex-wrap items-center gap-x-2">
               <input
                 type="radio"
@@ -90,7 +100,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 onChange={() => setRole("CLIENT")}
                 className="size-4 accent-accent"
               />{" "}
-              Client
+              {t.client}
             </label>
             <label className="flex min-h-11 flex-wrap items-center gap-x-2">
               <input
@@ -101,8 +111,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 onChange={() => setRole("NUTRITIONIST")}
                 className="size-4 accent-accent"
               />{" "}
-              Nutritionist
-              <span className={fieldHint}>(requires admin verification)</span>
+              {t.nutritionist}
+              <span className={fieldHint}>{t.requiresVerification}</span>
             </label>
           </fieldset>
           {role === "NUTRITIONIST" && <ProfileFields />}
@@ -110,11 +120,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
       )}
 
       <label className={label}>
-        Email
+        {t.email}
         <input name="email" type="email" required autoComplete="email" className={inputClass} />
       </label>
       <label className={label}>
-        Password
+        {t.password}
         <input
           name="password"
           type="password"
@@ -124,6 +134,16 @@ export function AuthForm({ mode }: { mode: Mode }) {
           className={inputClass}
         />
       </label>
+
+      {!isSignUp && (
+        <label className="flex min-h-11 items-start gap-3 text-sm">
+          <input type="checkbox" name="rememberMe" className="mt-0.5 size-4 accent-accent" />
+          <span className="flex flex-col gap-0.5">
+            <span className="font-medium">{t.rememberMe}</span>
+            <span className={fieldHint}>{t.rememberMeHint}</span>
+          </span>
+        </label>
+      )}
 
       {error && (
         <p role="alert" className={fieldError}>
@@ -136,13 +156,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
         disabled={pending}
         className={buttonPrimary}
       >
-        {pending ? "Please wait…" : isSignUp ? "Create account" : "Sign in"}
+        <ButtonLabel pending={pending} pendingText={isSignUp ? t.creatingAccount : t.signingIn}>
+          {isSignUp ? t.createAccount : t.signIn}
+        </ButtonLabel>
       </button>
 
       <p className={muted}>
-        {isSignUp ? "Already have an account? " : "New here? "}
+        {isSignUp ? t.haveAccount : t.newHere}
         <Link href={isSignUp ? "/sign-in" : "/sign-up"} className={link}>
-          {isSignUp ? "Sign in" : "Create an account"}
+          {isSignUp ? t.signIn : t.createAnAccount}
         </Link>
       </p>
     </form>

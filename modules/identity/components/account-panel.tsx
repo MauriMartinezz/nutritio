@@ -1,14 +1,6 @@
-import Link from "next/link";
-import {
-  buttonPrimary,
-  buttonSecondary,
-  callout,
-  card,
-  eyebrow,
-  h1,
-  type Tone,
-} from "@/modules/ui/classes";
+import { callout, card, eyebrow, h1, type Tone } from "@/modules/ui/classes";
 import { prisma } from "@/lib/prisma";
+import { Landing } from "@/modules/home/components/landing";
 import { ResubmitForm } from "@/modules/nutritionists/components/resubmit-form";
 import { formatBirthDate } from "@/modules/nutritionists/profile";
 import { getCurrentUser } from "../dal";
@@ -36,25 +28,7 @@ const STATUS_TONES: Record<keyof typeof STATUS_MESSAGES, Tone> = {
 export async function AccountPanel() {
   const user = await getCurrentUser();
 
-  if (!user) {
-    return (
-      <section className="flex flex-col gap-5">
-        <h1 className={h1}>Nutritio</h1>
-        <p className="max-w-xl text-lg text-secondary">
-          Nutrition plans and progress tracking for nutritionists and their
-          clients.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/sign-in" className={buttonPrimary}>
-            Sign in
-          </Link>
-          <Link href="/sign-up" className={buttonSecondary}>
-            Create an account
-          </Link>
-        </div>
-      </section>
-    );
-  }
+  if (!user) return <Landing />;
 
   // Clients, admins and approved nutritionists get a dashboard (modules/home) instead.
   if (user.role !== "NUTRITIONIST" || user.nutritionistStatus === "APPROVED") return null;

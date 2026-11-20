@@ -6,7 +6,7 @@ import { LocaleProvider } from "@/lib/i18n/client";
 import { LOCALES, isLocale, DEFAULT_LOCALE } from "@/lib/i18n/negotiate";
 import { getMessages } from "@/lib/i18n/server";
 import { navMessages } from "@/modules/identity/nav-messages";
-import { AppNav, Brand } from "@/modules/identity/components/app-nav";
+import { AppNav } from "@/modules/identity/components/app-nav";
 import { themeInitScript } from "@/modules/theme/theme";
 import { Toast } from "@/modules/ui/components/toast";
 import "../globals.css";
@@ -36,7 +36,6 @@ export function generateStaticParams() {
 export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
   const value = await lang();
   const locale = isLocale(value) ? value : DEFAULT_LOCALE;
-  const t = await getMessages(navMessages);
   return (
     <html
       lang={locale}
@@ -49,16 +48,10 @@ export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
       </head>
       <body className="flex min-h-full flex-col md:flex-row">
         <LocaleProvider locale={locale}>
-        {/* Sidebar on desktop (240px), top bar on mobile. */}
-        <nav
-          aria-label={t.mainNav}
-          className="relative flex flex-col gap-4 border-b border-line bg-surface px-4 py-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:gap-8 md:border-r md:border-b-0 md:px-[18px] md:py-7"
-        >
-          <Brand />
-          <Suspense fallback={null}>
-            <AppNav />
-          </Suspense>
-        </nav>
+        {/* Signed in only: sidebar on desktop (240px), top bar on mobile. */}
+        <Suspense fallback={null}>
+          <AppNav />
+        </Suspense>
         <div className="flex min-w-0 flex-1 flex-col">{children}</div>
         <Suspense fallback={null}>
           <Toast />

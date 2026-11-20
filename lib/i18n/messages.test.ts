@@ -11,3 +11,12 @@ test("defineMessages keeps both tables and their parameterised messages", () => 
   assert.equal(messages.en.items(3), "3 items");
   assert.equal(messages.es.items(3), "3 ítems");
 });
+
+test("Spanish must have every English key (checked by tsc)", () => {
+  const messages = defineMessages({
+    en: { title: "Title", list: ["a", "b"], steps: [{ title: "One" }] },
+    // @ts-expect-error: "list" and "steps" are missing in Spanish
+    es: { title: "Título" },
+  });
+  assert.equal(messages.es.title, "Título");
+});

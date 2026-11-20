@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
 import { buttonPrimary, buttonSecondary, fieldError, fieldHint, formSuccess, input, label } from "@/modules/ui/classes";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "../account";
 
 /** Hidden behind an "Update password" button; changing it signs out other devices. */
@@ -100,7 +101,9 @@ export function ChangePasswordForm() {
       )}
       <div className="flex flex-wrap gap-3">
         <button type="submit" disabled={pending} className={buttonPrimary}>
-          {pending ? "Saving…" : "Change password"}
+          <ButtonLabel pending={pending} pendingText="Saving…">
+            Change password
+          </ButtonLabel>
         </button>
         <button type="button" disabled={pending} onClick={() => setOpen(false)} className={buttonSecondary}>
           Cancel
