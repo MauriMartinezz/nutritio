@@ -14,6 +14,7 @@ import {
   label,
 } from "@/modules/ui/classes";
 import { Segmented } from "@/modules/ui/components/segmented";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { MAX_NAME_LENGTH } from "../account";
 
 type Props = {
@@ -146,7 +147,9 @@ export function AccountForm({ name, email, role, sex }: Props) {
       )}
       <div className="flex flex-wrap gap-3">
         <button type="submit" disabled={pending} className={buttonPrimary}>
-          {pending ? "Saving…" : "Save"}
+          <ButtonLabel pending={pending} pendingText="Saving…">
+            Save
+          </ButtonLabel>
         </button>
         <button type="button" disabled={pending} onClick={() => setEditing(false)} className={buttonSecondary}>
           Cancel

@@ -1,0 +1,18 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { MyActivities } from "@/modules/activities/components/my-activities";
+import { h1, page } from "@/modules/ui/classes";
+import { ListSkeleton } from "@/modules/ui/components/skeleton";
+
+export const metadata: Metadata = { title: "My activities · Nutritio" };
+
+export default function Page() {
+  return (
+    <main className={page}>
+      <h1 className={h1}>My activities</h1>
+      <Suspense fallback={<ListSkeleton />}>
+        <MyActivities />
+      </Suspense>
+    </main>
+  );
+}

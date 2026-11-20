@@ -1,6 +1,8 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useMessages } from "@/lib/i18n/client";
+import { appearanceMessages } from "./messages";
 import { THEME_STORAGE_KEY, resolveTheme, type Theme } from "./theme";
 
 // <html data-theme> is the source of truth (set before paint by themeInitScript).
@@ -22,25 +24,26 @@ function setTheme(theme: Theme) {
   }
 }
 
-const OPTIONS: { value: Theme; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
 
 /** Light/dark switch, saved in this browser only. */
 export function ThemeToggle() {
   // null on the server: no option is shown as pressed until hydration.
   const theme = useSyncExternalStore(subscribe, getTheme, () => null);
+  const t = useMessages(appearanceMessages);
+  const options: { value: Theme; label: string }[] = [
+    { value: "light", label: t.light },
+    { value: "dark", label: t.dark },
+  ];
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-semibold">Theme</legend>
+      <legend className="mb-2 text-sm font-semibold">{t.theme}</legend>
       <div
         role="group"
-        aria-label="Theme"
+        aria-label={t.theme}
         className="flex w-fit gap-0.5 rounded-control border border-line-strong bg-surface-muted p-0.5"
       >
-        {OPTIONS.map((option) => (
+        {options.map((option) => (
           <button
             key={option.value}
             type="button"
@@ -52,7 +55,7 @@ export function ThemeToggle() {
           </button>
         ))}
       </div>
-      <p className="text-xs text-secondary">Saved in this browser.</p>
+      <p className="text-xs text-secondary">{t.savedInBrowser}</p>
     </fieldset>
   );
 }
