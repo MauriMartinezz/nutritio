@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
-import { InvalidClientPreferencesError, parseClientPreferences } from "./preferences";
+import {
+  InvalidClientPreferencesError,
+  InvalidSexError,
+  parseClientPreferences,
+  parseSex,
+} from "./preferences";
 
 export type SaveClientPreferencesState = {
   problems?: Record<string, string>;
@@ -34,4 +39,26 @@ export async function saveClientPreferences(
 
   revalidatePath("/profile");
   return { saved: true };
+}
+
+/** The signed-in client saves their sex from the account card. Returns an error message, if any. */
+export async function saveOwnSex(input: string): Promise<{ error?: string }> {
+  const client = await requireRole("CLIENT");
+
+  let sex;
+  try {
+    sex = parseSex(input);
+  } catch (error) {
+    if (error instanceof InvalidSexError) return { error: error.message };
+    throw error;
+  }
+
+  await prisma.clientPreferences.upsert({
+    where: { userId: client.id },
+    create: { userId: client.id, sex },
+    update: { sex },
+  });
+
+  revalidatePath("/profile");
+  return {};
 }

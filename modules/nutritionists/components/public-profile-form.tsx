@@ -71,13 +71,18 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
           </label>
           <label className={`${label} flex-1`}>
             Amount
-            <input
-              name="feeAmount"
-              inputMode="decimal"
-              defaultValue={profile.feeAmount ?? ""}
-              placeholder="25000"
-              className={`${inputClass} font-mono`}
-            />
+            <span className="relative flex items-center">
+              <span aria-hidden className="pointer-events-none absolute left-3 font-mono text-secondary">
+                $
+              </span>
+              <input
+                name="feeAmount"
+                inputMode="decimal"
+                defaultValue={profile.feeAmount ?? ""}
+                placeholder="25000"
+                className={`${inputClass} pl-7 font-mono`}
+              />
+            </span>
           </label>
         </div>
         <label className={label}>

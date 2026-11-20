@@ -7,10 +7,12 @@ import { requireRole } from "@/modules/identity/dal";
 import {
   InvalidAdminUpdateError,
   InvalidVerificationError,
+  assertCanResubmit,
   parseAdminNutritionistUpdate,
   parseReviewNote,
   reviewStatus,
 } from "./verification";
+import { InvalidProfileError, parseNutritionistProfile } from "./profile";
 import { InvalidPublicProfileError, parsePublicProfile } from "./public-profile";
 
 async function findNutritionistOrThrow(nutritionistId: string) {
@@ -131,4 +133,46 @@ export async function updatePublicProfile(
   revalidatePath("/profile");
   revalidatePath("/nutritionists");
   return { saved: true };
+}
+
+export type ResubmitApplicationState = {
+  problems?: Record<string, string>;
+  sent?: boolean;
+};
+
+/**
+ * A rejected nutritionist corrects their data and sends the application again
+ * (used with useActionState). It goes back to PENDING for the admins.
+ */
+export async function resubmitApplication(
+  _previous: ResubmitApplicationState,
+  formData: FormData,
+): Promise<ResubmitApplicationState> {
+  const nutritionist = await requireRole("NUTRITIONIST");
+
+  let profile;
+  try {
+    assertCanResubmit(nutritionist.nutritionistStatus);
+    profile = parseNutritionistProfile(Object.fromEntries(formData));
+  } catch (error) {
+    if (error instanceof InvalidVerificationError) return { problems: { form: error.message } };
+    if (error instanceof InvalidProfileError) return { problems: error.problems };
+    throw error;
+  }
+
+  try {
+    // Only while still REJECTED: two quick submissions can't both go through.
+    const { count } = await prisma.user.updateMany({
+      where: { id: nutritionist.id, role: "NUTRITIONIST", nutritionistStatus: "REJECTED" },
+      data: { ...profile, nutritionistStatus: "PENDING" },
+    });
+    if (count === 0) return { problems: { form: "Your application is already waiting for review" } };
+  } catch (error) {
+    if (uniqueViolationIndex(error) !== null) return { problems: { dni: "DNI is already registered" } };
+    throw error;
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  return { sent: true };
 }

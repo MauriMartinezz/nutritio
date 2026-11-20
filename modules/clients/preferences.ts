@@ -39,10 +39,12 @@ type TextField = keyof typeof PREFERENCE_LIMITS;
 export type ClientPreferences = Record<Flag, boolean> &
   Record<TextField, string | null> & {
     cookingStyle: CookingStyle;
-    /** Required when saving; null only for rows saved before it was asked. */
+    /** Saved from the account card (parseSex); null until the client sets it. */
     sex: Sex | null;
   };
-export type ClientPreferencesField = keyof ClientPreferences;
+/** What the preferences form saves; sex is edited separately, from the account card. */
+export type SavedClientPreferences = Omit<ClientPreferences, "sex">;
+export type ClientPreferencesField = keyof SavedClientPreferences;
 
 export class InvalidClientPreferencesError extends Error {
   constructor(readonly problems: Partial<Record<ClientPreferencesField, string>>) {
@@ -65,7 +67,7 @@ const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
  * Validates form input (checked checkboxes arrive as "on", unchecked ones are
  * missing), reporting every invalid field at once.
  */
-export function parseClientPreferences(input: Record<string, unknown>): ClientPreferences {
+export function parseClientPreferences(input: Record<string, unknown>): SavedClientPreferences {
   const problems: Partial<Record<ClientPreferencesField, string>> = {};
 
   const flags = {} as Record<Flag, boolean>;
@@ -83,13 +85,23 @@ export function parseClientPreferences(input: Record<string, unknown>): ClientPr
   const cookingStyle = COOKING_STYLES.find((style) => style === rawStyle);
   if (!cookingStyle) problems.cookingStyle = "Choose basic, elaborate or no preference";
 
-  const rawSex = text(input.sex);
-  const sex = rawSex in SEX_LABELS ? (rawSex as Sex) : null;
-  if (!sex) problems.sex = "Choose woman or man";
-
   if (Object.keys(problems).length > 0) throw new InvalidClientPreferencesError(problems);
 
-  return { ...flags, cookingStyle: cookingStyle!, ...texts, sex };
+  return { ...flags, cookingStyle: cookingStyle!, ...texts };
+}
+
+export class InvalidSexError extends Error {
+  constructor() {
+    super("Choose woman or man");
+    this.name = "InvalidSexError";
+  }
+}
+
+/** Validates the sex chosen on the account card. */
+export function parseSex(input: unknown): Sex {
+  const value = text(input);
+  if (!(value in SEX_LABELS)) throw new InvalidSexError();
+  return value as Sex;
 }
 
 /** Readable labels for the set preferences, e.g. ["Woman", "Low carb", "Basic meals", "Intolerant to: lactose"]. */

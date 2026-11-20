@@ -9,6 +9,8 @@ import {
   type Tone,
 } from "@/modules/ui/classes";
 import { prisma } from "@/lib/prisma";
+import { ResubmitForm } from "@/modules/nutritionists/components/resubmit-form";
+import { formatBirthDate } from "@/modules/nutritionists/profile";
 import { getCurrentUser } from "../dal";
 
 const ROLE_LABELS = {
@@ -21,7 +23,7 @@ const STATUS_MESSAGES = {
   PENDING: "Your nutritionist profile is waiting for admin verification.",
   APPROVED:
     "Your nutritionist profile is verified and listed in the directory.",
-  REJECTED: "Your nutritionist profile was not approved.",
+  REJECTED: "Your nutritionist profile was not approved. You can correct it and send it again below.",
 } as const;
 
 const STATUS_TONES: Record<keyof typeof STATUS_MESSAGES, Tone> = {
@@ -59,7 +61,17 @@ export async function AccountPanel() {
 
   const review =
     user.role === "NUTRITIONIST"
-      ? await prisma.user.findUnique({ where: { id: user.id }, select: { verificationNote: true } })
+      ? await prisma.user.findUnique({
+          where: { id: user.id },
+          select: {
+            verificationNote: true,
+            dni: true,
+            licenseNumber: true,
+            birthDate: true,
+            phone: true,
+            specialty: true,
+          },
+        })
       : null;
 
   return (
@@ -75,6 +87,17 @@ export async function AccountPanel() {
             </p>
           )}
         </div>
+      )}
+      {user.nutritionistStatus === "REJECTED" && review && (
+        <ResubmitForm
+          values={{
+            dni: review.dni,
+            licenseNumber: review.licenseNumber,
+            birthDate: review.birthDate ? formatBirthDate(review.birthDate) : null,
+            phone: review.phone,
+            specialty: review.specialty,
+          }}
+        />
       )}
     </section>
   );

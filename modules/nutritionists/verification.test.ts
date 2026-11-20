@@ -4,6 +4,7 @@ import {
   InvalidAdminUpdateError,
   InvalidVerificationError,
   REVIEW_NOTE_MAX,
+  assertCanResubmit,
   parseAdminNutritionistUpdate,
   parseReviewNote,
   reviewStatus,
@@ -15,10 +16,11 @@ const form = {
   name: " Sandra Pérez ",
   email: " Sandra@Example.com ",
   status: "APPROVED",
-  dni: "30123456",
+  dni: "30.123.456",
   licenseNumber: "MN 1234",
-  birthDate: "1990-05-20",
-  phone: "+54 11 5555-1234",
+  birthDate: "20/05/1990",
+  phonePrefix: "+54 11",
+  phoneNumber: "5555 1234",
   specialty: "",
 };
 
@@ -30,7 +32,7 @@ test("an admin update is validated and normalized", () => {
     dni: "30123456",
     licenseNumber: "MN 1234",
     birthDate: new Date("1990-05-20T00:00:00.000Z"),
-    phone: "+54 11 5555-1234",
+    phone: "+54 11 5555 1234",
     specialty: null,
   });
 });
@@ -62,4 +64,17 @@ test("review decision: approve, reject or save keeps the current status", () => 
   assert.equal(reviewStatus("save", "REJECTED"), "REJECTED");
   assert.equal(reviewStatus("save", null), "PENDING");
   assert.throws(() => reviewStatus("ADMIN", "PENDING"), InvalidVerificationError);
+});
+
+test("only a rejected application can be sent again; a pending one blocks a new one", () => {
+  assert.doesNotThrow(() => assertCanResubmit("REJECTED"));
+  assert.throws(
+    () => assertCanResubmit("PENDING"),
+    (error) => error instanceof InvalidVerificationError && error.message === "Your application is already waiting for review",
+  );
+  assert.throws(
+    () => assertCanResubmit("APPROVED"),
+    (error) => error instanceof InvalidVerificationError && error.message === "Your application is already approved",
+  );
+  assert.throws(() => assertCanResubmit(null), InvalidVerificationError);
 });

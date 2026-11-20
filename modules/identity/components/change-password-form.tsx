@@ -2,11 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import { authClient } from "@/lib/auth-client";
-import { buttonPrimary, fieldError, fieldHint, formSuccess, input, label } from "@/modules/ui/classes";
+import { buttonPrimary, buttonSecondary, fieldError, fieldHint, formSuccess, input, label } from "@/modules/ui/classes";
 import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from "../account";
 
-/** Changes the password; other devices are signed out. */
+/** Hidden behind an "Update password" button; changing it signs out other devices. */
 export function ChangePasswordForm() {
+  const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(false);
@@ -34,7 +35,31 @@ export function ChangePasswordForm() {
       return;
     }
     formElement.reset();
+    setOpen(false);
     setSaved(true);
+  }
+
+  if (!open) {
+    return (
+      <div className="flex flex-col gap-4">
+        {saved && (
+          <p role="status" className={formSuccess}>
+            Password changed. Other devices were signed out.
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setSaved(false);
+            setError(null);
+            setOpen(true);
+          }}
+          className={`${buttonSecondary} self-start`}
+        >
+          Update password
+        </button>
+      </div>
+    );
   }
 
   const passwordProps = {
@@ -50,7 +75,14 @@ export function ChangePasswordForm() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className={label}>
         Current password
-        <input name="currentPassword" type="password" required autoComplete="current-password" className={input} />
+        <input
+          name="currentPassword"
+          type="password"
+          required
+          autoComplete="current-password"
+          className={input}
+          autoFocus
+        />
       </label>
       <label className={label}>
         New password
@@ -66,14 +98,14 @@ export function ChangePasswordForm() {
           {error}
         </p>
       )}
-      {saved && (
-        <p role="status" className={formSuccess}>
-          Password changed. Other devices were signed out.
-        </p>
-      )}
-      <button type="submit" disabled={pending} className={`${buttonPrimary} self-start`}>
-        {pending ? "Saving…" : "Change password"}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button type="submit" disabled={pending} className={buttonPrimary}>
+          {pending ? "Saving…" : "Change password"}
+        </button>
+        <button type="button" disabled={pending} onClick={() => setOpen(false)} className={buttonSecondary}>
+          Cancel
+        </button>
+      </div>
     </form>
   );
 }

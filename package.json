@@ -15,6 +15,7 @@
     "usda:download": "bash scripts/usda/download.sh",
     "usda:import": "tsx scripts/usda/import.ts",
     "admin:promote": "tsx scripts/admin/promote.ts",
+    "admin:set-role": "tsx scripts/admin/set-role.ts",
     "foods:names-es": "tsx scripts/foods/apply-spanish-names.ts"
   },
   "dependencies": {
