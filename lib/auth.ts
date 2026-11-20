@@ -1,8 +1,10 @@
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { localeFromHeaders } from "@/lib/i18n/negotiate";
 import { prisma } from "@/lib/prisma";
 import { InvalidDisplayNameError, normalizeNameUpdate } from "@/modules/identity/account";
+import { nutritionistErrors } from "@/modules/nutritionists/messages";
 import { InvalidProfileError } from "@/modules/nutritionists/profile";
 import {
   InvalidRoleError,
@@ -45,10 +47,12 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user) => {
+        before: async (user, ctx) => {
+          // /api/auth bypasses proxy.ts, so read the language from the request itself.
+          const locale = localeFromHeaders(ctx?.headers);
           let prepared;
           try {
-            prepared = prepareNewUser(user);
+            prepared = prepareNewUser(user, new Date(), locale);
           } catch (error) {
             if (
               error instanceof InvalidRoleError ||
@@ -61,13 +65,13 @@ export const auth = betterAuth({
           }
           if ("dni" in prepared) {
             const taken = await prisma.user.findUnique({ where: { dni: prepared.dni } });
-            if (taken) throw new APIError("BAD_REQUEST", { message: "DNI is already registered" });
+            if (taken) throw new APIError("BAD_REQUEST", { message: nutritionistErrors[locale].dniTaken });
           }
           return { data: { ...user, ...prepared } };
         },
       },
       update: {
-        before: async (update) => {
+        before: async (update, ctx) => {
           try {
             assertNoPrivilegedChanges(update);
           } catch (error) {
@@ -78,7 +82,7 @@ export const auth = betterAuth({
           }
           // Name edits from the profile page go through updateUser.
           try {
-            return normalizeNameUpdate(update);
+            return normalizeNameUpdate(update, localeFromHeaders(ctx?.headers));
           } catch (error) {
             if (error instanceof InvalidDisplayNameError) {
               throw new APIError("BAD_REQUEST", { message: error.message });

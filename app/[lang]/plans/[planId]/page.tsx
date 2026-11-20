@@ -11,14 +11,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: `${t.titles.plan} · Nutritio` };
 }
 
-export default function Page({ params, searchParams }: PageProps<"/[lang]/plans/[planId]">) {
+export default function Page({ params }: PageProps<"/[lang]/plans/[planId]">) {
   return (
-    <main className={page}>
+    // Wider than other pages: the meal tables and the day total sit side by side.
+    <main className={page.replace("max-w-5xl", "max-w-7xl")}>
       <Suspense fallback={<SectionsSkeleton fields={3} />}>
-        <PlanEditor
-          params={params}
-          searchParams={searchParams as Promise<{ meal?: string; q?: string }>}
-        />
+        <PlanEditor params={params} />
       </Suspense>
     </main>
   );

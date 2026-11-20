@@ -1,10 +1,14 @@
 import Link from "next/link";
+import { formatDateTime, formatNumber } from "@/lib/i18n/format";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { activityLabel } from "@/modules/activities/rules";
 import { rosterHref, timeLeftLabel } from "@/modules/coaching/roster";
 import { getCurrentUser } from "@/modules/identity/dal";
 import { buttonLink, card, figure, link, list, muted } from "@/modules/ui/classes";
 import { DashboardHeader, Kpi, KpiRow, PanelHeader, panelRow } from "./dashboard-parts";
-import { relativeTime } from "../dashboard";
-import { getNutritionistDashboard } from "../nutritionist-dashboard-dal";
+import { relativeTime, shortDate } from "../dashboard";
+import { homeMessages } from "../messages";
+import { getNutritionistDashboard, type FeedDetail } from "../nutritionist-dashboard-dal";
 
 const ATTENTION_LIMIT = 6;
 const rowClass = panelRow;
@@ -17,7 +21,11 @@ export async function NutritionistHome() {
   const user = await getCurrentUser();
   if (user?.role !== "NUTRITIONIST" || user.nutritionistStatus !== "APPROVED") return null;
 
-  const data = await getNutritionistDashboard(user);
+  const [data, locale, t] = await Promise.all([getNutritionistDashboard(user), getLocale(), getMessages(homeMessages)]);
+  const describe = (detail: FeedDetail) =>
+    detail.kind === "checkIn"
+      ? t.checkedInAt(formatNumber(detail.weightKg, locale, { maximumFractionDigits: 2 }))
+      : t.logged(activityLabel(detail, locale), detail.minutes);
   const { now } = data;
   const needsAction = data.pendingRequests.length + data.meetingRequests.length;
 
@@ -25,23 +33,23 @@ export async function NutritionistHome() {
     ...data.pendingRequests.map((c) => ({
       key: `p${c.linkId}`,
       name: c.name,
-      detail: "Wants to work with you",
+      detail: t.wantsToWork,
       href: rosterHref("all", { accept: c.linkId }),
-      action: "Review",
+      action: t.review,
     })),
     ...data.meetingRequests.map((m) => ({
       key: `m${m.id}`,
       name: m.name,
-      detail: `Asked for a ${m.kind.toLowerCase()} · ${relativeTime(m.at, now)}`,
+      detail: `${t.askedFor[m.kind]} · ${relativeTime(m.at, now, locale)}`,
       href: rosterHref("all", { meeting: m.id }),
-      action: "Answer",
+      action: t.answer,
     })),
     ...data.expired.map((c) => ({
       key: `e${c.linkId}`,
       name: c.name,
-      detail: `Access ${timeLeftLabel(c.until, now).toLowerCase()}`,
+      detail: t.accessStatus(timeLeftLabel(c.until, now, locale)),
       href: `/clients/${c.clientId}`,
-      action: "Open",
+      action: t.open,
     })),
   ];
 
@@ -51,35 +59,35 @@ export async function NutritionistHome() {
 
       <KpiRow>
         <Kpi
-          label="Active clients"
+          label={t.activeClients}
           value={data.activeCount}
-          hint={data.newThisMonth > 0 ? `+${data.newThisMonth} this month` : "None new this month"}
+          hint={data.newThisMonth > 0 ? t.newThisMonth(data.newThisMonth) : t.noneNewThisMonth}
           href="/clients?filter=active"
         />
         <Kpi
-          label="Needs action"
+          label={t.needsAction}
           value={needsAction}
-          hint="Requests and meetings"
+          hint={t.requestsAndMeetings}
           href="/clients?filter=needs-action"
         />
         <Kpi
-          label="Access ending this week"
+          label={t.accessEndingThisWeek}
           value={data.expiring.length}
-          hint={data.expired.length > 0 ? `${data.expired.length} already expired` : "None expired"}
+          hint={data.expired.length > 0 ? t.alreadyExpired(data.expired.length) : t.noneExpired}
           href="/clients?filter=expiring"
         />
         <Kpi
-          label="Diet adherence"
+          label={t.dietAdherence}
           value={data.adherence.average === null ? "—" : `${data.adherence.average}%`}
-          hint={`Average of ${data.adherence.checkIns} check-in${data.adherence.checkIns === 1 ? "" : "s"} · 30 days`}
+          hint={t.adherenceHint(data.adherence.checkIns)}
         />
       </KpiRow>
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <section className={card}>
-          <PanelHeader title="Needs attention" href="/clients?filter=needs-action" linkLabel="See all" />
+          <PanelHeader title={t.needsAttention} href="/clients?filter=needs-action" linkLabel={t.seeAll} />
           {attention.length === 0 ? (
-            <p className={muted}>You are all caught up.</p>
+            <p className={muted}>{t.allCaughtUp}</p>
           ) : (
             <ul className={list}>
               {attention.slice(0, ATTENTION_LIMIT).map((item) => (
@@ -98,28 +106,29 @@ export async function NutritionistHome() {
         </section>
 
         <section className={card}>
-          <PanelHeader title="Renewals · next 7 days" href="/clients?filter=expiring" linkLabel="See all" />
+          <PanelHeader title={t.renewalsNextWeek} href="/clients?filter=expiring" linkLabel={t.seeAll} />
           {data.expiring.length === 0 ? (
-            <p className={muted}>No access ends in the next 7 days.</p>
+            <p className={muted}>{t.noRenewals}</p>
           ) : (
             <ul className={list}>
               {data.expiring.map((c) => (
                 <li key={c.linkId} className={rowClass}>
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="w-10 shrink-0 font-mono text-xs font-semibold uppercase text-secondary">
-                      {c.until?.toLocaleDateString("en-US", { weekday: "short" })}
+                      {c.until &&
+                        formatDateTime(c.until, locale, { dateStyle: undefined, timeStyle: undefined, weekday: "short" })}
                     </span>
                     <div className="min-w-0">
                       <Link href={`/clients/${c.clientId}`} className={`${link} font-semibold`}>
                         {c.name}
                       </Link>
                       <p className={muted}>
-                        Ends <span className={figure}>{c.until?.toLocaleDateString()}</span>
+                        {t.ends} <span className={figure}>{c.until && shortDate(c.until, locale)}</span>
                       </p>
                     </div>
                   </div>
                   <Link href={rosterHref("expiring", { renew: c.linkId })} className={buttonLink}>
-                    Renew
+                    {t.renew}
                   </Link>
                 </li>
               ))}
@@ -129,9 +138,9 @@ export async function NutritionistHome() {
       </div>
 
       <section className={card}>
-        <PanelHeader title="Client activity" />
+        <PanelHeader title={t.clientActivity} />
         {data.feed.length === 0 ? (
-          <p className={muted}>Check-ins and activities your clients log will show up here.</p>
+          <p className={muted}>{t.noClientActivity}</p>
         ) : (
           <ul className={list}>
             {data.feed.map((event) => (
@@ -140,9 +149,9 @@ export async function NutritionistHome() {
                   <Link href={`/clients/${event.clientId}`} className={`${link} font-semibold`}>
                     {event.name}
                   </Link>{" "}
-                  {event.text}
+                  {describe(event.detail)}
                 </p>
-                <span className="text-xs text-tertiary">{relativeTime(event.at, now)}</span>
+                <span className="text-xs text-tertiary">{relativeTime(event.at, now, locale)}</span>
               </li>
             ))}
           </ul>

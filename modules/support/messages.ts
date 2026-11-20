@@ -55,7 +55,6 @@ export const supportMessages = defineMessages({
     replySaved: "Answer sent.",
     resolvedSaved: "Answer sent and request marked completed.",
     resolvedOn: (date: string) => `Completed ${date}`,
-    backToRequests: "All requests",
     usersMeta: "Users · Nutritio",
     usersTitle: "Users",
     searchUsers: "Search by name or email",
@@ -74,7 +73,6 @@ export const supportMessages = defineMessages({
     userSaved: "Changes saved.",
     history: "Request history",
     noHistory: "This user hasn't sent any request.",
-    backToUsers: "All users",
   },
   es: {
     contactMeta: "Contacto · Nutritio",
@@ -109,7 +107,6 @@ export const supportMessages = defineMessages({
     replySaved: "Respuesta enviada.",
     resolvedSaved: "Respuesta enviada y pedido marcado como completado.",
     resolvedOn: (date: string) => `Completado el ${date}`,
-    backToRequests: "Todos los pedidos",
     usersMeta: "Usuarios · Nutritio",
     usersTitle: "Usuarios",
     searchUsers: "Buscar por nombre o email",
@@ -128,6 +125,5 @@ export const supportMessages = defineMessages({
     userSaved: "Cambios guardados.",
     history: "Historial de pedidos",
     noHistory: "Este usuario no envió ningún pedido.",
-    backToUsers: "Todos los usuarios",
   },
 });

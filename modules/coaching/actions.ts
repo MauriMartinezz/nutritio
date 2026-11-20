@@ -56,6 +56,7 @@ export async function requestNutritionist(nutritionistId: string) {
 
   revalidatePath("/nutritionists");
   revalidatePath(`/nutritionists/${nutritionistId}`);
+  await setFlash("nutritionist-requested");
 }
 
 async function respond(linkId: string, response: LinkResponse, period?: AccessPeriod) {
@@ -161,4 +162,5 @@ export async function setAutoRenew(linkId: string, formData: FormData) {
     },
   });
   revalidatePath("/clients", "layout");
+  await setFlash("auto-renew-saved");
 }

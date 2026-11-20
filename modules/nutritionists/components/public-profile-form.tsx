@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useMessages } from "@/lib/i18n/client";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { nutritionistMessages } from "../messages";
 import { updatePublicProfile, type UpdatePublicProfileState } from "../actions";
@@ -26,6 +27,7 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
   );
   const problems = state.problems ?? {};
   const t = useMessages(nutritionistMessages);
+  useActionToast(state, (next) => (next.saved ? { text: t.publicProfileSaved } : null));
 
   return (
     <form action={formAction} className={`${card} w-full`}>

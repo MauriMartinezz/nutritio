@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
+import { setFlash } from "@/modules/ui/set-flash";
 import { InvalidActivityError, parseActivity } from "./rules";
 
 export type LogActivityState = {
@@ -35,7 +36,8 @@ export async function deleteActivity(activityId: string) {
   const client = await requireRole("CLIENT");
 
   // The bound id is tamperable: only delete it when it belongs to the caller.
-  await prisma.activity.deleteMany({ where: { id: activityId, userId: client.id } });
+  const { count } = await prisma.activity.deleteMany({ where: { id: activityId, userId: client.id } });
 
   revalidatePath("/activities");
+  if (count > 0) await setFlash("activity-deleted");
 }

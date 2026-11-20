@@ -63,3 +63,15 @@ test("nextMeeting is the soonest accepted meeting still ahead", () => {
   assert.deepEqual(nextMeeting([...meetings], now), meetings[3]);
   assert.equal(nextMeeting([meetings[0], meetings[2]], now), null);
 });
+
+test("dashboard helpers speak Spanish with es-AR dates", () => {
+  assert.equal(relativeTime(minutesAgo(20), now, "es"), "Hace 20 min");
+  assert.equal(relativeTime(minutesAgo(30 * 60), now, "es"), "Ayer");
+  assert.equal(relativeTime(minutesAgo(10 * 24 * 60), now, "es"), "3/11/2026");
+  const due = new Date("2026-11-16T12:00:00Z");
+  assert.deepEqual(checkInKpi({ state: "UPCOMING", daysLeft: 3, due }, "es"), { value: "3 días", hint: "El 16/11/2026" });
+  assert.deepEqual(checkInKpi({ state: "DUE", daysLeft: 0, due }, "es"), { value: "Hoy", hint: "Envialo hoy" });
+  const items = [1, 2, 3, 4].map((n) => ({ food: { label: `F${n}` }, grams: n }));
+  assert.equal(mealSummary(items, 3, "es"), "F1 1 g · F2 2 g · F3 3 g + 1 más");
+  assert.equal(mealSummary([], 3, "es"), "Todavía sin alimentos");
+});

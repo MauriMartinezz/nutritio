@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useLocale, useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, callout, fieldError, formSuccess, input, label, textarea } from "@/modules/ui/classes";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { requestMeeting, type RequestMeetingState } from "../actions";
 import { meetingMessages } from "../messages";
@@ -13,6 +14,8 @@ export function MeetingRequestForm({ linkId }: { linkId: string }) {
   const locale = useLocale();
   const [state, formAction, pending] = useActionState<RequestMeetingState, FormData>(requestMeeting, {});
   const problems = state.problems ?? {};
+  // Success shows through the flash notice of the meetings list; only a refusal is toasted here.
+  useActionToast(state, (next) => (next.error ? { text: next.error, tone: "error" } : null));
 
   return (
     <form action={formAction} className="flex w-full max-w-xl flex-col gap-5">

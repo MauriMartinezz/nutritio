@@ -28,3 +28,10 @@ test("normalizeNameUpdate normalizes a sent name and rejects an invalid one", ()
   });
   assert.throws(() => normalizeNameUpdate({ name: "  " }), InvalidDisplayNameError);
 });
+
+test("parseDisplayName explains the rule in Spanish", () => {
+  assert.throws(
+    () => parseDisplayName("  ", "es"),
+    (error) => error instanceof InvalidDisplayNameError && error.message === `Ingresá un nombre de 1 a ${MAX_NAME_LENGTH} caracteres`,
+  );
+});

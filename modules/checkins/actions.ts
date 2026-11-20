@@ -32,6 +32,7 @@ export async function setCheckInFrequency(clientId: string, formData: FormData) 
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/check-ins");
+  await setFlash("frequency-saved");
 }
 
 /** The nutritionist turns the menstrual cycle question on or off for a client who is a woman. */
@@ -50,6 +51,7 @@ export async function setCycleQuestion(clientId: string, formData: FormData) {
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/check-ins");
+  await setFlash(askCycle ? "cycle-question-on" : "cycle-question-off");
 }
 
 /** The nutritionist adds a body measurement to a client's check-ins, or removes it. */
@@ -83,6 +85,7 @@ export async function setRequestedMeasurement(clientId: string, formData: FormDa
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/check-ins");
+  await setFlash(adding ? "measurement-added" : "measurement-removed");
 }
 
 export type SubmitCheckInState = {

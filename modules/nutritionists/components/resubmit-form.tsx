@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { useMessages } from "@/lib/i18n/client";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { nutritionistMessages } from "../messages";
 import { buttonPrimary, callout, fieldHint, formSuccess, h3 } from "@/modules/ui/classes";
@@ -16,6 +17,8 @@ export function ResubmitForm({ values }: { values: ProfileFieldValues }) {
   );
   const problems = state.problems ?? {};
   const t = useMessages(nutritionistMessages);
+  // Success shows through the flash notice of the account panel; only a refusal is toasted here.
+  useActionToast(state, (next) => (next.problems?.form ? { text: next.problems.form, tone: "error" } : null));
 
   if (state.sent) {
     return (

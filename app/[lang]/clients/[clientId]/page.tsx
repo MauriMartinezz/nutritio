@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import { getMessages } from "@/lib/i18n/server";
 import { coachingMessages } from "@/modules/coaching/messages";
-import { link, page } from "@/modules/ui/classes";
+import { page } from "@/modules/ui/classes";
 import { ClientActivities } from "@/modules/activities/components/client-activities";
 import { ClientCheckIns } from "@/modules/checkins/components/client-check-ins";
 import { ClientAccess } from "@/modules/coaching/components/client-access";
@@ -15,13 +14,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getMessages(coachingMessages)).clientMeta };
 }
 
-export default async function Page({ params, searchParams }: PageProps<"/[lang]/clients/[clientId]">) {
-  const t = await getMessages(coachingMessages);
+export default function Page({ params, searchParams }: PageProps<"/[lang]/clients/[clientId]">) {
   return (
     <main className={page}>
-      <Link href="/clients" className={`${link} self-start text-sm`}>
-        {t.back}
-      </Link>
       <Suspense fallback={<SectionsSkeleton sections={4} />}>
         <ClientProfile params={params} />
         <ClientAccess params={params} searchParams={searchParams} />
