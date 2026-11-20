@@ -1,19 +1,22 @@
+import { getMessages } from "@/lib/i18n/server";
 import { buttonSecondary, input, label } from "@/modules/ui/classes";
 import { setCheckInFrequency } from "../actions";
+import { clientCheckInMessages } from "../messages";
 import { CHECK_IN_LIMITS, FREQUENCY_PRESETS } from "../rules";
 
 /** The nutritionist agrees how often the client checks in. */
-export function CheckInFrequencyForm({
+export async function CheckInFrequencyForm({
   clientId,
   checkInEveryDays,
 }: {
   clientId: string;
   checkInEveryDays: number | null;
 }) {
+  const t = await getMessages(clientCheckInMessages);
   return (
     <form action={setCheckInFrequency.bind(null, clientId)} className="flex flex-wrap items-end gap-3">
       <label className={label}>
-        Check-in every (days)
+        {t.everyDays}
         <input
           type="number"
           name="checkInEveryDays"
@@ -23,7 +26,7 @@ export function CheckInFrequencyForm({
           step={1}
           list="check-in-presets"
           defaultValue={checkInEveryDays ?? ""}
-          placeholder="e.g. 7"
+          placeholder={t.everyDaysPlaceholder}
           className={`${input} w-32 font-mono tabular-nums`}
         />
         <datalist id="check-in-presets">
@@ -33,7 +36,7 @@ export function CheckInFrequencyForm({
         </datalist>
       </label>
       <button className={buttonSecondary}>
-        Save frequency
+        {t.saveFrequency}
       </button>
     </form>
   );

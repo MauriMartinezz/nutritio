@@ -1,3 +1,6 @@
+import type { Locale } from "@/lib/i18n/negotiate";
+import { formatCheckInDate } from "../format";
+import { checkInMessages } from "../messages";
 import { trendAxis, trendPoints, type TrendPoint } from "../trend";
 
 // Fixed-pixel box: the SVG never renders wider than BOX.width, so the 12px
@@ -9,7 +12,8 @@ const LABEL_SIZE = 12;
  * Evolution of one value as a dependency-free SVG line chart. `series` is
  * oldest first; `format` prints a value with its unit; `summary` is the
  * accessible description; `name` heads the value column of the table view;
- * `formatAxis` prints the y-axis bounds (defaults to `format`).
+ * `formatAxis` prints the y-axis bounds (defaults to `format`); `locale`
+ * formats the dates and the text.
  * Server-renderable; colours come from the theme tokens (currentColor and CSS
  * variables), so light/dark work.
  */
@@ -19,23 +23,24 @@ export function TrendChart({
   summary,
   name,
   formatAxis = format,
+  locale,
 }: {
   series: TrendPoint[];
   format: (value: number) => string;
   summary: string;
   name: string;
   formatAxis?: (value: number) => string;
+  locale: Locale;
 }) {
   if (series.length === 0) return null;
+  const t = checkInMessages[locale];
+  const day = (date: Date) => formatCheckInDate(date, locale);
 
   if (series.length === 1) {
     return (
       <div className="flex flex-col gap-1 text-sm">
-        <p>
-          <span className="font-mono font-semibold tabular-nums">{format(series[0].value)}</span> on{" "}
-          <span className="font-mono tabular-nums">{series[0].date.toLocaleDateString()}</span>
-        </p>
-        <p className="text-secondary">Send more check-ins to see your evolution</p>
+        <p className="font-mono tabular-nums">{t.on(format(series[0].value), day(series[0].date))}</p>
+        <p className="text-secondary">{t.sendMore}</p>
       </div>
     );
   }
@@ -68,10 +73,10 @@ export function TrendChart({
             {formatAxis(min)}
           </text>
           <text x={left} y={bottom + 16} textAnchor="start">
-            {series[0].date.toLocaleDateString()}
+            {day(series[0].date)}
           </text>
           <text x={right} y={bottom + 16} textAnchor="end">
-            {series[series.length - 1].date.toLocaleDateString()}
+            {day(series[series.length - 1].date)}
           </text>
         </g>
         <polyline
@@ -84,23 +89,23 @@ export function TrendChart({
         />
         {points.map(({ x, y }, index) => (
           <circle key={index} cx={x} cy={y} r={3.5} fill="var(--surface)" stroke="currentColor" strokeWidth={2}>
-            <title>{`${series[index].date.toLocaleDateString()}: ${format(series[index].value)}`}</title>
+            <title>{`${day(series[index].date)}: ${format(series[index].value)}`}</title>
           </circle>
         ))}
       </svg>
       <figcaption className="text-xs text-secondary">{summary}</figcaption>
       <table className="sr-only">
-        <caption>{name} by check-in</caption>
+        <caption>{t.byCheckIn(name)}</caption>
         <thead>
           <tr>
-            <th scope="col">Date</th>
+            <th scope="col">{t.date}</th>
             <th scope="col">{name}</th>
           </tr>
         </thead>
         <tbody>
           {series.map((point, index) => (
             <tr key={index}>
-              <td>{point.date.toLocaleDateString()}</td>
+              <td>{day(point.date)}</td>
               <td>{format(point.value)}</td>
             </tr>
           ))}
