@@ -6,6 +6,7 @@ export const uiMessages = defineMessages({
     dismiss: "Dismiss",
     yes: "Yes",
     no: "No",
+    breadcrumbs: "Breadcrumb",
     // One-time notices (keys of FLASH_MESSAGES in ../flash.ts).
     flash: {
       "check-in-sent": "Check-in sent. Your nutritionist will see it.",
@@ -21,6 +22,7 @@ export const uiMessages = defineMessages({
     dismiss: "Descartar",
     yes: "Sí",
     no: "No",
+    breadcrumbs: "Ruta de navegación",
     flash: {
       "check-in-sent": "Check-in enviado. Tu nutricionista lo va a ver.",
       "access-renewed": "Acceso renovado.",

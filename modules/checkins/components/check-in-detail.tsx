@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { formatNumber } from "@/lib/i18n/format";
 import { getLocale } from "@/lib/i18n/server";
-import { card, eyebrow, figure, h1, h3, link, list } from "@/modules/ui/classes";
+import { navMessages } from "@/modules/identity/nav-messages";
+import { card, eyebrow, figure, h1, h3, list } from "@/modules/ui/classes";
+import { Breadcrumbs } from "@/modules/ui/components/breadcrumbs";
 import { getOwnCheckIn } from "../dal";
 import { asQuestion, formatCheckInDateLong } from "../format";
 import { formatCm } from "../measurement-chart";
@@ -33,9 +34,12 @@ export async function CheckInDetail({ params }: { params: Promise<{ checkInId: s
 
   return (
     <>
-      <Link href="/check-ins" className={`${link} self-start text-sm`}>
-        {t.backToCheckIns}
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: navMessages[locale].checkIns, href: "/check-ins" },
+          { label: formatCheckInDateLong(checkIn.createdAt, locale) },
+        ]}
+      />
       <header className="flex flex-col gap-1">
         <p className={eyebrow}>{t.sentTo(checkIn.nutritionistName)}</p>
         <h1 className={h1}>{formatCheckInDateLong(checkIn.createdAt, locale)}</h1>

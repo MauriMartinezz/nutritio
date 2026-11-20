@@ -125,7 +125,6 @@ export const checkInMessages = defineMessages({
     viewCheckIn: (date: string) => `View check-in of ${date}`,
     // Detail
     detailMeta: "Check-in · Nutritio",
-    backToCheckIns: "← My check-ins",
     sentTo: (name: string) => `Sent to ${name}`,
     bodyTitle: "Body",
     weekTitle: "Your week",
@@ -191,7 +190,6 @@ export const checkInMessages = defineMessages({
     view: "Ver",
     viewCheckIn: (date: string) => `Ver el control del ${date}`,
     detailMeta: "Control · Nutritio",
-    backToCheckIns: "← Mis controles",
     sentTo: (name: string) => `Enviado a ${name}`,
     bodyTitle: "Cuerpo",
     weekTitle: "Tu semana",

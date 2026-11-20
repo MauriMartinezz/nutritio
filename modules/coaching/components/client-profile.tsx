@@ -2,6 +2,8 @@ import { formatDate } from "../dates";
 import { getLocale } from "@/lib/i18n/server";
 import { getClientPreferencesForNutritionist } from "@/modules/clients/dal";
 import { describePreferences } from "@/modules/clients/preferences";
+import { navMessages } from "@/modules/identity/nav-messages";
+import { Breadcrumbs } from "@/modules/ui/components/breadcrumbs";
 import { badge, card, h1, h2, muted } from "@/modules/ui/classes";
 import { getClientProfile } from "../dal";
 import { coachingMessages } from "../messages";
@@ -17,6 +19,7 @@ export async function ClientProfile({ params }: { params: Promise<{ clientId: st
 
   return (
     <div className="flex flex-col gap-6">
+      <Breadcrumbs items={[{ label: navMessages[locale].myClients, href: "/clients" }, { label: client.name }]} />
       <div className={card}>
         <div className="flex flex-col gap-1.5">
           <h1 className={h1}>{client.name}</h1>
