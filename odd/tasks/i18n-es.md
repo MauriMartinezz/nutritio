@@ -21,8 +21,9 @@ Objective: the whole app available in Spanish (es-AR focus) and English. Branch:
 | T5 | S1 | delegated (parallel units): plans, foods + plans/my-plans routes | todo | |
 | T6 | S1 | delegated (parallel units): activities, meetings, ui + their routes | todo | |
 | U1 | L5 | inline: landing page, no sidebar on sign-in/sign-up, sign-out clears the login form, "remember me", button spinners | done (spinner component + identity forms; other modules adopt it in T2-T6) | (this commit) |
-| U2 | L7 | inline: admin dashboard of clients to fix their data (e.g. name) | todo | |
-| U3 | L8 | inline: Contact section (title + description) → admin inbox, reply, close as completed; admin user profile with request history (shares the admin user page with U2) | todo | |
+| U2 | L7 | inline: admin dashboard of clients to fix their data (e.g. name) | done | (this commit) |
+| U3 | L8 | inline: Contact section (title + description) → admin inbox, reply, close as completed; admin user profile with request history (shares the admin user page with U2) | done | (this commit) |
+| U4 | L11 | inline: hide check-ins, meetings and meal plans from clients who never had a nutritionist | todo | |
 | T7 | S1-S5 | inline: seam check, full suite, build, manual check of both languages | todo | |
 
 Route evidence: T2-T6 are independent units with disjoint edit surfaces (one module group each, several files and well over 100 changed lines each), launched together after T1 fixes the shared pattern (Writer trigger a).
@@ -45,3 +46,5 @@ Route evidence: T2-T6 are independent units with disjoint edit surfaces (one mod
 - L7 (2026-11-20, user): "El administrador también debe tener un dashboard de Clientes, para poder modificar datos en caso de emergencia, ejemplo: llega por contacto que un usuario no sabe como cambiar su nombre y que un administrador lo pueda hacer"
 - L8 (2026-11-20, user): "Se debe añadir una sección de Contacto, donde se dejará un formulario con un título y una descripción, el administrador recibirá esas peticiones y podrá responder ahí mismo. Ejemplo: Titulo: No se cambiar mi email, descripción: ayuda no se cómo se hace --> Administrador ve esa petición, resuelve y contesta: Resuelto! --> Cierra el caso y lo marca como completado. El administrador podrá ver las peticiones de todo tipo y puede entrar a perfil de los usuarios y tener un historial ahí"
 - L9 (2026-11-20): U1 verified on the local dev server: landing screenshots desktop/mobile (es, en); sign-in has no sidebar; rememberMe=false → session cookie without Max-Age, true → Max-Age=604800. Sign-out now does a full page load so no cached page keeps typed credentials (reasoned, not reproduced in a real browser).
+- L10 (2026-11-20): U2+U3 verified with a Playwright run on the local dev server (Spanish browser): client sends a contact request, form clears, list shows it waiting; admin sees Pedidos (no Contacto), answers and marks it completed, fixes the client name, history and search show it; client sees the answer; after sign-out the sign-in form is empty and has no sidebar. New table support_requests (additive migration 20261120153704).
+- L11 (2026-11-20, user): "No tiene sentido que un usuario tenga Check-ins, meetings, y meal plans si nunca tuvo un nutricionista." — tracked as U4.

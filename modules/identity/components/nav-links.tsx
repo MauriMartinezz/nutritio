@@ -12,18 +12,26 @@ export type NavItem = { href: string; label: string; badge?: ReactNode };
 // The URL never shows the locale, but a rewritten path may carry it: ignore it.
 const LOCALE_PREFIX = new RegExp(`^/(${LOCALES.join("|")})(?=/|$)`);
 
-function isActive(rawPathname: string, href: string) {
+function matches(rawPathname: string, href: string) {
   const pathname = rawPathname.replace(LOCALE_PREFIX, "") || "/";
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
+
+/** The most specific link wins: on /admin/users only "Users" is current, not "/admin" too. */
+function activeHref(pathname: string, items: NavItem[]) {
+  return items
+    .filter((item) => matches(pathname, item.href))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
+
 /** Main navigation links; the current section is marked with aria-current. */
 export function NavLinks({ items }: { items: NavItem[] }) {
-  const pathname = usePathname();
+  const current = activeHref(usePathname(), items);
   return (
     <ul className="flex gap-1 overflow-x-auto md:flex-col md:overflow-visible">
       {items.map((item) => {
-        const active = isActive(pathname, item.href);
+        const active = item.href === current;
         return (
           <li key={item.href} className="shrink-0">
             <Link
@@ -51,7 +59,7 @@ type ProfileLinkProps = { name: string; initials: string; roleLabel: string };
  */
 export function ProfileLink({ name, initials, roleLabel }: ProfileLinkProps) {
   const t = useMessages(navMessages);
-  const active = isActive(usePathname(), "/profile");
+  const active = matches(usePathname(), "/profile");
   const avatar = (
     <span
       aria-hidden="true"

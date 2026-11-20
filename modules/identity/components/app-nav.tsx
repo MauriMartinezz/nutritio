@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getMessages } from "@/lib/i18n/server";
 import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
+import { OpenRequestsBadge } from "@/modules/support/components/open-requests-badge";
 import { getCurrentUser, type CurrentUser } from "../dal";
 import { navMessages, roleMessages } from "../nav-messages";
 import { NavLinks, ProfileLink, type NavItem } from "./nav-links";
@@ -25,7 +26,13 @@ function navItems(user: CurrentUser, t: NavText): NavItem[] {
     );
   }
   if (user.role === "ADMIN") {
-    items.push({ href: "/admin", label: t.nutritionists });
+    items.push(
+      { href: "/admin", label: t.nutritionists },
+      { href: "/admin/users", label: t.users },
+      { href: "/admin/requests", label: t.requests, badge: <OpenRequestsBadge /> },
+    );
+  } else {
+    items.push({ href: "/contact", label: t.contact });
   }
   return items;
 }
