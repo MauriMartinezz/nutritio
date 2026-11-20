@@ -1,6 +1,8 @@
 // What clients see about a nutritionist before asking to work together.
 
+import type { Locale } from "@/lib/i18n/negotiate";
 import { hasActiveAccess, type AccessUnit } from "./access";
+import { coachingLabels } from "./messages";
 
 type AcceptedLink = { accessUntil: Date | null; autoRenew: boolean; accessAmount: number; accessUnit: AccessUnit };
 
@@ -10,7 +12,7 @@ export function countActiveClients(links: AcceptedLink[], now: Date): number {
     .length;
 }
 
-export function activeClientsLabel(count: number): string {
-  if (count === 0) return "No active clients yet";
-  return `${count} active ${count === 1 ? "client" : "clients"}`;
+export function activeClientsLabel(count: number, locale: Locale = "en"): string {
+  const t = coachingLabels[locale];
+  return count === 0 ? t.noActiveClients : t.activeClients(count);
 }

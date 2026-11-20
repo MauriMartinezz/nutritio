@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { formatDateTime } from "@/lib/i18n/format";
+import { formatDate } from "../dates";
+import { getLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import { meetingKindLabel } from "@/modules/meetings/rules";
@@ -15,19 +18,19 @@ import {
   sortRoster,
   type RosterStatus,
 } from "../roster";
+import { coachingLabels, coachingMessages } from "../messages";
 import { RosterDialogs } from "./roster-dialogs";
 
-export const STATUS_PILLS: Record<RosterStatus, { label: string; tone: Tone }> = {
-  ACTIVE: { label: "Active", tone: "success" },
-  EXPIRING: { label: "Expiring", tone: "warning" },
-  EXPIRED: { label: "Expired", tone: "danger" },
-  PENDING: { label: "Pending", tone: "neutral" },
-  REJECTED: { label: "Rejected", tone: "danger" },
+export const STATUS_TONES: Record<RosterStatus, Tone> = {
+  ACTIVE: "success",
+  EXPIRING: "warning",
+  EXPIRED: "danger",
+  PENDING: "neutral",
+  REJECTED: "danger",
 };
 
 /** Bell shown on rows that need the nutritionist's action. */
-function ActionBell({ reasons }: { reasons: string[] }) {
-  const text = `Needs action: ${reasons.join(", ")}`;
+function ActionBell({ text }: { text: string }) {
   return (
     <span role="img" aria-label={text} title={text} className="inline-flex shrink-0 text-warning">
       <svg viewBox="0 0 24 24" fill="currentColor" className="size-5" aria-hidden="true">
@@ -39,7 +42,15 @@ function ActionBell({ reasons }: { reasons: string[] }) {
 
 const cell =
   "flex items-center justify-between gap-3 before:text-xs before:font-medium before:text-secondary before:content-[attr(data-label)] md:table-cell md:px-3 md:py-3 md:align-middle md:whitespace-nowrap md:before:content-none md:first:pl-0 md:last:pr-0";
-const timeFormat: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" };
+// Overrides formatDateTime's dateStyle/timeStyle (they can't be combined with field options).
+const timeFormat: Intl.DateTimeFormatOptions = {
+  dateStyle: undefined,
+  timeStyle: undefined,
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+};
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -52,9 +63,12 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
   const params = await searchParams;
   const filter = parseRosterFilter(params.filter);
   const dialog = parseRosterDialog(params);
+  const locale = await getLocale();
+  const t = coachingMessages[locale];
+  const labels = coachingLabels[locale];
 
   if (nutritionist.nutritionistStatus !== "APPROVED") {
-    return <p className={callout("warning")}>Clients can find you once an admin verifies your profile.</p>;
+    return <p className={callout("warning")}>{t.notVerified}</p>;
   }
 
   await connection();
@@ -90,8 +104,8 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
       const pending = meetings.filter((m) => m.linkId === row.id && m.status === "PENDING");
       const next = meetings.find((m) => m.linkId === row.id && m.status === "ACCEPTED");
       const reasons = [
-        ...(row.status === "PENDING" ? ["request to work with you"] : []),
-        ...(pending.length > 0 ? [`${pending.length} meeting request${pending.length === 1 ? "" : "s"}`] : []),
+        ...(row.status === "PENDING" ? [t.reasonRequest] : []),
+        ...(pending.length > 0 ? [t.reasonMeetings(pending.length)] : []),
       ];
       return {
         id: row.id,
@@ -112,7 +126,7 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
 
   return (
     <div className="flex flex-col gap-6">
-      <nav aria-label="Filter clients" className="flex gap-2 overflow-x-auto">
+      <nav aria-label={t.filterClients} className="flex gap-2 overflow-x-auto">
         {ROSTER_FILTERS.map((option) => {
           const count = rows.filter((row) => matchesFilter(row, option.value)).length;
           const active = option.value === filter;
@@ -125,34 +139,33 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
                 active ? "border-ink bg-ink text-bg" : "border-line-strong bg-surface text-secondary hover:text-ink"
               }`}
             >
-              {option.label} <span className="font-mono">· {count}</span>
+              {labels.filters[option.value]} <span className="font-mono">· {count}</span>
             </Link>
           );
         })}
       </nav>
 
-      <section className={card} aria-label="Clients">
+      <section className={card} aria-label={t.clients}>
         {rows.length === 0 ? (
-          <p className={muted}>You have no clients yet. Clients find you in the directory.</p>
+          <p className={muted}>{t.noClients}</p>
         ) : visible.length === 0 ? (
-          <p className={muted}>No clients match this filter.</p>
+          <p className={muted}>{t.noMatches}</p>
         ) : (
           <table className="block w-full text-sm md:table">
             <thead className="hidden border-b border-line text-left text-xs text-secondary md:table-header-group">
               <tr>
-                {["Client", "Status", "Access until", "Meetings"].map((heading) => (
+                {[t.client, t.status, t.accessUntil, t.meetings].map((heading) => (
                   <th key={heading} scope="col" className="px-3 pb-3 font-medium first:pl-0">
                     {heading}
                   </th>
                 ))}
                 <th scope="col" className="pb-3 pl-3 text-right font-medium">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t.actions}</span>
                 </th>
               </tr>
             </thead>
             <tbody className="block divide-y divide-divider md:table-row-group">
               {visible.map((row) => {
-                const pill = STATUS_PILLS[row.status];
                 const accepted = row.linkStatus === "ACCEPTED";
                 return (
                   <tr key={row.id} className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 md:table-row">
@@ -165,23 +178,23 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
                         ) : (
                           <span className="truncate font-semibold">{row.client.name}</span>
                         )}
-                        {row.needsAction && <ActionBell reasons={row.reasons} />}
+                        {row.needsAction && <ActionBell text={t.needsAction(row.reasons.join(", "))} />}
                       </span>
                     </th>
-                    <td data-label="Status" className={cell}>
-                      <span className={badge(pill.tone)}>{pill.label}</span>
+                    <td data-label={t.status} className={cell}>
+                      <span className={badge(STATUS_TONES[row.status])}>{labels.statuses[row.status]}</span>
                     </td>
-                    <td data-label="Access until" className={cell}>
+                    <td data-label={t.accessUntil} className={cell}>
                       <span className={row.until ? figure : "text-tertiary"}>
-                        {row.until?.toLocaleDateString() ?? "—"}
+                        {row.until ? formatDate(row.until, locale) : "—"}
                       </span>
                     </td>
-                    <td data-label="Meetings" className={cell}>
+                    <td data-label={t.meetings} className={cell}>
                       {row.pendingMeeting ? (
-                        <span className={badge("warning")}>{meetingKindLabel(row.pendingMeeting.kind)} requested</span>
+                        <span className={badge("warning")}>{t.meetingRequested(meetingKindLabel(row.pendingMeeting.kind, locale))}</span>
                       ) : row.nextMeeting?.scheduledFor ? (
                         <span className="font-mono text-xs tabular-nums">
-                          {row.nextMeeting.scheduledFor.toLocaleString("en-US", timeFormat)}
+                          {formatDateTime(row.nextMeeting.scheduledFor, locale, timeFormat)}
                         </span>
                       ) : (
                         <span className="text-tertiary">—</span>
@@ -195,7 +208,7 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
                             scroll={false}
                             className={buttonPrimary}
                           >
-                            Review request
+                            {t.reviewRequest}
                           </Link>
                         )}
                         {row.pendingMeeting && (
@@ -204,7 +217,7 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
                             scroll={false}
                             className={buttonPrimary}
                           >
-                            Answer
+                            {t.answer}
                           </Link>
                         )}
                         {accepted && (
@@ -213,7 +226,7 @@ export async function MyClients({ searchParams }: { searchParams: SearchParams }
                             scroll={false}
                             className={buttonSecondary}
                           >
-                            Renew
+                            {t.renew}
                           </Link>
                         )}
                       </span>

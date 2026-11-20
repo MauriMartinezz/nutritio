@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@/generated/prisma/client";
+import { formatDateTime } from "@/lib/i18n/format";
+import { getLocale, getMessages } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import { NUTRITIONIST_STATUSES, type NutritionistStatus } from "@/modules/identity/roles";
@@ -14,21 +16,22 @@ import {
   muted,
 } from "@/modules/ui/classes";
 import { ReviewPanel } from "./review-panel";
-import { STATUS_LABELS, STATUS_TONES } from "./status";
+import { nutritionistMessages, nutritionistStatusLabels } from "../messages";
+import { STATUS_TONES } from "./status";
 
-const TABS = [
-  { label: "Pending", status: "PENDING" },
-  { label: "Verified", status: "APPROVED" },
-  { label: "Rejected", status: "REJECTED" },
-  { label: "All", status: "ALL" },
-] as const;
+const TABS = ["PENDING", "APPROVED", "REJECTED", "ALL"] as const;
 
 type SearchParams = Promise<{ status?: string; q?: string; review?: string }>;
 
 /** Admin-only list. Reads the session and search params, so render it inside <Suspense>. */
 export async function NutritionistList({ searchParams }: { searchParams: SearchParams }) {
   await requireRole("ADMIN");
-  const params = await searchParams;
+  const [params, locale, t, statusLabels] = await Promise.all([
+    searchParams,
+    getLocale(),
+    getMessages(nutritionistMessages),
+    getMessages(nutritionistStatusLabels),
+  ]);
 
   const status = (NUTRITIONIST_STATUSES as readonly string[]).includes(params.status ?? "")
     ? (params.status as NutritionistStatus)
@@ -75,16 +78,16 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
       <nav className="flex flex-wrap gap-2 text-sm font-semibold">
         {TABS.map((tab) => (
           <Link
-            key={tab.status}
-            href={{ pathname: "/admin", query: { status: tab.status, ...(query && { q: query }) } }}
-            aria-current={status === tab.status ? "page" : undefined}
+            key={tab}
+            href={{ pathname: "/admin", query: { status: tab, ...(query && { q: query }) } }}
+            aria-current={status === tab ? "page" : undefined}
             className={`inline-flex min-h-11 items-center rounded-full px-4 ${
-              status === tab.status
+              status === tab
                 ? "bg-ink text-bg"
                 : "border border-line-strong bg-surface text-ink hover:bg-surface-muted"
             }`}
           >
-            {tab.label}
+            {t.tabs[tab]}
           </Link>
         ))}
       </nav>
@@ -94,14 +97,14 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
         <input
           name="q"
           defaultValue={query}
-          placeholder="Search by name, email, DNI or license"
+          placeholder={t.searchPlaceholder}
           className={`${input} w-full`}
         />
-        <button className={buttonSecondary}>Search</button>
+        <button className={buttonSecondary}>{t.search}</button>
       </form>
 
       {nutritionists.length === 0 ? (
-        <p className={`${card} ${muted}`}>No nutritionists found.</p>
+        <p className={`${card} ${muted}`}>{t.noneFound}</p>
       ) : (
         <ul className={`${list} rounded-card-lg border border-line bg-surface px-5 md:px-6`}>
           {nutritionists.map((nutritionist) => {
@@ -115,14 +118,16 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <p className="flex flex-wrap items-center gap-2 font-semibold">
                     {nutritionist.name}
-                    <span className={badge(STATUS_TONES[current])}>{STATUS_LABELS[current]}</span>
+                    <span className={badge(STATUS_TONES[current])}>{statusLabels[current]}</span>
                   </p>
                   <p className={`${muted} break-all`}>{nutritionist.email}</p>
                   <p className={muted}>
-                    License {nutritionist.licenseNumber ?? "—"}
-                    {nutritionist.specialty && ` · ${nutritionist.specialty}`} · applied{" "}
-                    <span className={figure}>{nutritionist.createdAt.toLocaleDateString()}</span>
-                    {nutritionist.verificationNote && " · has a note"}
+                    {t.licenseShort(nutritionist.licenseNumber ?? "—")}
+                    {nutritionist.specialty && ` · ${nutritionist.specialty}`} · {t.applied}{" "}
+                    <span className={figure}>
+                      {formatDateTime(nutritionist.createdAt, locale, { timeStyle: undefined })}
+                    </span>
+                    {nutritionist.verificationNote && ` · ${t.hasNote}`}
                   </p>
                 </div>
                 <Link
@@ -131,7 +136,7 @@ export async function NutritionistList({ searchParams }: { searchParams: SearchP
                   aria-current={selected ? "true" : undefined}
                   className={current === "PENDING" ? buttonPrimary : buttonSecondary}
                 >
-                  {current === "PENDING" ? "Review" : "Open"}
+                  {current === "PENDING" ? t.review : t.open}
                 </Link>
               </li>
             );

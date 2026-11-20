@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { card, h1, h2, muted } from "@/modules/ui/classes";
+import { getMessages } from "@/lib/i18n/server";
 import { getDirectoryProfile } from "../directory-dal";
+import { coachingMessages } from "../messages";
 import { FeeBox, NutritionistFacts } from "./nutritionist-facts";
 import { RequestNutritionist } from "./request-nutritionist";
 import { PlansWithNutritionist } from "@/modules/plans/components/plans-with-nutritionist";
@@ -20,6 +22,7 @@ export async function NutritionistPublicProfile({ params }: { params: Promise<{ 
   const { nutritionistId } = await params;
   const nutritionist = await getDirectoryProfile(nutritionistId);
   if (!nutritionist) notFound();
+  const t = await getMessages(coachingMessages);
 
   const empty = !nutritionist.bio && !nutritionist.education && !nutritionist.planIncludes;
 
@@ -40,10 +43,10 @@ export async function NutritionistPublicProfile({ params }: { params: Promise<{ 
         <PlansWithNutritionist nutritionistId={nutritionist.id} nutritionistName={nutritionist.name} />
       )}
 
-      {nutritionist.bio && <Section title="About">{nutritionist.bio}</Section>}
-      {nutritionist.planIncludes && <Section title="What the plan includes">{nutritionist.planIncludes}</Section>}
-      {nutritionist.education && <Section title="Education">{nutritionist.education}</Section>}
-      {empty && <p className={muted}>This nutritionist hasn&apos;t filled in their public profile yet.</p>}
+      {nutritionist.bio && <Section title={t.about}>{nutritionist.bio}</Section>}
+      {nutritionist.planIncludes && <Section title={t.planIncludes}>{nutritionist.planIncludes}</Section>}
+      {nutritionist.education && <Section title={t.education}>{nutritionist.education}</Section>}
+      {empty && <p className={muted}>{t.emptyProfile}</p>}
     </div>
   );
 }

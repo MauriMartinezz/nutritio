@@ -1,4 +1,6 @@
 // Nutritionist profile data: entered at sign-up, editable afterwards only by admins.
+import type { Locale } from "@/lib/i18n/negotiate";
+import { nutritionistErrors } from "./messages";
 
 export const PROFILE_FIELDS = ["dni", "licenseNumber", "birthDate", "phone", "specialty"] as const;
 export type ProfileField = (typeof PROFILE_FIELDS)[number];
@@ -13,7 +15,8 @@ export type NutritionistProfile = {
 
 export class InvalidProfileError extends Error {
   constructor(readonly problems: Partial<Record<ProfileField, string>>) {
-    super(`Invalid nutritionist profile: ${Object.values(problems).join("; ")}`);
+    // Already in the visitor's language: shown as is by the sign-up form.
+    super(Object.values(problems).join("; "));
     this.name = "InvalidProfileError";
   }
 }
@@ -73,15 +76,20 @@ export function maskPhoneNumberInput(raw: string): string {
 }
 
 /** Joins and validates the two phone fields into the stored format. */
-export function buildPhone(prefix: string, number: string): { phone: string } | { error: string } {
+export function buildPhone(
+  prefix: string,
+  number: string,
+  locale: Locale = "en",
+): { phone: string } | { error: string } {
+  const t = nutritionistErrors[locale];
   const cleanPrefix = prefix.trim().replace(/\s+/g, " ");
-  if (!PHONE_PREFIX.test(cleanPrefix)) return { error: "Phone prefix must look like +54 11" };
+  if (!PHONE_PREFIX.test(cleanPrefix)) return { error: t.phonePrefix };
   const numberDigits = digits(number);
   if (numberDigits.length < 6 || numberDigits.length > 8) {
-    return { error: "Phone number must have 6 to 8 digits" };
+    return { error: t.phoneNumber };
   }
   const phone = `${cleanPrefix} ${maskPhoneNumberInput(numberDigits)}`;
-  if (phone.length > PHONE_MAX_LENGTH) return { error: `Phone must be at most ${PHONE_MAX_LENGTH} characters` };
+  if (phone.length > PHONE_MAX_LENGTH) return { error: t.phoneLength(PHONE_MAX_LENGTH) };
   return { phone };
 }
 
@@ -116,38 +124,40 @@ function ageOn(birthDate: Date, today: Date): number {
 export function parseNutritionistProfile(
   input: Record<string, unknown>,
   today: Date = new Date(),
+  locale: Locale = "en",
 ): NutritionistProfile {
+  const t = nutritionistErrors[locale];
   const problems: Partial<Record<ProfileField, string>> = {};
 
   const dni = text(input.dni).replaceAll(".", "");
-  if (!DNI.test(dni)) problems.dni = "DNI must be between 1.000.000 and 999.999.999";
+  if (!DNI.test(dni)) problems.dni = t.dni;
 
   const licenseNumber = text(input.licenseNumber);
   if (licenseNumber.length === 0 || licenseNumber.length > 30) {
-    problems.licenseNumber = "License number is required (max 30 characters)";
+    problems.licenseNumber = t.licenseNumber;
   }
 
   const birthDate = parseDate(input.birthDate);
   if (!birthDate) {
-    problems.birthDate = "Birth date must be a valid date";
+    problems.birthDate = t.birthDate;
   } else {
     const age = ageOn(birthDate, today);
     if (birthDate > today || age < MIN_AGE || age > MAX_AGE) {
-      problems.birthDate = `Age must be between ${MIN_AGE} and ${MAX_AGE}`;
+      problems.birthDate = t.age(MIN_AGE, MAX_AGE);
     }
   }
 
   let phone = text(input.phone);
   if (input.phonePrefix !== undefined || input.phoneNumber !== undefined) {
-    const built = buildPhone(text(input.phonePrefix), text(input.phoneNumber));
+    const built = buildPhone(text(input.phonePrefix), text(input.phoneNumber), locale);
     if ("error" in built) problems.phone = built.error;
     else phone = built.phone;
   } else if (!PHONE.test(phone) || phone.length > PHONE_MAX_LENGTH) {
-    problems.phone = "Phone must be a prefix like +54 11 followed by the number";
+    problems.phone = t.phone;
   }
 
   const specialty = text(input.specialty);
-  if (specialty.length > 100) problems.specialty = "Specialty must be at most 100 characters";
+  if (specialty.length > 100) problems.specialty = t.specialty;
 
   if (Object.keys(problems).length > 0) throw new InvalidProfileError(problems);
 

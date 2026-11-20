@@ -58,3 +58,8 @@ test("monthly auto-renewal keeps the original day of the month (no month-end dri
   // Jan 31 → Feb 28 → … → Nov 30 (not Nov 28).
   assert.deepEqual(effectiveAccessUntil(link, d("2026-11-15T00:00:00Z")), d("2026-11-30T12:00:00Z"));
 });
+
+test("period errors read in Spanish", () => {
+  assert.throws(() => parsePeriod("0", "DAY", "es"), { message: "La cantidad debe ser un número entero entre 1 y 365" });
+  assert.throws(() => parsePeriod("2", "YEAR", "es"), { message: "La unidad debe ser días, semanas o meses" });
+});

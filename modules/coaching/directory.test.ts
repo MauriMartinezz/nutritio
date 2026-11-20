@@ -31,3 +31,9 @@ test("active clients label", () => {
   assert.equal(activeClientsLabel(1), "1 active client");
   assert.equal(activeClientsLabel(12), "12 active clients");
 });
+
+test("active clients label in Spanish", () => {
+  assert.equal(activeClientsLabel(0, "es"), "Todavía sin pacientes activos");
+  assert.equal(activeClientsLabel(1, "es"), "1 paciente activo");
+  assert.equal(activeClientsLabel(12, "es"), "12 pacientes activos");
+});

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { uniqueViolationIndex } from "@/lib/prisma-errors";
+import { getActionLocale } from "@/lib/i18n/server";
 import { requireRole } from "@/modules/identity/dal";
+import { nutritionistErrors } from "./messages";
 import {
   InvalidAdminUpdateError,
   InvalidVerificationError,
@@ -44,21 +46,23 @@ export async function reviewNutritionist(
   const nutritionistId = String(formData.get("nutritionistId") ?? "");
 
   const target = await findNutritionistOrThrow(nutritionistId);
-  if (target.role !== "NUTRITIONIST") return { problems: { form: "This user is not a nutritionist" } };
+  const locale = await getActionLocale();
+  const t = nutritionistErrors[locale];
+  if (target.role !== "NUTRITIONIST") return { problems: { form: t.userNotNutritionist } };
 
   const input = Object.fromEntries(formData);
   let update;
   let note;
   let status;
   try {
-    status = reviewStatus(input.decision, target.nutritionistStatus);
+    status = reviewStatus(input.decision, target.nutritionistStatus, locale);
   } catch (error) {
     if (error instanceof InvalidVerificationError) return { problems: { decision: error.message } };
     throw error;
   }
   try {
-    note = parseReviewNote(input.note);
-    update = parseAdminNutritionistUpdate({ ...input, status });
+    note = parseReviewNote(input.note, locale);
+    update = parseAdminNutritionistUpdate({ ...input, status }, new Date(), locale);
   } catch (error) {
     if (error instanceof InvalidAdminUpdateError) return { problems: error.problems };
     if (error instanceof InvalidVerificationError) return { problems: { note: error.message } };
@@ -86,8 +90,8 @@ export async function reviewNutritionist(
     if (index !== null) {
       return {
         problems: index.includes("dni")
-          ? { dni: "DNI is already registered" }
-          : { email: "Email is already in use" },
+          ? { dni: t.dniTaken }
+          : { email: t.emailTaken },
       };
     }
     throw error;
@@ -111,7 +115,7 @@ export async function updatePublicProfile(
 
   let profile;
   try {
-    profile = parsePublicProfile(Object.fromEntries(formData));
+    profile = parsePublicProfile(Object.fromEntries(formData), await getActionLocale());
   } catch (error) {
     if (error instanceof InvalidPublicProfileError) return { problems: error.problems };
     throw error;
@@ -149,11 +153,13 @@ export async function resubmitApplication(
   formData: FormData,
 ): Promise<ResubmitApplicationState> {
   const nutritionist = await requireRole("NUTRITIONIST");
+  const locale = await getActionLocale();
+  const t = nutritionistErrors[locale];
 
   let profile;
   try {
-    assertCanResubmit(nutritionist.nutritionistStatus);
-    profile = parseNutritionistProfile(Object.fromEntries(formData));
+    assertCanResubmit(nutritionist.nutritionistStatus, locale);
+    profile = parseNutritionistProfile(Object.fromEntries(formData), new Date(), locale);
   } catch (error) {
     if (error instanceof InvalidVerificationError) return { problems: { form: error.message } };
     if (error instanceof InvalidProfileError) return { problems: error.problems };
@@ -166,9 +172,9 @@ export async function resubmitApplication(
       where: { id: nutritionist.id, role: "NUTRITIONIST", nutritionistStatus: "REJECTED" },
       data: { ...profile, nutritionistStatus: "PENDING" },
     });
-    if (count === 0) return { problems: { form: "Your application is already waiting for review" } };
+    if (count === 0) return { problems: { form: t.alreadyPending } };
   } catch (error) {
-    if (uniqueViolationIndex(error) !== null) return { problems: { dni: "DNI is already registered" } };
+    if (uniqueViolationIndex(error) !== null) return { problems: { dni: t.dniTaken } };
     throw error;
   }
 
