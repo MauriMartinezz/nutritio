@@ -1,5 +1,7 @@
+import { getLocale } from "@/lib/i18n/server";
 import { buttonSecondary, fieldHint } from "@/modules/ui/classes";
 import { setRequestedMeasurement } from "../actions";
+import { checkInLabels, clientCheckInMessages } from "../messages";
 import { MEASUREMENTS, type MeasurementSite } from "../rules";
 
 const chip =
@@ -9,23 +11,24 @@ const chip =
  * The nutritionist adds body measurements to the client's check-ins one by
  * one, from a fixed list, and can remove them. Plain form buttons: works without JS.
  */
-export function MeasurementsForm({ clientId, measurements }: { clientId: string; measurements: MeasurementSite[] }) {
+export async function MeasurementsForm({ clientId, measurements }: { clientId: string; measurements: MeasurementSite[] }) {
+  const locale = await getLocale();
+  const t = clientCheckInMessages[locale];
+  const names = checkInLabels[locale].measurements;
   const available = (Object.keys(MEASUREMENTS) as MeasurementSite[]).filter((site) => !measurements.includes(site));
 
   return (
     <form action={setRequestedMeasurement.bind(null, clientId)} className="flex flex-col gap-2">
       <p className="text-sm">
-        Measurements:{" "}
-        <span className="font-medium">
-          {measurements.length === 0 ? "not asked" : "asked in every check-in (cm)"}
-        </span>
+        {t.measurements}{" "}
+        <span className="font-medium">{measurements.length === 0 ? t.notAsked : t.measurementsAsked}</span>
       </p>
       {measurements.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Asked measurements">
+        <ul className="flex flex-wrap gap-2" aria-label={t.askedMeasurements}>
           {measurements.map((site) => (
             <li key={site}>
-              <button name="remove" value={site} className={chip} aria-label={`Stop asking ${MEASUREMENTS[site]}`}>
-                {MEASUREMENTS[site]}
+              <button name="remove" value={site} className={chip} aria-label={t.stopAskingSite(names[site])}>
+                {names[site]}
                 <span aria-hidden className="text-secondary">
                   ×
                 </span>
@@ -36,12 +39,12 @@ export function MeasurementsForm({ clientId, measurements }: { clientId: string;
       )}
       {available.length > 0 && (
         <>
-          <p className={fieldHint}>Add a measurement:</p>
-          <ul className="flex flex-wrap gap-2" aria-label="Measurements you can add">
+          <p className={fieldHint}>{t.addMeasurement}</p>
+          <ul className="flex flex-wrap gap-2" aria-label={t.measurementsToAdd}>
             {available.map((site) => (
               <li key={site}>
                 <button name="add" value={site} className={buttonSecondary}>
-                  + {MEASUREMENTS[site]}
+                  + {names[site]}
                 </button>
               </li>
             ))}

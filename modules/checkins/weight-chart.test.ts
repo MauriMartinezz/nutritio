@@ -65,3 +65,11 @@ test("formatKg drops trailing zeros", () => {
   assert.equal(formatKg(70), "70 kg");
   assert.equal(formatKg(70.25), "70.25 kg");
 });
+
+test("in Spanish, weights use a decimal comma", () => {
+  assert.equal(formatKg(71.5, "es"), "71,5 kg");
+  assert.equal(formatWeightChange(-2.5, "es"), "−2,5 kg");
+  assert.equal(formatWeightChange(0, "es"), "Sin cambios");
+  assert.equal(describeWeightSeries(series, "es"), "Peso de 74 kg a 71,5 kg en 3 controles");
+  assert.equal(describeWeightSeries([series[0]], "es"), "Peso 74 kg en 1 control");
+});

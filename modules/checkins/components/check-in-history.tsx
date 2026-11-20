@@ -1,49 +1,59 @@
-import { COMPLETED_WORKOUTS_LABEL, CYCLE_HISTORY_LABEL, GYM_PERFORMANCE, MEASUREMENTS, RATINGS, type RatingField } from "../rules";
-import type { CheckInView } from "../dal";
+import { getLocale } from "@/lib/i18n/server";
+import { formatNumber } from "@/lib/i18n/format";
 import { figure, list, muted } from "@/modules/ui/classes";
+import type { CheckInView } from "../dal";
+import { formatCheckInDate } from "../format";
+import { formatCm } from "../measurement-chart";
+import { checkInLabels, clientCheckInMessages } from "../messages";
+import { RATINGS, type RatingField } from "../rules";
+import { formatKg } from "../weight-chart";
 
-/** Check-ins, newest first. Plain markup, so it renders on server and client. */
-export function CheckInHistory({ checkIns }: { checkIns: CheckInView[] }) {
-  if (checkIns.length === 0) return <p className={muted}>No check-ins yet.</p>;
+/** Check-ins, newest first, for the nutritionist. Server Component. */
+export async function CheckInHistory({ checkIns }: { checkIns: CheckInView[] }) {
+  const locale = await getLocale();
+  const t = clientCheckInMessages[locale];
+  const labels = checkInLabels[locale];
+  if (checkIns.length === 0) return <p className={muted}>{t.noCheckIns}</p>;
+  const yesNo = (value: boolean) => (value ? labels.yes : labels.no).toLowerCase();
 
   return (
     <ul className={list}>
       {checkIns.map((checkIn) => (
         <li key={checkIn.id} className="flex flex-col gap-1 py-3 text-sm first:pt-0 last:pb-0">
           <p>
-            <span className="font-mono font-medium tabular-nums">{checkIn.createdAt.toLocaleDateString()}</span> ·{" "}
-            <span className={figure}>{checkIn.weightKg} kg</span>
+            <span className="font-mono font-medium tabular-nums">{formatCheckInDate(checkIn.createdAt, locale)}</span> ·{" "}
+            <span className={figure}>{formatKg(checkIn.weightKg, locale)}</span>
             {checkIn.dietAdherence !== null && (
               <>
                 {" "}
-                · Diet followed: <span className={figure}>{checkIn.dietAdherence}%</span>
+                · {t.dietFollowed}: <span className={figure}>{formatNumber(checkIn.dietAdherence, locale)}%</span>
               </>
             )}
           </p>
           <p className="text-secondary">
             {[
-              `${COMPLETED_WORKOUTS_LABEL}: ${checkIn.completedWorkouts ? "yes" : "no"}`,
-              ...(checkIn.gymPerformance ? [`Gym performance: ${GYM_PERFORMANCE[checkIn.gymPerformance].toLowerCase()}`] : []),
-              ...(Object.entries(RATINGS) as [RatingField, string][]).map(
-                ([field, label]) => `${label}: ${checkIn[field]}/5`,
-              ),
-              ...(checkIn.menstruating === null ? [] : [`${CYCLE_HISTORY_LABEL}: ${checkIn.menstruating ? "yes" : "no"}`]),
+              `${labels.completedWorkouts}: ${yesNo(checkIn.completedWorkouts)}`,
+              ...(checkIn.gymPerformance
+                ? [`${t.gymPerformance}: ${labels.gymPerformance[checkIn.gymPerformance].toLowerCase()}`]
+                : []),
+              ...(Object.keys(RATINGS) as RatingField[]).map((field) => `${labels.ratings[field]}: ${checkIn[field]}/5`),
+              ...(checkIn.menstruating === null ? [] : [`${labels.cycleHistory}: ${yesNo(checkIn.menstruating)}`]),
             ].join(" · ")}
           </p>
           {checkIn.measurements.length > 0 && (
             <p>
-              <span className="font-medium">Measurements:</span>{" "}
+              <span className="font-medium">{t.measurementsLabel}</span>{" "}
               {checkIn.measurements.map((m, index) => (
                 <span key={m.site}>
                   {index > 0 && " · "}
-                  {MEASUREMENTS[m.site]} <span className={figure}>{m.cm} cm</span>
+                  {labels.measurements[m.site]} <span className={figure}>{formatCm(m.cm, locale)}</span>
                 </span>
               ))}
             </p>
           )}
           {checkIn.discomfort && (
             <p>
-              <span className="font-medium">Discomfort:</span> {checkIn.discomfortNotes ?? "yes"}
+              <span className="font-medium">{t.discomfort}</span> {checkIn.discomfortNotes ?? yesNo(true)}
             </p>
           )}
           {checkIn.notes && <p className="whitespace-pre-line">{checkIn.notes}</p>}

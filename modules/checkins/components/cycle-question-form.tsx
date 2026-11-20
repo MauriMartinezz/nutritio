@@ -1,12 +1,14 @@
+import { getLocale } from "@/lib/i18n/server";
 import { buttonSecondary, fieldHint } from "@/modules/ui/classes";
 import { setCycleQuestion } from "../actions";
-import { CYCLE_QUESTION } from "../rules";
+import { asQuestion } from "../format";
+import { checkInLabels, clientCheckInMessages } from "../messages";
 
 /**
  * The nutritionist turns the menstrual cycle question on or off. Only offered
  * when the client said she is a woman.
  */
-export function CycleQuestionForm({
+export async function CycleQuestionForm({
   clientId,
   askCycle,
   clientSex,
@@ -16,19 +18,19 @@ export function CycleQuestionForm({
   clientSex: "FEMALE" | "MALE" | null;
 }) {
   if (clientSex === "MALE") return null;
-  if (clientSex === null) {
-    return <p className={fieldHint}>The client hasn&apos;t said if she is a woman or a man in her profile yet.</p>;
-  }
+  const locale = await getLocale();
+  const t = clientCheckInMessages[locale];
+  if (clientSex === null) return <p className={fieldHint}>{t.noSex}</p>;
 
   return (
     <form action={setCycleQuestion.bind(null, clientId)} className="flex flex-wrap items-center gap-3">
       <input type="hidden" name="askCycle" value={askCycle ? "off" : "on"} />
       <p className="text-sm">
-        Menstrual cycle question:{" "}
-        <span className="font-medium">{askCycle ? "asked in every check-in" : "not asked"}</span>
-        <span className={`${fieldHint} block`}>&ldquo;{CYCLE_QUESTION}?&rdquo;</span>
+        {t.cycleQuestion}{" "}
+        <span className="font-medium">{askCycle ? t.cycleAsked : t.notAsked}</span>
+        <span className={`${fieldHint} block`}>&ldquo;{asQuestion(checkInLabels[locale].cycleQuestion, locale)}&rdquo;</span>
       </p>
-      <button className={buttonSecondary}>{askCycle ? "Stop asking" : "Ask in check-ins"}</button>
+      <button className={buttonSecondary}>{askCycle ? t.stopAsking : t.askInCheckIns}</button>
     </form>
   );
 }

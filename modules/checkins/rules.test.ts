@@ -197,3 +197,20 @@ test("diet adherence is a whole percentage from 0 to 100", () => {
     assert.throws(() => parseCheckIn({ ...valid, dietAdherence: value }), InvalidCheckInError, value);
   }
 });
+
+test("in Spanish, the status, the problems and the frequency error read in Spanish", () => {
+  assert.equal(describeCheckInStatus({ state: "DUE", daysLeft: 0 }, "es"), "Te toca el control");
+  assert.equal(describeCheckInStatus({ state: "UPCOMING", daysLeft: 1 }, "es"), "Próximo control en 1 día");
+  assert.equal(describeCheckInStatus({ state: "UPCOMING", daysLeft: 3 }, "es"), "Próximo control en 3 días");
+  assert.equal(describeCheckInStatus({ state: "NOT_SCHEDULED", daysLeft: 0 }, "es"), "Todavía no hay controles programados");
+  try {
+    parseCheckIn({ ...valid, weightKg: "10", sleep: "9", measurement_WAIST: "5" }, { measurements: ["WAIST"], locale: "es" });
+    assert.fail("expected InvalidCheckInError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidCheckInError);
+    assert.equal(error.problems.weightKg, "El peso tiene que estar entre 20 y 400 kg");
+    assert.equal(error.problems.sleep, "Sueño: elegí un puntaje del 1 al 5");
+    assert.equal(error.problems.measurement_WAIST, "Cintura tiene que estar entre 10 y 300 cm");
+  }
+  assert.throws(() => parseFrequency("0", "es"), { message: "La frecuencia tiene que ser un número entero de días entre 1 y 90" });
+});

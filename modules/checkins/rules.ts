@@ -2,6 +2,9 @@
 // client, and the client reports weight, whether they completed the agreed
 // workouts, a few 1–5 ratings and notes.
 
+import type { Locale } from "@/lib/i18n/negotiate";
+import { checkInLabels, checkInRuleMessages } from "./messages";
+
 export const CHECK_IN_LIMITS = {
   minWeightKg: 20,
   maxWeightKg: 400,
@@ -29,7 +32,8 @@ export const RATINGS = {
 } as const;
 export type RatingField = keyof typeof RATINGS;
 
-export const COMPLETED_WORKOUTS_LABEL = "Completed the agreed workouts";
+/** English labels; use `checkInLabels[locale]` from ./messages for the UI. */
+export const COMPLETED_WORKOUTS_LABEL = checkInLabels.en.completedWorkouts;
 
 export const GYM_PERFORMANCE = {
   IMPROVED: "Improved",
@@ -39,8 +43,8 @@ export const GYM_PERFORMANCE = {
 export type GymPerformance = keyof typeof GYM_PERFORMANCE;
 
 /** Asked only to women whose nutritionist turned it on. */
-export const CYCLE_QUESTION = "On your period or in the week before it";
-export const CYCLE_HISTORY_LABEL = "Period or week before";
+export const CYCLE_QUESTION = checkInLabels.en.cycleQuestion;
+export const CYCLE_HISTORY_LABEL = checkInLabels.en.cycleHistory;
 
 /** The cycle question only shows to women whose nutritionist turned it on. */
 export function asksCycle(askCycle: boolean, sex: "FEMALE" | "MALE" | null): boolean {
@@ -118,34 +122,40 @@ const text = (value: unknown) => (typeof value === "string" ? value.trim() : "")
  */
 export function parseCheckIn(
   input: Record<string, unknown>,
-  { askCycle = false, measurements: sites = [] }: { askCycle?: boolean; measurements?: readonly MeasurementSite[] } = {},
+  {
+    askCycle = false,
+    measurements: sites = [],
+    locale = "en",
+  }: { askCycle?: boolean; measurements?: readonly MeasurementSite[]; locale?: Locale } = {},
 ): CheckInInput {
+  const t = checkInRuleMessages[locale];
+  const labels = checkInLabels[locale];
   const problems: Partial<Record<CheckInField, string>> = {};
   const { minWeightKg, maxWeightKg, minRating, maxRating } = CHECK_IN_LIMITS;
 
   const rawWeight = text(input.weightKg).replace(",", ".");
   const weightKg = Number(rawWeight);
   if (!/^\d+(\.\d{1,2})?$/.test(rawWeight) || weightKg < minWeightKg || weightKg > maxWeightKg) {
-    problems.weightKg = `Weight must be between ${minWeightKg} and ${maxWeightKg} kg`;
+    problems.weightKg = t.weight(minWeightKg, maxWeightKg);
   }
 
   const completedWorkouts = input.completedWorkouts === "yes";
   if (input.completedWorkouts !== "yes" && input.completedWorkouts !== "no") {
-    problems.completedWorkouts = `${COMPLETED_WORKOUTS_LABEL}: choose yes or no`;
+    problems.completedWorkouts = t.chooseYesNo(labels.completedWorkouts);
   }
 
   const rawGym = text(input.gymPerformance);
   const gymPerformance = rawGym === "" ? null : (rawGym as GymPerformance);
   if (gymPerformance !== null && !(gymPerformance in GYM_PERFORMANCE)) {
-    problems.gymPerformance = "Gym performance must be improved, the same or dropped";
+    problems.gymPerformance = t.gymPerformance;
   }
 
   const ratings = {} as Record<RatingField, number>;
-  for (const [field, label] of Object.entries(RATINGS) as [RatingField, string][]) {
+  for (const field of Object.keys(RATINGS) as RatingField[]) {
     const raw = text(input[field]);
     const value = Number(raw);
     if (!/^\d+$/.test(raw) || value < minRating || value > maxRating) {
-      problems[field] = `${label}: choose a rating from ${minRating} to ${maxRating}`;
+      problems[field] = t.rating(labels.ratings[field], minRating, maxRating);
     }
     ratings[field] = value;
   }
@@ -153,23 +163,23 @@ export function parseCheckIn(
   const rawAdherence = text(input.dietAdherence);
   const dietAdherence = Number(rawAdherence);
   if (!/^\d+$/.test(rawAdherence) || dietAdherence > CHECK_IN_LIMITS.maxDietAdherence) {
-    problems.dietAdherence = `Diet followed must be a percentage from 0 to ${CHECK_IN_LIMITS.maxDietAdherence}`;
+    problems.dietAdherence = t.dietAdherence(CHECK_IN_LIMITS.maxDietAdherence);
   }
 
   const discomfort = input.discomfort === "on";
   const discomfortNotes = discomfort ? text(input.discomfortNotes) : "";
   if (discomfortNotes.length > CHECK_IN_LIMITS.discomfortNotes) {
-    problems.discomfortNotes = `Discomfort details must be at most ${CHECK_IN_LIMITS.discomfortNotes} characters`;
+    problems.discomfortNotes = t.discomfortNotes(CHECK_IN_LIMITS.discomfortNotes);
   }
   const notes = text(input.notes);
   if (notes.length > CHECK_IN_LIMITS.notes) {
-    problems.notes = `Notes must be at most ${CHECK_IN_LIMITS.notes} characters`;
+    problems.notes = t.notes(CHECK_IN_LIMITS.notes);
   }
 
   let menstruating: boolean | null = null;
   if (askCycle) {
     if (input.menstruating === "yes" || input.menstruating === "no") menstruating = input.menstruating === "yes";
-    else problems.menstruating = `${CYCLE_QUESTION}: choose yes or no`;
+    else problems.menstruating = t.chooseYesNo(labels.cycleQuestion);
   }
 
   const measurements: Measurement[] = [];
@@ -178,7 +188,7 @@ export function parseCheckIn(
     const raw = text(input[measurementField(site)]).replace(",", ".");
     const cm = Number(raw);
     if (!/^\d+(\.\d)?$/.test(raw) || cm < minMeasurementCm || cm > maxMeasurementCm) {
-      problems[measurementField(site)] = `${MEASUREMENTS[site]} must be between ${minMeasurementCm} and ${maxMeasurementCm} cm`;
+      problems[measurementField(site)] = t.measurement(labels.measurements[site], minMeasurementCm, maxMeasurementCm);
     } else {
       measurements.push({ site, cm });
     }
@@ -201,12 +211,12 @@ export function parseCheckIn(
 }
 
 /** Days between check-ins: a whole number from 1 to 90. */
-export function parseFrequency(value: unknown): number {
+export function parseFrequency(value: unknown, locale: Locale = "en"): number {
   const raw = text(value);
   const days = Number(raw);
   const { minEveryDays, maxEveryDays } = CHECK_IN_LIMITS;
   if (!/^\d+$/.test(raw) || days < minEveryDays || days > maxEveryDays) {
-    throw new CheckInRuleError(`Frequency must be a whole number of days between ${minEveryDays} and ${maxEveryDays}`);
+    throw new CheckInRuleError(checkInRuleMessages[locale].frequency(minEveryDays, maxEveryDays));
   }
   return days;
 }
@@ -231,8 +241,9 @@ export function checkInStatus(due: Date | null, now: Date): CheckInStatus {
 }
 
 /** Readable status, e.g. "Check-in due" or "Next check-in in 3 days". */
-export function describeCheckInStatus(status: CheckInStatus): string {
-  if (status.state === "NOT_SCHEDULED") return "No check-in schedule yet";
-  if (status.state === "DUE") return "Check-in due";
-  return `Next check-in in ${status.daysLeft} ${status.daysLeft === 1 ? "day" : "days"}`;
+export function describeCheckInStatus(status: CheckInStatus, locale: Locale = "en"): string {
+  const t = checkInRuleMessages[locale];
+  if (status.state === "NOT_SCHEDULED") return t.notScheduled;
+  if (status.state === "DUE") return t.due;
+  return t.upcoming(status.daysLeft);
 }
