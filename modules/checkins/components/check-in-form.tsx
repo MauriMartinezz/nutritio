@@ -6,6 +6,7 @@ import { useLocale } from "@/lib/i18n/client";
 import { buttonPrimary, buttonSecondary, fieldError, fieldHint, input, label as labelClass, textarea } from "@/modules/ui/classes";
 import { submitCheckIn, type SubmitCheckInState } from "../actions";
 import { Segmented } from "@/modules/ui/components/segmented";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { asQuestion } from "../format";
 import { checkInLabels, checkInMessages } from "../messages";
@@ -39,6 +40,8 @@ export function CheckInForm({
   ];
   const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(submitCheckIn, {});
   const problems = state.problems ?? {};
+  // Success redirects home, where the flash notice shows; only a refusal is toasted here.
+  useActionToast(state, (next) => (next.error ? { text: next.error, tone: "error" } : null));
   // React resets the form after the action; these defaults bring a rejected check-in back as it was sent.
   const values = state.values ?? {};
 

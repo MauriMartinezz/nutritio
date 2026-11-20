@@ -4,6 +4,7 @@ import { badge, callout, card, figure, h2, h3, list, muted, type Tone } from "@/
 import { getOwnMeetings } from "../dal";
 import { meetingMessages } from "../messages";
 import { meetingKindLabel, meetingStatusLabel } from "../rules";
+import { FlashNotice } from "@/modules/ui/components/action-feedback";
 import { MeetingRequestForm } from "./meeting-request-form";
 
 const STATUS_TONES: Record<string, Tone> = { ACCEPTED: "success", DECLINED: "danger" };
@@ -18,6 +19,7 @@ export async function MyMeetings() {
 
   return (
     <div className="flex flex-col gap-6">
+      <FlashNotice />
       {links.map(({ linkId, nutritionistName, requests, hasPending }) => (
         <section key={linkId} className={card}>
           <h2 className={h2}>{nutritionistName}</h2>

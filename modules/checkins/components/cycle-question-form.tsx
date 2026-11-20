@@ -1,5 +1,6 @@
 import { getLocale } from "@/lib/i18n/server";
 import { buttonSecondary, fieldHint } from "@/modules/ui/classes";
+import { FlashNotice, SubmitButton } from "@/modules/ui/components/action-feedback";
 import { setCycleQuestion } from "../actions";
 import { asQuestion } from "../format";
 import { checkInLabels, clientCheckInMessages } from "../messages";
@@ -30,7 +31,10 @@ export async function CycleQuestionForm({
         <span className="font-medium">{askCycle ? t.cycleAsked : t.notAsked}</span>
         <span className={`${fieldHint} block`}>&ldquo;{asQuestion(checkInLabels[locale].cycleQuestion, locale)}&rdquo;</span>
       </p>
-      <button className={buttonSecondary}>{askCycle ? t.stopAsking : t.askInCheckIns}</button>
+      <SubmitButton pendingText={t.saving} className={buttonSecondary}>
+        {askCycle ? t.stopAsking : t.askInCheckIns}
+      </SubmitButton>
+      <FlashNotice />
     </form>
   );
 }

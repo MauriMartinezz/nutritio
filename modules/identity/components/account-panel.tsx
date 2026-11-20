@@ -3,6 +3,7 @@ import { callout, card, eyebrow, h1, type Tone } from "@/modules/ui/classes";
 import { prisma } from "@/lib/prisma";
 import { Landing } from "@/modules/home/components/landing";
 import { ResubmitForm } from "@/modules/nutritionists/components/resubmit-form";
+import { FlashNotice } from "@/modules/ui/components/action-feedback";
 import { formatBirthDate } from "@/modules/nutritionists/profile";
 import { getCurrentUser } from "../dal";
 import { accountMessages } from "../messages";
@@ -66,6 +67,7 @@ export async function AccountPanel() {
           }}
         />
       )}
+      {user.nutritionistStatus && <FlashNotice />}
     </section>
   );
 }

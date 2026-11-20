@@ -10,6 +10,19 @@ export const FLASH_MESSAGES = {
   "client-declined": "Request declined.",
   "meeting-accepted": "Meeting scheduled. The client will see the date.",
   "meeting-declined": "Meeting request declined.",
+  "frequency-saved": "Check-in frequency saved.",
+  "cycle-question-on": "The cycle question is now part of the check-ins.",
+  "cycle-question-off": "The cycle question was removed from the check-ins.",
+  "measurement-added": "Measurement added to the check-ins.",
+  "measurement-removed": "Measurement removed from the check-ins.",
+  "auto-renew-saved": "Auto-renew settings saved.",
+  "nutritionist-requested": "Request sent. You'll see here when the nutritionist answers.",
+  "activity-deleted": "Activity deleted.",
+  "plan-created": "Plan created.",
+  "template-created": "Template created.",
+  "plan-deleted": "Plan deleted.",
+  "meeting-requested": "Meeting request sent.",
+  "application-sent": "Application sent. An admin will review it again.",
 } as const;
 
 export type FlashKey = keyof typeof FLASH_MESSAGES;

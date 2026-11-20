@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useMessages } from "@/lib/i18n/client";
 import { buttonPrimary, card, fieldError, formSuccess, input, label, textarea } from "@/modules/ui/classes";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { sendSupportRequest, type SupportFormState } from "../actions";
 import { supportMessages } from "../messages";
@@ -12,6 +13,7 @@ export function ContactForm() {
   const t = useMessages(supportMessages);
   const [state, formAction, pending] = useActionState<SupportFormState, FormData>(sendSupportRequest, {});
   const problems = state.problems ?? {};
+  useActionToast(state, (next) => (next.saved === "sent" ? { text: t.sent } : null));
 
   return (
     // React clears the fields after each submit; a rejected one gets its values back.

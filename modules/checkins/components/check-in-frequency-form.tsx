@@ -1,5 +1,6 @@
 import { getMessages } from "@/lib/i18n/server";
 import { buttonSecondary, input, label } from "@/modules/ui/classes";
+import { FlashNotice, SubmitButton } from "@/modules/ui/components/action-feedback";
 import { setCheckInFrequency } from "../actions";
 import { clientCheckInMessages } from "../messages";
 import { CHECK_IN_LIMITS, FREQUENCY_PRESETS } from "../rules";
@@ -35,9 +36,10 @@ export async function CheckInFrequencyForm({
           ))}
         </datalist>
       </label>
-      <button className={buttonSecondary}>
+      <SubmitButton pendingText={t.saving} className={buttonSecondary}>
         {t.saveFrequency}
-      </button>
+      </SubmitButton>
+      <FlashNotice />
     </form>
   );
 }

@@ -1,5 +1,6 @@
 import { getLocale } from "@/lib/i18n/server";
 import { buttonSecondary, fieldHint } from "@/modules/ui/classes";
+import { FlashNotice, SubmitButton } from "@/modules/ui/components/action-feedback";
 import { setRequestedMeasurement } from "../actions";
 import { checkInLabels, clientCheckInMessages } from "../messages";
 import { MEASUREMENTS, type MeasurementSite } from "../rules";
@@ -27,12 +28,18 @@ export async function MeasurementsForm({ clientId, measurements }: { clientId: s
         <ul className="flex flex-wrap gap-2" aria-label={t.askedMeasurements}>
           {measurements.map((site) => (
             <li key={site}>
-              <button name="remove" value={site} className={chip} aria-label={t.stopAskingSite(names[site])}>
+              <SubmitButton
+                name="remove"
+                value={site}
+                pendingText={t.saving}
+                className={chip}
+                aria-label={t.stopAskingSite(names[site])}
+              >
                 {names[site]}
                 <span aria-hidden className="text-secondary">
                   ×
                 </span>
-              </button>
+              </SubmitButton>
             </li>
           ))}
         </ul>
@@ -43,14 +50,15 @@ export async function MeasurementsForm({ clientId, measurements }: { clientId: s
           <ul className="flex flex-wrap gap-2" aria-label={t.measurementsToAdd}>
             {available.map((site) => (
               <li key={site}>
-                <button name="add" value={site} className={buttonSecondary}>
+                <SubmitButton name="add" value={site} pendingText={t.saving} className={buttonSecondary}>
                   + {names[site]}
-                </button>
+                </SubmitButton>
               </li>
             ))}
           </ul>
         </>
       )}
+      <FlashNotice />
     </form>
   );
 }

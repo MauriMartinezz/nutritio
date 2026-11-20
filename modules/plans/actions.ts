@@ -7,6 +7,7 @@ import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
+import { setFlash } from "@/modules/ui/set-flash";
 import { findEditablePlan, planContentIds, searchFoods } from "./dal";
 import { defaultMealNames, planErrors } from "./messages";
 import {
@@ -59,6 +60,7 @@ export async function createPlan(clientId: string | null, formData: FormData) {
     data: { nutritionistId, clientId, name, meals: { create: defaultMeals(locale) } },
     select: { id: true },
   });
+  await setFlash(clientId ? "plan-created" : "template-created");
   redirect(`/plans/${plan.id}`);
 }
 
@@ -105,6 +107,7 @@ export async function createPlanFromTemplate(clientId: string, formData: FormDat
     },
     select: { id: true },
   });
+  await setFlash(clientId ? "plan-created" : "template-created");
   redirect(`/plans/${plan.id}`);
 }
 
@@ -187,6 +190,7 @@ export async function editPlan(planId: string, _previous: PlanEditorState, formD
 
   if (intent.kind === "delete") {
     await prisma.mealPlan.delete({ where: { id: planId } });
+    await setFlash("plan-deleted");
     redirect(plan.clientId ? `/clients/${plan.clientId}` : "/plans");
   }
 

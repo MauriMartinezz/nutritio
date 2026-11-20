@@ -17,6 +17,7 @@ import {
 } from "@/modules/ui/classes";
 import { Segmented } from "@/modules/ui/components/segmented";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
+import { notify } from "@/modules/ui/components/toast";
 import { InvalidDisplayNameError, MAX_NAME_LENGTH, parseDisplayName } from "../account";
 import { accountMessages } from "../messages";
 
@@ -97,6 +98,7 @@ export function AccountForm({ name, email, role, sex }: Props) {
     setPending(false);
     setEditing(false);
     setSaved(true);
+    notify(t.accountSaved);
     router.refresh();
   }
 
