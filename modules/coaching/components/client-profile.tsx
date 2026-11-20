@@ -1,14 +1,19 @@
+import { formatDate } from "../dates";
+import { getLocale } from "@/lib/i18n/server";
 import { getClientPreferencesForNutritionist } from "@/modules/clients/dal";
 import { describePreferences } from "@/modules/clients/preferences";
 import { badge, card, h1, h2, muted } from "@/modules/ui/classes";
 import { getClientProfile } from "../dal";
+import { coachingMessages } from "../messages";
 
 /** Guarded by an accepted link. Render inside <Suspense>. */
 export async function ClientProfile({ params }: { params: Promise<{ clientId: string }> }) {
   const { clientId } = await params;
   const client = await getClientProfile(clientId);
+  const locale = await getLocale();
+  const t = coachingMessages[locale];
   const preferences = await getClientPreferencesForNutritionist(clientId);
-  const labels = preferences ? describePreferences(preferences) : [];
+  const labels = preferences ? describePreferences(preferences, locale) : [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -18,16 +23,16 @@ export async function ClientProfile({ params }: { params: Promise<{ clientId: st
           <p className={`${muted} break-all`}>{client.email}</p>
           {client.workingSince && (
             <p className={muted}>
-              Working together since {client.workingSince.toLocaleDateString()}
+              {t.workingSince(formatDate(client.workingSince, locale))}
             </p>
           )}
         </div>
       </div>
 
       <section className={card}>
-        <h2 className={h2}>Preferences &amp; health</h2>
+        <h2 className={h2}>{t.preferences}</h2>
         {!preferences ? (
-          <p className={muted}>No preferences yet.</p>
+          <p className={muted}>{t.noPreferences}</p>
         ) : (
           <>
             {labels.length > 0 && (
@@ -41,16 +46,16 @@ export async function ClientProfile({ params }: { params: Promise<{ clientId: st
             )}
             {preferences.otherConditions && (
               <p className="text-sm">
-                <span className="font-medium">Other conditions:</span> {preferences.otherConditions}
+                <span className="font-medium">{t.otherConditions}</span> {preferences.otherConditions}
               </p>
             )}
             {preferences.notes && (
               <p className="whitespace-pre-line text-sm">
-                <span className="font-medium">Notes:</span> {preferences.notes}
+                <span className="font-medium">{t.notes}</span> {preferences.notes}
               </p>
             )}
             {labels.length === 0 && !preferences.otherConditions && !preferences.notes && (
-              <p className={muted}>No preferences yet.</p>
+              <p className={muted}>{t.noPreferences}</p>
             )}
           </>
         )}

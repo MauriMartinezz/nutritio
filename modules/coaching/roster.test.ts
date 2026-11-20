@@ -10,7 +10,7 @@ import {
   timeLeftLabel,
   type RosterRow,
 } from "./roster";
-import { parseRosterDialog, rosterHref } from "./roster";
+import { parseAutoRenew, parseRosterDialog, renewReturnHref, rosterHref } from "./roster";
 
 const now = new Date("2026-06-01T12:00:00Z");
 const day = 24 * 60 * 60 * 1000;
@@ -99,4 +99,36 @@ test("parseRosterDialog reads one dialog from the URL; unknown or empty ids open
   assert.equal(parseRosterDialog({}), null);
   assert.equal(parseRosterDialog({ renew: "" }), null);
   assert.equal(parseRosterDialog({ filter: "all" }), null);
+});
+
+test("time left and period errors read in Spanish", () => {
+  assert.equal(timeLeftLabel(at(0.5), now, "es"), "Queda menos de un día");
+  assert.equal(timeLeftLabel(at(1), now, "es"), "Queda 1 día");
+  assert.equal(timeLeftLabel(at(12), now, "es"), "Quedan 12 días");
+  assert.equal(timeLeftLabel(at(21), now, "es"), "Quedan 3 semanas");
+  assert.equal(timeLeftLabel(at(95), now, "es"), "Quedan 3 meses");
+  assert.equal(timeLeftLabel(at(-0.2), now, "es"), "Terminó hoy");
+  assert.equal(timeLeftLabel(at(-4), now, "es"), "Terminó hace 4 días");
+  assert.throws(() => parsePeriodChoice({ preset: "2Y" }, "es"), { message: "Elegí un período de renovación" });
+});
+
+test("auto-renew off ignores the period; on requires a valid one", () => {
+  assert.deepEqual(parseAutoRenew({ amount: "2", unit: "WEEK" }), { autoRenew: false });
+  assert.deepEqual(parseAutoRenew({ autoRenew: null, amount: "0", unit: "YEAR" }), { autoRenew: false });
+  assert.deepEqual(parseAutoRenew({ autoRenew: "on", amount: "2", unit: "WEEK" }), {
+    autoRenew: true,
+    period: { amount: 2, unit: "WEEK" },
+  });
+  assert.throws(() => parseAutoRenew({ autoRenew: "on", amount: "0", unit: "DAY" }), AccessRuleError);
+  assert.throws(() => parseAutoRenew({ autoRenew: "on", amount: "0", unit: "DAY" }, "es"), {
+    message: "La cantidad debe ser un número entero entre 1 y 365",
+  });
+});
+
+test("after renewing, go back to the client's page or to the clients table, never to a browser-given URL", () => {
+  assert.equal(renewReturnHref({ returnTo: "client" }, "c1"), "/clients/c1");
+  assert.equal(renewReturnHref({ returnTo: "client" }, "c/../x"), "/clients/c%2F..%2Fx");
+  assert.equal(renewReturnHref({ filter: "expiring" }, "c1"), "/clients?filter=expiring");
+  assert.equal(renewReturnHref({ returnTo: "https://evil.example", filter: "bogus" }, "c1"), "/clients");
+  assert.equal(renewReturnHref({}, "c1"), "/clients");
 });

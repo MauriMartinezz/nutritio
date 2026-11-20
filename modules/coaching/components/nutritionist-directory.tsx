@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { buttonLink, card, h3, muted } from "@/modules/ui/classes";
+import { getMessages } from "@/lib/i18n/server";
 import { getDirectory } from "../directory-dal";
+import { coachingMessages } from "../messages";
 import { FeeBox, NutritionistFacts } from "./nutritionist-facts";
 import { RequestNutritionist } from "./request-nutritionist";
 
 /** Approved nutritionists a client can work with, as summary cards. Render inside <Suspense>. */
 export async function NutritionistDirectory() {
   const nutritionists = await getDirectory();
+  const t = await getMessages(coachingMessages);
 
   if (nutritionists.length === 0) {
-    return <p className={muted}>There are no verified nutritionists yet.</p>;
+    return <p className={muted}>{t.noNutritionists}</p>;
   }
 
   return (
@@ -28,7 +31,7 @@ export async function NutritionistDirectory() {
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-divider pt-4">
             <Link href={`/nutritionists/${nutritionist.id}`} className={buttonLink}>
-              View profile
+              {t.viewProfile}
             </Link>
             <RequestNutritionist nutritionist={nutritionist} />
           </div>

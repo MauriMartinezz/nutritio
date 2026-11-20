@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getMessages } from "@/lib/i18n/server";
+import { coachingMessages } from "@/modules/coaching/messages";
 import { h1, page } from "@/modules/ui/classes";
 import { MyClients } from "@/modules/coaching/components/my-clients";
 import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
 import { TableSkeleton } from "@/modules/ui/components/skeleton";
 
-export const metadata: Metadata = { title: "My clients · Nutritio" };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getMessages(coachingMessages)).myClientsMeta };
+}
 
-export default function Page({ searchParams }: PageProps<"/[lang]/clients">) {
+export default async function Page({ searchParams }: PageProps<"/[lang]/clients">) {
+  const t = await getMessages(coachingMessages);
   return (
     <main className={page}>
       <h1 className={`${h1} flex flex-wrap items-center`}>
-        My clients
+        {t.myClientsTitle}
         <Suspense fallback={null}>
           <PendingActions />
         </Suspense>

@@ -69,3 +69,15 @@ test("a revoked or unverified nutritionist loses access but keeps the link", () 
     assert.equal(canAccessClient(status, { status: "ACCEPTED" }), false);
   }
 });
+
+test("link rule errors read in Spanish", () => {
+  assert.throws(() => decideLinkRequest(approvedNutritionist, { status: "PENDING" }, "es"), {
+    message: "La solicitud ya fue enviada",
+  });
+  assert.throws(() => decideLinkRequest(approvedNutritionist, { status: "ACCEPTED" }, "es"), {
+    message: "Ya trabajás con este nutricionista",
+  });
+  assert.throws(() => respondToLinkRequest("PENDING", { status: "PENDING" }, "ACCEPT", "es"), {
+    message: "Tu perfil tiene que estar verificado para responder solicitudes",
+  });
+});

@@ -1,4 +1,7 @@
+import { getLocale } from "@/lib/i18n/server";
 import type { AccessPeriod } from "../access";
+import { formatDate } from "../dates";
+import { coachingLabels, coachingMessages } from "../messages";
 import { CUSTOM_PRESET, PERIOD_PRESETS } from "../roster";
 import { PeriodFields } from "./period-fields";
 
@@ -9,7 +12,7 @@ const row =
  * Period presets as radios, each with the end date it would give, plus a
  * custom amount + unit (shown when chosen; CSS only, works without JS).
  */
-export function PeriodChoice({
+export async function PeriodChoice({
   endDates,
   current,
 }: {
@@ -17,13 +20,16 @@ export function PeriodChoice({
   endDates: Record<string, Date>;
   current: AccessPeriod;
 }) {
+  const locale = await getLocale();
+  const t = coachingMessages[locale];
+  const presets = coachingLabels[locale].presets;
   const matching = PERIOD_PRESETS.find(
     (preset) => preset.period.amount === current.amount && preset.period.unit === current.unit,
   );
 
   return (
     <fieldset className="group flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-medium">Period</legend>
+      <legend className="mb-2 text-sm font-medium">{t.period}</legend>
       {PERIOD_PRESETS.map((preset) => (
         <label key={preset.value} className={row}>
           <input
@@ -34,9 +40,9 @@ export function PeriodChoice({
             defaultChecked={preset.value === matching?.value}
             className="size-4 accent-accent"
           />
-          <span className="flex-1 font-medium">{preset.label}</span>
+          <span className="flex-1 font-medium">{presets[preset.value]}</span>
           <span className="font-mono text-xs text-secondary tabular-nums">
-            until {endDates[preset.value]?.toLocaleDateString()}
+            {endDates[preset.value] && t.until(formatDate(endDates[preset.value], locale))}
           </span>
         </label>
       ))}
@@ -49,10 +55,10 @@ export function PeriodChoice({
           defaultChecked={!matching}
           className="size-4 accent-accent"
         />
-        <span className="flex-1 font-medium">Custom</span>
+        <span className="flex-1 font-medium">{t.custom}</span>
       </label>
       <div className="hidden flex-wrap items-center gap-2 pl-7 group-has-[input[value=custom]:checked]:flex">
-        <PeriodFields defaultValue={current} label="Custom period" />
+        <PeriodFields defaultValue={current} label={t.customPeriod} />
       </div>
     </fieldset>
   );

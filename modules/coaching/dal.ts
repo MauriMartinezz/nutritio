@@ -37,7 +37,15 @@ export async function getClientAccess(clientId: string) {
   const { nutritionist } = await requireClientAccess(clientId);
   const link = await prisma.nutritionistClient.findUnique({
     where: { nutritionistId_clientId: { nutritionistId: nutritionist.id, clientId } },
-    select: { id: true, status: true, accessAmount: true, accessUnit: true, accessUntil: true, autoRenew: true },
+    select: {
+      id: true,
+      status: true,
+      accessAmount: true,
+      accessUnit: true,
+      accessUntil: true,
+      autoRenew: true,
+      client: { select: { name: true } },
+    },
   });
   if (!link) notFound();
   return link;

@@ -1,5 +1,7 @@
 // Time-limited client access: a nutritionist grants access for a period
 // (days, weeks or months) and renews it manually or automatically.
+import type { Locale } from "@/lib/i18n/negotiate";
+import { coachingErrors } from "./messages";
 
 export const ACCESS_UNITS = ["DAY", "WEEK", "MONTH"] as const;
 export type AccessUnit = (typeof ACCESS_UNITS)[number];
@@ -17,13 +19,14 @@ export class AccessRuleError extends Error {
   }
 }
 
-export function parsePeriod(amount: unknown, unit: unknown): AccessPeriod {
+export function parsePeriod(amount: unknown, unit: unknown, locale: Locale = "en"): AccessPeriod {
+  const t = coachingErrors[locale];
   const raw = typeof amount === "string" ? amount.trim() : typeof amount === "number" ? String(amount) : "";
   if (!/^\d+$/.test(raw) || Number(raw) < 1 || Number(raw) > MAX_AMOUNT) {
-    throw new AccessRuleError(`Amount must be a whole number between 1 and ${MAX_AMOUNT}`);
+    throw new AccessRuleError(t.amount(MAX_AMOUNT));
   }
   if (!(ACCESS_UNITS as readonly unknown[]).includes(unit)) {
-    throw new AccessRuleError("Unit must be days, weeks or months");
+    throw new AccessRuleError(t.unit);
   }
   return { amount: Number(raw), unit: unit as AccessUnit };
 }
