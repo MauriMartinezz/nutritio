@@ -1,19 +1,21 @@
 import Link from "next/link";
 import { buttonSecondary, card, input, link, list, muted } from "@/modules/ui/classes";
 import { createPlan } from "../actions";
+import { getMessages } from "@/lib/i18n/server";
 import { listTemplates } from "../dal";
+import { planMessages } from "../messages";
+import { SubmitButton } from "./submit-button";
 
 /** The signed-in nutritionist's reusable templates. Render inside <Suspense>. */
 export async function TemplateList() {
   const templates = await listTemplates();
+  const t = await getMessages(planMessages);
 
   return (
     <div className="flex flex-col gap-5">
       <section className={card}>
         {templates.length === 0 ? (
-          <p className={muted}>
-            No templates yet. A template is a plan without a client that you can copy for any client.
-          </p>
+          <p className={muted}>{t.noTemplates}</p>
         ) : (
           <ul className={list}>
             {templates.map((template) => (
@@ -31,11 +33,13 @@ export async function TemplateList() {
           name="name"
           required
           maxLength={120}
-          placeholder="New template name"
-          aria-label="New template name"
+          placeholder={t.newTemplateName}
+          aria-label={t.newTemplateName}
           className={`${input} w-full sm:flex-1`}
         />
-        <button className={buttonSecondary}>Create template</button>
+        <SubmitButton pendingText={t.pending.creating} className={buttonSecondary}>
+          {t.createTemplate}
+        </SubmitButton>
       </form>
     </div>
   );
