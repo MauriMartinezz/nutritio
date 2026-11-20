@@ -84,7 +84,7 @@ model User {
   verificationNote   String?              @map("verification_note") @db.VarChar(1000)
   reviewedAt         DateTime?            @map("reviewed_at")
   /// Nutritionist profile (null for other roles). Set at sign-up, then admin-only.
-  dni                String?              @unique @db.VarChar(8)
+  dni                String?              @unique @db.VarChar(9)
   licenseNumber      String?              @map("license_number") @db.VarChar(30)
   birthDate          DateTime?            @map("birth_date") @db.Date
   phone              String?              @db.VarChar(20)

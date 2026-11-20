@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { ProfileFields, inputClass } from "@/modules/nutritionists/components/profile-fields";
+import { buildPhone, parseBirthDateInput } from "@/modules/nutritionists/profile";
 import { buttonPrimary, card, fieldError, fieldHint, h1, label, link, muted } from "@/modules/ui/classes";
 
 type Mode = "sign-in" | "sign-up";
@@ -18,11 +19,33 @@ export function AuthForm({ mode }: { mode: Mode }) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setPending(true);
 
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email"));
     const password = String(form.get("password"));
+
+    let nutritionistFields = {};
+    if (mode === "sign-up" && role === "NUTRITIONIST") {
+      const birthDate = parseBirthDateInput(String(form.get("birthDate")));
+      if (!birthDate) {
+        setError("Date of birth must be a real date as dd/mm/yyyy.");
+        return;
+      }
+      const phone = buildPhone(String(form.get("phonePrefix")), String(form.get("phoneNumber")));
+      if ("error" in phone) {
+        setError(`${phone.error}.`);
+        return;
+      }
+      nutritionistFields = {
+        dni: String(form.get("dni")),
+        licenseNumber: String(form.get("licenseNumber")),
+        birthDate,
+        phone: phone.phone,
+        specialty: String(form.get("specialty")),
+      };
+    }
+
+    setPending(true);
 
     const { error } =
       mode === "sign-up"
@@ -31,13 +54,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             email,
             password,
             role,
-            ...(role === "NUTRITIONIST" && {
-              dni: String(form.get("dni")),
-              licenseNumber: String(form.get("licenseNumber")),
-              birthDate: new Date(`${String(form.get("birthDate"))}T00:00:00.000Z`),
-              phone: String(form.get("phone")),
-              specialty: String(form.get("specialty")),
-            }),
+            ...nutritionistFields,
           })
         : await authClient.signIn.email({ email, password });
 

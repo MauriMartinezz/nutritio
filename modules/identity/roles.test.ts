@@ -14,7 +14,7 @@ const profile = {
   dni: "30123456",
   licenseNumber: "MN 1234",
   birthDate: "1990-05-20",
-  phone: "+54 11 5555-1234",
+  phone: "+54 11 5555 1234",
   specialty: "Sports nutrition",
 };
 const parsedProfile = { ...profile, birthDate: new Date("1990-05-20T00:00:00.000Z") };

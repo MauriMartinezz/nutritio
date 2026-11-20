@@ -15,10 +15,11 @@ const form = {
   name: " Sandra Pérez ",
   email: " Sandra@Example.com ",
   status: "APPROVED",
-  dni: "30123456",
+  dni: "30.123.456",
   licenseNumber: "MN 1234",
-  birthDate: "1990-05-20",
-  phone: "+54 11 5555-1234",
+  birthDate: "20/05/1990",
+  phonePrefix: "+54 11",
+  phoneNumber: "5555 1234",
   specialty: "",
 };
 
@@ -30,7 +31,7 @@ test("an admin update is validated and normalized", () => {
     dni: "30123456",
     licenseNumber: "MN 1234",
     birthDate: new Date("1990-05-20T00:00:00.000Z"),
-    phone: "+54 11 5555-1234",
+    phone: "+54 11 5555 1234",
     specialty: null,
   });
 });

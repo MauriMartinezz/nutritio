@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma";
 import { badge, eyebrow, figure, h2, h3, muted } from "@/modules/ui/classes";
 import { CloseOnEscape } from "@/modules/ui/components/close-on-escape";
+import { formatBirthDate, formatDni } from "../profile";
 import { STATUS_LABELS, STATUS_TONES } from "./status";
 import { ReviewForm } from "./review-form";
 
@@ -93,13 +94,13 @@ export async function ReviewPanel({ id, closeHref }: { id: string; closeHref: st
               <span className="block text-xs text-tertiary">{nutritionist.emailVerified ? "Verified" : "Not verified"}</span>
             </Field>
             <Field term="Phone">{nutritionist.phone}</Field>
-            <Field term="DNI">{nutritionist.dni && <span className={figure}>{nutritionist.dni}</span>}</Field>
+            <Field term="DNI">{nutritionist.dni && <span className={figure}>{formatDni(nutritionist.dni)}</span>}</Field>
             <Field term="License number">
               {nutritionist.licenseNumber && <span className={figure}>{nutritionist.licenseNumber}</span>}
             </Field>
             <Field term="Birth date">
               {nutritionist.birthDate &&
-                `${nutritionist.birthDate.toISOString().slice(0, 10)} (${ageOn(nutritionist.birthDate, nutritionist.createdAt)} at sign-up)`}
+                `${formatBirthDate(nutritionist.birthDate)} (${ageOn(nutritionist.birthDate, nutritionist.createdAt)} at sign-up)`}
             </Field>
             <Field term="Specialty">{nutritionist.specialty}</Field>
             <Field term="Applied on">{nutritionist.createdAt.toLocaleString()}</Field>
@@ -142,7 +143,7 @@ export async function ReviewPanel({ id, closeHref }: { id: string; closeHref: st
               note: nutritionist.verificationNote,
               dni: nutritionist.dni,
               licenseNumber: nutritionist.licenseNumber,
-              birthDate: nutritionist.birthDate?.toISOString().slice(0, 10) ?? null,
+              birthDate: nutritionist.birthDate ? formatBirthDate(nutritionist.birthDate) : null,
               phone: nutritionist.phone,
               specialty: nutritionist.specialty,
             }}
