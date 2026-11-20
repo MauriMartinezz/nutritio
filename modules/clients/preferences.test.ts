@@ -148,3 +148,27 @@ test("describePreferences lists readable labels in a stable order", () => {
 test("describePreferences returns nothing when no preference is set", () => {
   assert.deepEqual(describePreferences(none), []);
 });
+
+test("parseClientPreferences reports problems in Spanish", () => {
+  try {
+    parseClientPreferences({ cookingStyle: "NOPE", notes: "x".repeat(1001) }, "es");
+    assert.fail("expected an InvalidClientPreferencesError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidClientPreferencesError);
+    assert.deepEqual(error.problems, {
+      notes: "Notas: como máximo 1000 caracteres",
+      cookingStyle: "Elegí comidas simples, elaboradas o sin preferencia",
+    });
+  }
+});
+
+test("parseSex explains the choice in Spanish", () => {
+  assert.throws(() => parseSex("", "es"), (error) => error instanceof InvalidSexError && error.message === "Elegí mujer u hombre");
+});
+
+test("describePreferences lists Spanish labels", () => {
+  assert.deepEqual(
+    describePreferences({ ...none, sex: "FEMALE", vegan: true, cookingStyle: "BASIC", celiac: true, intolerances: "lactosa" }, "es"),
+    ["Mujer", "Vegano", "Comidas simples", "Celiaquía", "Intolerancia a: lactosa"],
+  );
+});

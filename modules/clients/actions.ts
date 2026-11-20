@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
 import {
@@ -24,7 +25,7 @@ export async function saveClientPreferences(
 
   let preferences;
   try {
-    preferences = parseClientPreferences(Object.fromEntries(formData));
+    preferences = parseClientPreferences(Object.fromEntries(formData), await getActionLocale());
   } catch (error) {
     if (error instanceof InvalidClientPreferencesError) return { problems: error.problems };
     throw error;
@@ -47,7 +48,7 @@ export async function saveOwnSex(input: string): Promise<{ error?: string }> {
 
   let sex;
   try {
-    sex = parseSex(input);
+    sex = parseSex(input, await getActionLocale());
   } catch (error) {
     if (error instanceof InvalidSexError) return { error: error.message };
     throw error;
