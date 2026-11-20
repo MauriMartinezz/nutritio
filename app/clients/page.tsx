@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { h1, muted, page } from "@/modules/ui/classes";
+import { h1, page } from "@/modules/ui/classes";
 import { MyClients } from "@/modules/coaching/components/my-clients";
 import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
+import { TableSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "My clients · Nutritio" };
 
@@ -15,7 +16,7 @@ export default function Page({ searchParams }: PageProps<"/clients">) {
           <PendingActions />
         </Suspense>
       </h1>
-      <Suspense fallback={<p className={muted}>Loading…</p>}>
+      <Suspense fallback={<TableSkeleton />}>
         <MyClients searchParams={searchParams} />
       </Suspense>
     </main>

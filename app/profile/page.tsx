@@ -10,6 +10,7 @@ import { SignOutButton } from "@/modules/identity/components/sign-out-button";
 import { PublicProfileForm } from "@/modules/nutritionists/components/public-profile-form";
 import { ThemeToggle } from "@/modules/theme/theme-toggle";
 import { card, h1, h2, muted, pageNarrow } from "@/modules/ui/classes";
+import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
 
 export const metadata: Metadata = { title: "Profile · Nutritio" };
 
@@ -114,7 +115,7 @@ export default function Page() {
   return (
     <main className={pageNarrow}>
       <h1 className={h1}>Profile</h1>
-      <Suspense fallback={<p className={muted}>Loading…</p>}>
+      <Suspense fallback={<SectionsSkeleton />}>
         <OwnProfile />
       </Suspense>
     </main>

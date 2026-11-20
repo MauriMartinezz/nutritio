@@ -3,12 +3,13 @@ import { ClientHome } from "@/modules/home/components/client-home";
 import { AdminHome } from "@/modules/home/components/admin-home";
 import { NutritionistHome } from "@/modules/home/components/nutritionist-home";
 import { AccountPanel } from "@/modules/identity/components/account-panel";
-import { muted, page } from "@/modules/ui/classes";
+import { page } from "@/modules/ui/classes";
+import { CardGridSkeleton } from "@/modules/ui/components/skeleton";
 
 export default function Home() {
   return (
     <main className={page}>
-      <Suspense fallback={<p className={muted}>Loading your account…</p>}>
+      <Suspense fallback={<CardGridSkeleton count={3} />}>
         <AccountPanel />
       </Suspense>
       <Suspense fallback={null}>
