@@ -78,3 +78,10 @@ test("profile updates through the auth API cannot touch role or verification sta
     assert.throws(() => assertNoPrivilegedChanges({ [field]: "x" }), PrivilegedFieldChangeError);
   }
 });
+
+test("a nutritionist's invalid profile is reported in the sign-up language", () => {
+  assert.throws(
+    () => prepareNewUser({ role: "NUTRITIONIST", ...profile, dni: "12" }, today, "es"),
+    { name: "InvalidProfileError", message: "El DNI tiene que estar entre 1.000.000 y 999.999.999" },
+  );
+});

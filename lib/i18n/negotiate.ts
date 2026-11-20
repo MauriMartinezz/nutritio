@@ -42,3 +42,13 @@ export function negotiateLocale({
   if (isLocale(cookie)) return cookie;
   return browserLocales(acceptLanguage ?? "")[0] ?? DEFAULT_LOCALE;
 }
+
+/** The locale of a request that bypasses proxy.ts (e.g. /api/auth): cookie, then browser language. */
+export function localeFromHeaders(headers: Headers | undefined | null): Locale {
+  const cookie = headers
+    ?.get("cookie")
+    ?.split(";")
+    .map((part) => part.trim().split("="))
+    .find(([name]) => name === LOCALE_COOKIE)?.[1];
+  return negotiateLocale({ cookie, acceptLanguage: headers?.get("accept-language") });
+}

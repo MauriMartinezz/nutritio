@@ -3,8 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { useLocale, useMessages } from "@/lib/i18n/client";
 import { saveOwnSex } from "@/modules/clients/actions";
-import { SEX_LABELS, type Sex } from "@/modules/clients/preferences";
+import { preferenceLabels } from "@/modules/clients/messages";
+import type { Sex } from "@/modules/clients/preferences";
 import {
   buttonPrimary,
   buttonSecondary,
@@ -15,11 +17,13 @@ import {
 } from "@/modules/ui/classes";
 import { Segmented } from "@/modules/ui/components/segmented";
 import { ButtonLabel } from "@/modules/ui/components/spinner";
-import { MAX_NAME_LENGTH } from "../account";
+import { InvalidDisplayNameError, MAX_NAME_LENGTH, parseDisplayName } from "../account";
+import { accountMessages } from "../messages";
 
 type Props = {
   name: string;
   email: string;
+  /** Already translated, e.g. "Paciente". */
   role: string;
   /** Only clients have it: undefined hides the field, null means not set yet. */
   sex?: Sex | null;
@@ -40,6 +44,9 @@ function Detail({ term, children }: { term: string; children: React.ReactNode })
  */
 export function AccountForm({ name, email, role, sex }: Props) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useMessages(accountMessages);
+  const sexLabels = useMessages(preferenceLabels).sex;
   const isClient = sex !== undefined;
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,12 +65,21 @@ export function AccountForm({ name, email, role, sex }: Props) {
     setPending(true);
     const form = new FormData(event.currentTarget);
 
-    const newName = String(form.get("name")).trim();
+    let newName: string;
+    try {
+      // Same rule the server applies, checked here so the message is in the visitor's language.
+      newName = parseDisplayName(form.get("name"), locale);
+    } catch (error) {
+      if (!(error instanceof InvalidDisplayNameError)) throw error;
+      setPending(false);
+      setError(error.message);
+      return;
+    }
     if (newName !== name) {
       const { error } = await authClient.updateUser({ name: newName });
       if (error) {
         setPending(false);
-        setError(error.message ?? "Something went wrong. Please try again.");
+        setError(t.genericError);
         return;
       }
     }
@@ -86,10 +102,10 @@ export function AccountForm({ name, email, role, sex }: Props) {
 
   const details = (
     <dl className="grid gap-4 sm:grid-cols-2">
-      {!editing && <Detail term="Full name">{name}</Detail>}
-      {!editing && isClient && <Detail term="Sex">{sex ? SEX_LABELS[sex] : "Not set"}</Detail>}
-      <Detail term="Email">{email}</Detail>
-      <Detail term="Role">{role}</Detail>
+      {!editing && <Detail term={t.fullName}>{name}</Detail>}
+      {!editing && isClient && <Detail term={t.sex}>{sex ? sexLabels[sex] : t.notSet}</Detail>}
+      <Detail term={t.email}>{email}</Detail>
+      <Detail term={t.role}>{role}</Detail>
     </dl>
   );
 
@@ -99,11 +115,11 @@ export function AccountForm({ name, email, role, sex }: Props) {
         {details}
         {saved && (
           <p role="status" className={formSuccess}>
-            Account saved.
+            {t.accountSaved}
           </p>
         )}
         <button type="button" onClick={startEditing} className={`${buttonSecondary} self-start`}>
-          Edit
+          {t.edit}
         </button>
       </div>
     );
@@ -112,7 +128,7 @@ export function AccountForm({ name, email, role, sex }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <label className={label}>
-        Full name
+        {t.fullName}
         <input
           name="name"
           required
@@ -125,17 +141,17 @@ export function AccountForm({ name, email, role, sex }: Props) {
       </label>
       {isClient && (
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1 text-sm font-semibold">Sex</legend>
+          <legend className="mb-1 text-sm font-semibold">{t.sex}</legend>
           <div className="max-w-xs">
             <Segmented
               name="sex"
               required
               defaultValue={sex}
-              options={Object.entries(SEX_LABELS).map(([value, label]) => ({ value, label }))}
+              options={Object.entries(sexLabels).map(([value, label]) => ({ value, label }))}
             />
           </div>
           <p className="text-xs text-secondary">
-            Women and men have different needs; your nutritionist may also ask about your menstrual cycle.
+            {t.sexHint}
           </p>
         </fieldset>
       )}
@@ -147,12 +163,12 @@ export function AccountForm({ name, email, role, sex }: Props) {
       )}
       <div className="flex flex-wrap gap-3">
         <button type="submit" disabled={pending} className={buttonPrimary}>
-          <ButtonLabel pending={pending} pendingText="Saving…">
-            Save
+          <ButtonLabel pending={pending} pendingText={t.saving}>
+            {t.save}
           </ButtonLabel>
         </button>
         <button type="button" disabled={pending} onClick={() => setEditing(false)} className={buttonSecondary}>
-          Cancel
+          {t.cancel}
         </button>
       </div>
     </form>

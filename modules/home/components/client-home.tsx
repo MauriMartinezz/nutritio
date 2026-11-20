@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { formatDateTime } from "@/lib/i18n/format";
+import type { Locale } from "@/lib/i18n/negotiate";
+import { getLocale, getMessages } from "@/lib/i18n/server";
 import { getCurrentUser } from "@/modules/identity/dal";
 import { getClientHome, type ClientHomeLink } from "@/modules/checkins/dal";
 import { describeCheckInStatus } from "@/modules/checkins/rules";
@@ -22,7 +25,8 @@ import {
   muted,
 } from "@/modules/ui/classes";
 import { accessDaysLeft, describeAccess } from "../access-summary";
-import { checkInKpi, mealSummary, nextMeeting } from "../dashboard";
+import { checkInKpi, mealSummary, nextMeeting, shortDate } from "../dashboard";
+import { homeMessages } from "../messages";
 import { DashboardHeader, Kpi, KpiRow, PanelHeader, panelRow } from "./dashboard-parts";
 
 const primaryButton = `${buttonPrimary} self-start`;
@@ -35,11 +39,13 @@ export async function ClientHome() {
   const user = await getCurrentUser();
   if (user?.role !== "CLIENT") return null;
 
-  const [{ now, links }, { plans }, activity, meetings] = await Promise.all([
+  const [{ now, links }, { plans }, activity, meetings, locale, t] = await Promise.all([
     getClientHome(),
     listMyPlans(),
     getOwnActivities(),
     getOwnMeetings(),
+    getLocale(),
+    getMessages(homeMessages),
   ]);
 
   if (links.length === 0) {
@@ -47,10 +53,10 @@ export async function ClientHome() {
       <div className="flex flex-col gap-7">
         <DashboardHeader name={user.name} now={now} />
         <section className={card}>
-          <h2 className={h2}>Your follow-up</h2>
-          <p className={muted}>You are not working with a nutritionist yet.</p>
+          <h2 className={h2}>{t.yourFollowUp}</h2>
+          <p className={muted}>{t.noNutritionist}</p>
           <Link href="/nutritionists" className={primaryButton}>
-            Find a nutritionist
+            {t.findNutritionist}
           </Link>
         </section>
       </div>
@@ -61,7 +67,7 @@ export async function ClientHome() {
   const activeLink = links.find((link) => !link.accessExpired) ?? null;
   const weighed = links.find((link) => link.latestWeightKg !== null) ?? null;
   const change = weighed ? weightChange(weighed.weightSeries) : null;
-  const checkIn = checkInKpi(activeLink);
+  const checkIn = checkInKpi(activeLink, locale);
   const meeting = nextMeeting(meetings.flatMap((link) => link.requests), now);
   const pendingMeeting = meetings.some((link) => link.hasPending);
 
@@ -71,26 +77,26 @@ export async function ClientHome() {
 
       <KpiRow>
         <Kpi
-          label="Today's plan"
+          label={t.todaysPlan}
           value={plan ? <>{Math.round(plan.totals.kcal)}<span className="text-base"> kcal</span></> : "—"}
           hint={
             plan
-              ? `P ${Math.round(plan.totals.proteinG)} g · C ${Math.round(plan.totals.carbsG)} g · F ${Math.round(plan.totals.fatG)} g`
-              : "No plan yet"
+              ? t.macros(Math.round(plan.totals.proteinG), Math.round(plan.totals.carbsG), Math.round(plan.totals.fatG))
+              : t.noPlanYet
           }
           href={plan ? `/nutritionists/${plan.nutritionist.id}#plan` : undefined}
         />
         <Kpi
-          label="Latest weight"
-          value={weighed?.latestWeightKg != null ? formatKg(weighed.latestWeightKg) : "—"}
-          hint={change !== null ? `${formatWeightChange(change)} since you started` : "Log it in a check-in"}
+          label={t.latestWeight}
+          value={weighed?.latestWeightKg != null ? formatKg(weighed.latestWeightKg, locale) : "—"}
+          hint={change !== null ? t.sinceYouStarted(formatWeightChange(change, locale)) : t.logItInCheckIn}
           href="/check-ins"
         />
-        <Kpi label="Next check-in" value={checkIn.value} hint={checkIn.hint} href="/check-ins" />
+        <Kpi label={t.nextCheckIn} value={checkIn.value} hint={checkIn.hint} href="/check-ins" />
         <Kpi
-          label="Activity this week"
+          label={t.activityThisWeek}
           value={formatDuration(activity.summary.totalMinutes)}
-          hint={`${activity.summary.count} ${activity.summary.count === 1 ? "activity" : "activities"}`}
+          hint={t.activityCount(activity.summary.count)}
           href="/activities"
         />
       </KpiRow>
@@ -99,19 +105,19 @@ export async function ClientHome() {
         <div className="flex flex-col gap-6">
           {plan?.notes && (
             <section className={cardAccent}>
-              <p className={eyebrow}>Note from {plan.nutritionist.name}</p>
+              <p className={eyebrow}>{t.noteFrom(plan.nutritionist.name)}</p>
               <p className="whitespace-pre-line">{plan.notes}</p>
             </section>
           )}
           <section className={card}>
             <PanelHeader
-              title="Today's meals"
+              title={t.todaysMeals}
               href={plans.length > 1 ? "/my-plans" : undefined}
-              linkLabel={`All plans (${plans.length})`}
+              linkLabel={t.allPlans(plans.length)}
             />
             {!plan ? (
               <p className={muted}>
-                {activeLink ? "Your nutritionist hasn't shared a plan yet." : "Renew your access to see your plans."}
+                {activeLink ? t.planNotShared : t.renewToSeePlans}
               </p>
             ) : (
               <>
@@ -121,7 +127,7 @@ export async function ClientHome() {
                     <li key={meal.id} className={panelRow}>
                       <div className="min-w-0">
                         <p className="font-semibold">{meal.name}</p>
-                        <p className={muted}>{mealSummary(meal.items)}</p>
+                        <p className={muted}>{mealSummary(meal.items, 3, locale)}</p>
                       </div>
                       <span className={`${figure} text-sm`}>{Math.round(meal.perServing.kcal)} kcal</span>
                     </li>
@@ -129,10 +135,10 @@ export async function ClientHome() {
                 </ul>
                 <div className="flex flex-wrap gap-2">
                   <Link href={`/nutritionists/${plan.nutritionist.id}#plan`} className={buttonSecondary}>
-                    Open plan
+                    {t.openPlan}
                   </Link>
                   <Link href={`/my-plans/${plan.id}/shopping-list`} className={buttonSecondary}>
-                    Shopping list
+                    {t.shoppingList}
                   </Link>
                 </div>
               </>
@@ -142,19 +148,19 @@ export async function ClientHome() {
 
         <div className="flex flex-col gap-6">
           {links.map((link) => (
-            <LinkCard key={link.linkId} link={link} now={now} />
+            <LinkCard key={link.linkId} link={link} now={now} locale={locale} t={t} />
           ))}
           {activeLink && (
             <section className={card}>
-              <PanelHeader title="Meetings" href="/meetings" linkLabel="Open" />
+              <PanelHeader title={t.meetings} href="/meetings" linkLabel={t.open} />
               {meeting ? (
                 <p className="text-sm">
-                  Next meeting:{" "}
-                  <span className={figure}>{meeting.scheduledFor!.toLocaleString()}</span>
+                  {t.nextMeeting}{" "}
+                  <span className={figure}>{formatDateTime(meeting.scheduledFor!, locale)}</span>
                 </p>
               ) : (
                 <p className={muted}>
-                  {pendingMeeting ? "Your meeting request is waiting for an answer." : "No meetings scheduled."}
+                  {pendingMeeting ? t.meetingWaiting : t.noMeetings}
                 </p>
               )}
             </section>
@@ -165,7 +171,9 @@ export async function ClientHome() {
   );
 }
 
-function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
+type HomeTexts = (typeof homeMessages)["en"];
+
+function LinkCard({ link, now, locale, t }: { link: ClientHomeLink; now: Date; locale: Locale; t: HomeTexts }) {
   const daysLeft = accessDaysLeft(link.accessUntil, now);
   const change = weightChange(link.weightSeries);
 
@@ -177,12 +185,12 @@ function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
             {link.nutritionistName}
           </Link>
           <Link href={`/nutritionists/${link.nutritionistId}#plan`} className={buttonSecondary}>
-            Plan, macros and shopping list
+            {t.planMacrosShopping}
           </Link>
         </h3>
         <p className={link.accessExpired ? `${callout("danger")} font-medium` : muted}>
-          {describeAccess({ expired: link.accessExpired, daysLeft }, link.nutritionistName)}
-          {!link.accessExpired && link.accessUntil && ` (until ${link.accessUntil.toLocaleDateString()})`}
+          {describeAccess({ expired: link.accessExpired, daysLeft }, link.nutritionistName, locale)}
+          {!link.accessExpired && link.accessUntil && t.until(shortDate(link.accessUntil, locale))}
         </p>
       </div>
 
@@ -195,12 +203,12 @@ function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
           }
         >
           <p className={link.state === "DUE" ? "font-medium" : muted}>
-            {describeCheckInStatus(link)}
-            {link.due && link.state === "UPCOMING" && ` (${link.due.toLocaleDateString()})`}
+            {describeCheckInStatus(link, locale)}
+            {link.due && link.state === "UPCOMING" && ` (${shortDate(link.due, locale)})`}
           </p>
           {link.state === "DUE" && (
             <Link href="/check-ins" className={primaryButton}>
-              Send check-in
+              {t.sendCheckIn}
             </Link>
           )}
         </div>
@@ -210,13 +218,13 @@ function LinkCard({ link, now }: { link: ClientHomeLink; now: Date }) {
         <div className="flex flex-col gap-4 border-t border-divider pt-4">
           {/* Flex drops the {" "} nodes visually, but they keep the text "Latest weight: 71.5 kg · …". */}
           <p className={`${eyebrow} flex flex-wrap items-baseline gap-x-3 gap-y-2`}>
-            <span className="basis-full">Latest weight:</span>{" "}
-            <span className={`${kpi} text-ink`}>{formatKg(link.latestWeightKg)}</span>
+            <span className="basis-full">{t.latestWeightLabel}</span>{" "}
+            <span className={`${kpi} text-ink`}>{formatKg(link.latestWeightKg, locale)}</span>
             {change !== null && (
               <span className="font-normal">
                 {" · "}
-                <span className="font-mono font-semibold tabular-nums text-ink">{formatWeightChange(change)}</span>
-                {` since ${link.weightSeries[0].date.toLocaleDateString()}`}
+                <span className="font-mono font-semibold tabular-nums text-ink">{formatWeightChange(change, locale)}</span>
+                {t.since(shortDate(link.weightSeries[0].date, locale))}
               </span>
             )}
           </p>

@@ -1,24 +1,14 @@
+import { getMessages } from "@/lib/i18n/server";
 import { callout, card, eyebrow, h1, type Tone } from "@/modules/ui/classes";
 import { prisma } from "@/lib/prisma";
 import { Landing } from "@/modules/home/components/landing";
 import { ResubmitForm } from "@/modules/nutritionists/components/resubmit-form";
 import { formatBirthDate } from "@/modules/nutritionists/profile";
 import { getCurrentUser } from "../dal";
+import { accountMessages } from "../messages";
+import { roleMessages } from "../nav-messages";
 
-const ROLE_LABELS = {
-  ADMIN: "Administrator",
-  NUTRITIONIST: "Nutritionist",
-  CLIENT: "Client",
-} as const;
-
-const STATUS_MESSAGES = {
-  PENDING: "Your nutritionist profile is waiting for admin verification.",
-  APPROVED:
-    "Your nutritionist profile is verified and listed in the directory.",
-  REJECTED: "Your nutritionist profile was not approved. You can correct it and send it again below.",
-} as const;
-
-const STATUS_TONES: Record<keyof typeof STATUS_MESSAGES, Tone> = {
+const STATUS_TONES: Record<"PENDING" | "APPROVED" | "REJECTED", Tone> = {
   PENDING: "warning",
   APPROVED: "success",
   REJECTED: "danger",
@@ -32,6 +22,9 @@ export async function AccountPanel() {
 
   // Clients, admins and approved nutritionists get a dashboard (modules/home) instead.
   if (user.role !== "NUTRITIONIST" || user.nutritionistStatus === "APPROVED") return null;
+
+  const [t, roles] = await Promise.all([getMessages(accountMessages), getMessages(roleMessages)]);
+  const statusMessages = { PENDING: t.statusPending, APPROVED: t.statusApproved, REJECTED: t.statusRejected };
 
   const review =
     user.role === "NUTRITIONIST"
@@ -50,14 +43,14 @@ export async function AccountPanel() {
 
   return (
     <section className={card}>
-      <p className={eyebrow}>{ROLE_LABELS[user.role]}</p>
-      <h1 className={h1}>Hi, {user.name.split(/\s+/)[0]}</h1>
+      <p className={eyebrow}>{roles[user.role]}</p>
+      <h1 className={h1}>{t.hi(user.name.split(/\s+/)[0])}</h1>
       {user.nutritionistStatus && (
         <div className={`${callout(STATUS_TONES[user.nutritionistStatus])} flex flex-col gap-1`}>
-          <p>{STATUS_MESSAGES[user.nutritionistStatus]}</p>
+          <p>{statusMessages[user.nutritionistStatus]}</p>
           {review?.verificationNote && (
             <p className="whitespace-pre-line">
-              <span className="font-semibold">Note from the admin:</span> {review.verificationNote}
+              <span className="font-semibold">{t.adminNote}</span> {review.verificationNote}
             </p>
           )}
         </div>

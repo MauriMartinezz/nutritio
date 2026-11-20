@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { getLocale, getMessages } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/modules/identity/dal";
-import { STATUS_LABELS, STATUS_TONES } from "@/modules/nutritionists/components/status";
+import { roleMessages } from "@/modules/identity/nav-messages";
+import { STATUS_TONES } from "@/modules/nutritionists/components/status";
+import { nutritionistStatusLabels } from "@/modules/nutritionists/messages";
 import { badge, buttonLink, card, list, muted } from "@/modules/ui/classes";
 import { relativeTime } from "../dashboard";
+import { homeMessages } from "../messages";
 import { DashboardHeader, Kpi, KpiRow, PanelHeader, panelRow } from "./dashboard-parts";
 
 const QUEUE_SIZE = 5;
-const ROLE_LABELS = { ADMIN: "Administrator", NUTRITIONIST: "Nutritionist", CLIENT: "Client" } as const;
 
 /** Admin dashboard for the home page. Reads the session: render inside <Suspense>. */
 export async function AdminHome() {
@@ -32,6 +35,12 @@ export async function AdminHome() {
       take: 6,
     }),
   ]);
+  const [locale, t, roles, statusLabels] = await Promise.all([
+    getLocale(),
+    getMessages(homeMessages),
+    getMessages(roleMessages),
+    getMessages(nutritionistStatusLabels),
+  ]);
   await connection();
   const now = new Date();
 
@@ -41,21 +50,26 @@ export async function AdminHome() {
 
       <KpiRow>
         <Kpi
-          label="Requests to review"
+          label={t.requestsToReview}
           value={pending}
-          hint={queue[0] ? `Oldest from ${relativeTime(queue[0].createdAt, now).toLowerCase()}` : "All caught up"}
+          hint={queue[0] ? t.oldestFrom(relativeTime(queue[0].createdAt, now, locale)) : t.allCaughtUpShort}
           href="/admin?status=PENDING"
         />
-        <Kpi label="Verified nutritionists" value={approved} hint="Listed in the directory" href="/admin?status=APPROVED" />
-        <Kpi label="Clients" value={clients} hint="Registered on the platform" />
-        <Kpi label="Active coaching links" value={activeLinks} hint="Accepted client requests" />
+        <Kpi
+          label={t.verifiedNutritionists}
+          value={approved}
+          hint={t.listedInDirectory}
+          href="/admin?status=APPROVED"
+        />
+        <Kpi label={t.clients} value={clients} hint={t.registered} />
+        <Kpi label={t.activeLinks} value={activeLinks} hint={t.acceptedRequests} />
       </KpiRow>
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <section className={card}>
-          <PanelHeader title="Waiting for review" href="/admin?status=PENDING" linkLabel="See all" />
+          <PanelHeader title={t.waitingForReview} href="/admin?status=PENDING" linkLabel={t.seeAll} />
           {queue.length === 0 ? (
-            <p className={muted}>No requests waiting. Nice.</p>
+            <p className={muted}>{t.noRequestsWaiting}</p>
           ) : (
             <ul className={list}>
               {queue.map((nutritionist) => (
@@ -63,16 +77,16 @@ export async function AdminHome() {
                   <div className="min-w-0">
                     <p className="font-semibold">{nutritionist.name}</p>
                     <p className={muted}>
-                      License {nutritionist.licenseNumber ?? "—"}
-                      {nutritionist.specialty && ` · ${nutritionist.specialty}`} · applied{" "}
-                      {relativeTime(nutritionist.createdAt, now).toLowerCase()}
+                      {t.license(nutritionist.licenseNumber ?? "—")}
+                      {nutritionist.specialty && ` · ${nutritionist.specialty}`} ·{" "}
+                      {t.applied(relativeTime(nutritionist.createdAt, now, locale))}
                     </p>
                   </div>
                   <Link
                     href={`/admin?${new URLSearchParams({ status: "PENDING", review: nutritionist.id })}`}
                     className={buttonLink}
                   >
-                    Review
+                    {t.review}
                   </Link>
                 </li>
               ))}
@@ -81,21 +95,21 @@ export async function AdminHome() {
         </section>
 
         <section className={card}>
-          <PanelHeader title="Recent sign-ups" />
+          <PanelHeader title={t.recentSignUps} />
           <ul className={list}>
             {signUps.map((account) => (
               <li key={account.id} className={panelRow}>
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{account.name}</p>
-                  <p className={muted}>{ROLE_LABELS[account.role]}</p>
+                  <p className={muted}>{roles[account.role]}</p>
                 </div>
                 <span className="flex items-center gap-2">
                   {account.nutritionistStatus && (
                     <span className={badge(STATUS_TONES[account.nutritionistStatus])}>
-                      {STATUS_LABELS[account.nutritionistStatus]}
+                      {statusLabels[account.nutritionistStatus]}
                     </span>
                   )}
-                  <span className="text-xs text-tertiary">{relativeTime(account.createdAt, now)}</span>
+                  <span className="text-xs text-tertiary">{relativeTime(account.createdAt, now, locale)}</span>
                 </span>
               </li>
             ))}

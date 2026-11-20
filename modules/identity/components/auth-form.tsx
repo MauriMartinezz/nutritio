@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { useMessages } from "@/lib/i18n/client";
+import { useLocale, useMessages } from "@/lib/i18n/client";
 import { ProfileFields, inputClass } from "@/modules/nutritionists/components/profile-fields";
 import { buildPhone, parseBirthDateInput } from "@/modules/nutritionists/profile";
 import { buttonPrimary, card, fieldError, fieldHint, h1, label, link, muted } from "@/modules/ui/classes";
@@ -16,6 +16,7 @@ type Mode = "sign-in" | "sign-up";
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const t = useMessages(authMessages);
+  const locale = useLocale();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   // The landing links "I'm a nutritionist" to /sign-up?role=NUTRITIONIST.
@@ -39,7 +40,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setError(t.invalidBirthDate);
         return;
       }
-      const phone = buildPhone(String(form.get("phonePrefix")), String(form.get("phoneNumber")));
+      const phone = buildPhone(String(form.get("phonePrefix")), String(form.get("phoneNumber")), locale);
       if ("error" in phone) {
         setError(`${phone.error}.`);
         return;

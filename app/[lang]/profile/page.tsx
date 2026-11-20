@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { getMessages } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { PreferencesForm } from "@/modules/clients/components/preferences-form";
 import { getOwnPreferences } from "@/modules/clients/dal";
 import { requireUser, type CurrentUser } from "@/modules/identity/dal";
 import { AccountForm } from "@/modules/identity/components/account-form";
 import { ChangePasswordForm } from "@/modules/identity/components/change-password-form";
+import { accountMessages } from "@/modules/identity/messages";
+import { roleMessages } from "@/modules/identity/nav-messages";
 import { SignOutButton } from "@/modules/identity/components/sign-out-button";
 import { PublicProfileForm } from "@/modules/nutritionists/components/public-profile-form";
 import { LanguageSwitcher } from "@/modules/theme/language-switcher";
@@ -13,13 +16,9 @@ import { ThemeToggle } from "@/modules/theme/theme-toggle";
 import { card, h1, h2, muted, pageNarrow } from "@/modules/ui/classes";
 import { SectionsSkeleton } from "@/modules/ui/components/skeleton";
 
-export const metadata: Metadata = { title: "Profile · Nutritio" };
-
-const ROLE_LABELS = {
-  ADMIN: "Administrator",
-  NUTRITIONIST: "Nutritionist",
-  CLIENT: "Client",
-} as const;
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: (await getMessages(accountMessages)).profileMeta };
+}
 
 function Section({ id, title, hint, children }: { id: string; title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -55,16 +54,20 @@ async function OwnProfile() {
   const user = await requireUser();
   const hasPublicProfile =
     user.role === "NUTRITIONIST" && (user.nutritionistStatus === "APPROVED" || user.nutritionistStatus === "PENDING");
-  const preferences = user.role === "CLIENT" ? await getOwnPreferences() : null;
+  const [preferences, t, roles] = await Promise.all([
+    user.role === "CLIENT" ? getOwnPreferences() : null,
+    getMessages(accountMessages),
+    getMessages(roleMessages),
+  ]);
 
   return (
     <>
-      <Section id="account" title="Account">
+      <Section id="account" title={t.account}>
         <div className={card}>
           <AccountForm
             name={user.name}
             email={user.email}
-            role={ROLE_LABELS[user.role]}
+            role={roles[user.role]}
             sex={user.role === "CLIENT" ? (preferences?.sex ?? null) : undefined}
           />
         </div>
@@ -73,8 +76,8 @@ async function OwnProfile() {
       {user.role === "CLIENT" && (
         <Section
           id="nutrition-preferences"
-          title="Nutrition preferences"
-          hint="Only the nutritionists you work with can see this."
+          title={t.nutritionPreferences}
+          hint={t.nutritionPreferencesHint}
         >
           <PreferencesForm preferences={preferences} />
         </Section>
@@ -83,29 +86,29 @@ async function OwnProfile() {
       {hasPublicProfile && (
         <Section
           id="public-profile"
-          title="Public profile"
-          hint="Clients see this in the directory before they ask to work with you."
+          title={t.publicProfile}
+          hint={t.publicProfileHint}
         >
           <PublicProfile user={user} />
         </Section>
       )}
 
-      <Section id="password" title="Password">
+      <Section id="password" title={t.password}>
         <div className={card}>
           <ChangePasswordForm />
         </div>
       </Section>
 
-      <Section id="appearance" title="Appearance">
+      <Section id="appearance" title={t.appearance}>
         <div className={card}>
           <ThemeToggle />
           <LanguageSwitcher />
         </div>
       </Section>
 
-      <Section id="session" title="Session">
+      <Section id="session" title={t.session}>
         <div className={card}>
-          <p className={muted}>Signed in as {user.email}.</p>
+          <p className={muted}>{t.signedInAs(user.email)}</p>
           <SignOutButton className="self-start" />
         </div>
       </Section>
@@ -113,10 +116,11 @@ async function OwnProfile() {
   );
 }
 
-export default function Page() {
+export default async function Page() {
+  const t = await getMessages(accountMessages);
   return (
     <main className={pageNarrow}>
-      <h1 className={h1}>Profile</h1>
+      <h1 className={h1}>{t.profileTitle}</h1>
       <Suspense fallback={<SectionsSkeleton />}>
         <OwnProfile />
       </Suspense>

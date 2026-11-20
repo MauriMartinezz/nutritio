@@ -1,10 +1,9 @@
 import "server-only";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ACTIVITY_TYPES } from "@/modules/activities/rules";
+import type { ActivityType } from "@/modules/activities/rules";
 import { effectiveAccessUntil } from "@/modules/coaching/access";
 import { rosterStatus, type RosterStatus } from "@/modules/coaching/roster";
-import { meetingKindLabel } from "@/modules/meetings/rules";
 import type { CurrentUser } from "@/modules/identity/dal";
 import { latestEvents, startOfMonth } from "./dashboard";
 
@@ -20,7 +19,12 @@ export type DashboardClient = {
   period: { amount: number; unit: "DAY" | "WEEK" | "MONTH" };
 };
 
-export type FeedEvent = { id: string; at: Date; clientId: string; name: string; text: string };
+/** What happened, as data: the dashboard words it in the visitor's language. */
+export type FeedDetail =
+  | { kind: "checkIn"; weightKg: number }
+  | { kind: "activity"; type: ActivityType; customName: string | null; minutes: number };
+
+export type FeedEvent = { id: string; at: Date; clientId: string; name: string; detail: FeedDetail };
 
 /**
  * Everything the approved nutritionist's home dashboard shows. Only clients
@@ -92,14 +96,19 @@ export async function getNutritionistDashboard(nutritionist: CurrentUser) {
         at: checkIn.createdAt,
         clientId: checkIn.link.client.id,
         name: checkIn.link.client.name,
-        text: `checked in at ${checkIn.weightKg.toString()} kg`,
+        detail: { kind: "checkIn" as const, weightKg: Number(checkIn.weightKg) },
       })),
       ...activities.map((activity) => ({
         id: `a${activity.id}`,
         at: activity.createdAt,
         clientId: activity.user.id,
         name: activity.user.name,
-        text: `logged ${activity.customName ?? ACTIVITY_TYPES[activity.type]} · ${activity.durationMinutes} min`,
+        detail: {
+          kind: "activity" as const,
+          type: activity.type,
+          customName: activity.customName,
+          minutes: activity.durationMinutes,
+        },
       })),
     ],
     FEED_SIZE,
@@ -115,7 +124,7 @@ export async function getNutritionistDashboard(nutritionist: CurrentUser) {
       at: meeting.createdAt,
       clientId: meeting.link.client.id,
       name: meeting.link.client.name,
-      kind: meetingKindLabel(meeting.kind),
+      kind: meeting.kind,
     })),
     expiring: clients.filter((c) => c.status === "EXPIRING").sort(byEnd),
     expired: clients.filter((c) => c.status === "EXPIRED").sort(byEnd),
