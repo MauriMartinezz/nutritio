@@ -1,9 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/modules/identity/dal";
-import { InvalidClientPreferencesError, parseClientPreferences } from "./preferences";
+import {
+  InvalidClientPreferencesError,
+  InvalidSexError,
+  parseClientPreferences,
+  parseSex,
+} from "./preferences";
 
 export type SaveClientPreferencesState = {
   problems?: Record<string, string>;
@@ -19,7 +25,7 @@ export async function saveClientPreferences(
 
   let preferences;
   try {
-    preferences = parseClientPreferences(Object.fromEntries(formData));
+    preferences = parseClientPreferences(Object.fromEntries(formData), await getActionLocale());
   } catch (error) {
     if (error instanceof InvalidClientPreferencesError) return { problems: error.problems };
     throw error;
@@ -34,4 +40,26 @@ export async function saveClientPreferences(
 
   revalidatePath("/profile");
   return { saved: true };
+}
+
+/** The signed-in client saves their sex from the account card. Returns an error message, if any. */
+export async function saveOwnSex(input: string): Promise<{ error?: string }> {
+  const client = await requireRole("CLIENT");
+
+  let sex;
+  try {
+    sex = parseSex(input, await getActionLocale());
+  } catch (error) {
+    if (error instanceof InvalidSexError) return { error: error.message };
+    throw error;
+  }
+
+  await prisma.clientPreferences.upsert({
+    where: { userId: client.id },
+    create: { userId: client.id, sex },
+    update: { sex },
+  });
+
+  revalidatePath("/profile");
+  return {};
 }

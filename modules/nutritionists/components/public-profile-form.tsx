@@ -1,6 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
+import { useMessages } from "@/lib/i18n/client";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
+import { nutritionistMessages } from "../messages";
 import { updatePublicProfile, type UpdatePublicProfileState } from "../actions";
 import { PUBLIC_PROFILE_LIMITS } from "../public-profile";
 import { buttonPrimary, callout, card, formSuccess, label, textarea } from "@/modules/ui/classes";
@@ -22,71 +26,78 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
     {},
   );
   const problems = state.problems ?? {};
+  const t = useMessages(nutritionistMessages);
+  useActionToast(state, (next) => (next.saved ? { text: t.publicProfileSaved } : null));
 
   return (
     <form action={formAction} className={`${card} w-full`}>
       <label className={label}>
-        About you
+        {t.aboutYou}
         <textarea
           name="bio"
           rows={4}
           maxLength={PUBLIC_PROFILE_LIMITS.bio}
           defaultValue={profile.bio ?? ""}
-          placeholder="Who you are and how you work"
+          placeholder={t.aboutYouPlaceholder}
           className={`${textarea} w-full`}
         />
       </label>
       <label className={label}>
-        Education
+        {t.education}
         <textarea
           name="education"
           rows={2}
           maxLength={PUBLIC_PROFILE_LIMITS.education}
           defaultValue={profile.education ?? ""}
-          placeholder="Where you studied"
+          placeholder={t.educationPlaceholder}
           className={`${textarea} w-full`}
         />
       </label>
       <label className={label}>
-        What your plan includes
+        {t.planIncludesLabel}
         <textarea
           name="planIncludes"
           rows={4}
           maxLength={PUBLIC_PROFILE_LIMITS.planIncludes}
           defaultValue={profile.planIncludes ?? ""}
-          placeholder="e.g. weekly check-ins, shopping list, recipes"
+          placeholder={t.planIncludesPlaceholder}
           className={`${textarea} w-full`}
         />
       </label>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-1 text-sm font-semibold">Fee</legend>
+        <legend className="mb-1 text-sm font-semibold">{t.fee}</legend>
         <div className="flex flex-col gap-3 sm:flex-row">
           <label className={`${label} sm:w-28`}>
-            Currency
+            {t.currency}
             <select name="feeCurrency" defaultValue={profile.feeCurrency} className={inputClass}>
               <option value="ARS">ARS</option>
               <option value="USD">USD</option>
             </select>
           </label>
           <label className={`${label} flex-1`}>
-            Amount
-            <input
-              name="feeAmount"
-              inputMode="decimal"
-              defaultValue={profile.feeAmount ?? ""}
-              placeholder="25000"
-              className={`${inputClass} font-mono`}
-            />
+            {t.amount}
+            <span className="relative flex items-center">
+              <span aria-hidden className="pointer-events-none absolute left-3 font-mono text-secondary">
+                $
+              </span>
+              <input
+                name="feeAmount"
+                inputMode="decimal"
+                defaultValue={profile.feeAmount ?? ""}
+                placeholder="25000"
+                className={`${inputClass} pl-7 font-mono`}
+              />
+            </span>
           </label>
         </div>
         <label className={label}>
-          Fee description
+          {t.feeDescription}
           <input
             name="feeDescription"
             maxLength={PUBLIC_PROFILE_LIMITS.feeDescription}
             defaultValue={profile.feeDescription ?? ""}
-            placeholder="per month, per consultation…"
+            placeholder={t.feeDescriptionPlaceholder}
             className={inputClass}
           />
         </label>
@@ -101,7 +112,7 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
       )}
       {state.saved && (
         <p role="status" className={formSuccess}>
-          Public profile saved.
+          {t.publicProfileSaved}
         </p>
       )}
 
@@ -110,7 +121,9 @@ export function PublicProfileForm({ profile }: { profile: PublicProfileValues })
         disabled={pending}
         className={`${buttonPrimary} self-start`}
       >
-        {pending ? "Saving…" : "Save public profile"}
+        <ButtonLabel pending={pending} pendingText={t.saving}>
+          {t.savePublicProfile}
+        </ButtonLabel>
       </button>
     </form>
   );

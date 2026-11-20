@@ -84,7 +84,7 @@ model User {
   verificationNote   String?              @map("verification_note") @db.VarChar(1000)
   reviewedAt         DateTime?            @map("reviewed_at")
   /// Nutritionist profile (null for other roles). Set at sign-up, then admin-only.
-  dni                String?              @unique @db.VarChar(8)
+  dni                String?              @unique @db.VarChar(9)
   licenseNumber      String?              @map("license_number") @db.VarChar(30)
   birthDate          DateTime?            @map("birth_date") @db.Date
   phone              String?              @db.VarChar(20)
@@ -112,6 +112,10 @@ model User {
   preferences        ClientPreferences?
   /// Physical activities logged by this client.
   activities         Activity[]
+  /// Help requests sent from the Contact page.
+  supportRequests    SupportRequest[]     @relation("SupportRequester")
+  /// Help requests this admin answered.
+  answeredRequests   SupportRequest[]     @relation("SupportResponder")
 
   @@index([role, nutritionistStatus])
   @@map("users")
@@ -428,4 +432,30 @@ enum GymPerformance {
   IMPROVED
   SAME
   DROPPED
+}
+
+enum SupportStatus {
+  OPEN
+  RESOLVED
+}
+
+/// A help request sent from the Contact page; an admin answers it and marks it resolved.
+model SupportRequest {
+  id          String        @id @default(cuid())
+  userId      String        @map("user_id")
+  user        User          @relation("SupportRequester", fields: [userId], references: [id], onDelete: Cascade)
+  title       String        @db.VarChar(120)
+  description String        @db.VarChar(2000)
+  status      SupportStatus @default(OPEN)
+  /// The admin's answer, shown to the user.
+  reply       String?       @db.VarChar(2000)
+  repliedById String?       @map("replied_by_id")
+  repliedBy   User?         @relation("SupportResponder", fields: [repliedById], references: [id], onDelete: SetNull)
+  repliedAt   DateTime?     @map("replied_at")
+  resolvedAt  DateTime?     @map("resolved_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@map("support_requests")
 }

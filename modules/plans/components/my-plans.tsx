@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { buttonLink, callout, card, cardSm, figure, h2, h3, muted } from "@/modules/ui/classes";
+import { formatDay, formatNumber, intlLocale } from "@/lib/i18n/format";
+import { getLocale, getMessages } from "@/lib/i18n/server";
 import { listMyPlans, type PlanView } from "../dal";
+import { planMessages } from "../messages";
 import { MacroSummary } from "./macro-summary";
 import { MealTotals } from "./meal-totals";
 
-const PREPARATION_LABELS = { RAW: "raw", COOKED: "cooked" } as const;
-
 /** The signed-in client's plans, read-only, grouped by nutritionist. Render inside <Suspense>. */
 export async function MyPlans() {
-  const { plans, expired } = await listMyPlans();
+  const locale = await getLocale();
+  const t = await getMessages(planMessages);
+  const { plans, expired } = await listMyPlans(locale);
   const expiredNotice = expired.length > 0 && (
     <p role="status" className={callout("danger")}>
-      Your access with {expired.join(", ")} has expired. Ask them to renew it to see their plans again.
+      {t.expiredAccess(new Intl.ListFormat(intlLocale(locale), { type: "conjunction" }).format(expired))}
     </p>
   );
   if (plans.length === 0) {
@@ -19,9 +22,7 @@ export async function MyPlans() {
       <div className="flex flex-col gap-4">
         {expiredNotice}
         <p className={muted}>
-          {expired.length > 0
-            ? "You have no active meal plans."
-            : "Your nutritionists have not assigned you a plan yet."}
+          {expired.length > 0 ? t.noActivePlans : t.noAssignedPlans}
         </p>
       </div>
     );
@@ -35,7 +36,7 @@ export async function MyPlans() {
       {expiredNotice}
       {[...byNutritionist].map(([nutritionistId, nutritionistPlans]) => (
         <section key={nutritionistId} className="flex flex-col gap-5">
-          <h2 className={h2}>From {nutritionistPlans[0].nutritionist.name}</h2>
+          <h2 className={h2}>{t.fromNutritionist(nutritionistPlans[0].nutritionist.name)}</h2>
           {nutritionistPlans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
@@ -45,22 +46,25 @@ export async function MyPlans() {
   );
 }
 
-function PlanCard({ plan }: { plan: PlanView }) {
+export async function PlanCard({ plan }: { plan: PlanView }) {
+  const locale = await getLocale();
+  const t = await getMessages(planMessages);
+  const preparation = { RAW: t.raw, COOKED: t.cooked } as const;
   return (
     <article className={card}>
       <header className="flex flex-col gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
             <h3 className="text-2xl font-semibold tracking-tight">{plan.name}</h3>
-            <p className="text-xs text-secondary">Updated {plan.updatedAt.toLocaleDateString()}</p>
+            <p className="text-xs text-secondary">{t.updated(formatDay(plan.updatedAt, locale))}</p>
           </div>
           <Link href={`/my-plans/${plan.id}/shopping-list`} className={buttonLink}>
-            Shopping list
+            {t.shoppingList}
           </Link>
         </div>
         {plan.notes && <p className="whitespace-pre-line text-sm">{plan.notes}</p>}
         <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-card bg-accent-tint px-4 py-3 text-sm font-semibold text-accent">
-          Daily total: <MacroSummary totals={plan.totals} strong />
+          {t.dailyTotal} <MacroSummary totals={plan.totals} strong />
         </p>
       </header>
       {plan.meals.map((meal) => (
@@ -71,11 +75,11 @@ function PlanCard({ plan }: { plan: PlanView }) {
           </div>
           {meal.servings > 1 && (
             <p className="text-xs text-secondary">
-              Quantities below are for the whole recipe ({meal.servings} servings). Eat one serving per day.
+              {t.wholeRecipeHint(formatNumber(meal.servings, locale))}
             </p>
           )}
           {meal.items.length === 0 ? (
-            <p className={muted}>Nothing planned.</p>
+            <p className={muted}>{t.nothingPlanned}</p>
           ) : (
             <ul className="flex flex-col gap-2 text-sm">
               {meal.items.map((item) => (
@@ -84,9 +88,9 @@ function PlanCard({ plan }: { plan: PlanView }) {
                   className="flex flex-wrap items-center justify-between gap-2 rounded-card bg-surface-muted px-3 py-2.5"
                 >
                   <span>
-                    <span className={figure}>{item.grams} g</span> <span className="font-medium">{item.food.label}</span>
+                    <span className={figure}>{formatNumber(item.grams, locale)} g</span> <span className="font-medium">{item.food.label}</span>
                     {item.food.preparation && (
-                      <span className="text-secondary"> ({PREPARATION_LABELS[item.food.preparation]})</span>
+                      <span className="text-secondary"> ({preparation[item.food.preparation]})</span>
                     )}
                     {item.note && <span className="text-secondary"> — {item.note}</span>}
                   </span>
@@ -97,7 +101,7 @@ function PlanCard({ plan }: { plan: PlanView }) {
           )}
           {meal.extras && (
             <p className="whitespace-pre-line text-sm">
-              <span className="text-secondary">Extras: </span>
+              <span className="text-secondary">{t.extras}</span>
               {meal.extras}
             </p>
           )}

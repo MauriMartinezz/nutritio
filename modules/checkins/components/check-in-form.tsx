@@ -1,19 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
-import { buttonPrimary, fieldError, fieldHint, input, label as labelClass, textarea } from "@/modules/ui/classes";
+import { useLocale } from "@/lib/i18n/client";
+import { buttonPrimary, buttonSecondary, fieldError, fieldHint, input, label as labelClass, textarea } from "@/modules/ui/classes";
 import { submitCheckIn, type SubmitCheckInState } from "../actions";
-import { Segmented, YES_NO } from "@/modules/ui/components/segmented";
-import {
-  CHECK_IN_LIMITS,
-  COMPLETED_WORKOUTS_LABEL,
-  CYCLE_QUESTION,
-  GYM_PERFORMANCE,
-  MEASUREMENTS,
-  RATINGS,
-  measurementField,
-  type MeasurementSite,
-} from "../rules";
+import { Segmented } from "@/modules/ui/components/segmented";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
+import { asQuestion } from "../format";
+import { checkInLabels, checkInMessages } from "../messages";
+import { CHECK_IN_LIMITS, GYM_PERFORMANCE, RATINGS, measurementField, type MeasurementSite, type RatingField } from "../rules";
 import { DietAdherenceSlider } from "./diet-adherence-slider";
 
 const SCORES = [1, 2, 3, 4, 5];
@@ -21,18 +18,30 @@ const legend = "mb-2 text-sm font-medium";
 /**
  * `askCycle`: the nutritionist asks this client about her menstrual cycle.
  * `measurements`: body measurements the nutritionist asks for, in list order.
+ * `cancelHref`: where Cancel goes (e.g. closing the dialog); no Cancel without it.
  */
 export function CheckInForm({
   linkId,
   askCycle,
   measurements,
+  cancelHref,
 }: {
   linkId: string;
   askCycle: boolean;
   measurements: MeasurementSite[];
+  cancelHref?: string;
 }) {
+  const locale = useLocale();
+  const t = checkInMessages[locale];
+  const labels = checkInLabels[locale];
+  const yesNo = [
+    { value: "yes", label: labels.yes },
+    { value: "no", label: labels.no },
+  ];
   const [state, formAction, pending] = useActionState<SubmitCheckInState, FormData>(submitCheckIn, {});
   const problems = state.problems ?? {};
+  // Success redirects home, where the flash notice shows; only a refusal is toasted here.
+  useActionToast(state, (next) => (next.error ? { text: next.error, tone: "error" } : null));
   // React resets the form after the action; these defaults bring a rejected check-in back as it was sent.
   const values = state.values ?? {};
 
@@ -40,25 +49,25 @@ export function CheckInForm({
     <form action={formAction} className="flex w-full flex-col gap-6">
       <input type="hidden" name="linkId" value={linkId} />
       <label className={labelClass}>
-        Weight (kg)
+        {t.weightKg}
         <input
           name="weightKg"
           inputMode="decimal"
           required
           defaultValue={values.weightKg}
-          placeholder="e.g. 72.5"
+          placeholder={t.weightPlaceholder}
           className={`${input} w-32 font-mono tabular-nums`}
         />
       </label>
 
       {measurements.length > 0 && (
         <fieldset>
-          <legend className={legend}>Measurements (cm)</legend>
-          <p className={`${fieldHint} mb-2`}>Measure with a tape, relaxed, at the same time of day each check-in.</p>
+          <legend className={legend}>{t.measurementsCm}</legend>
+          <p className={`${fieldHint} mb-2`}>{t.measureHint}</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {measurements.map((site) => (
               <label key={site} className={labelClass}>
-                {MEASUREMENTS[site]}
+                {labels.measurements[site]}
                 <input
                   name={measurementField(site)}
                   inputMode="decimal"
@@ -74,30 +83,33 @@ export function CheckInForm({
       )}
 
       <fieldset>
-        <legend className={legend}>{COMPLETED_WORKOUTS_LABEL}?</legend>
+        <legend className={legend}>{asQuestion(labels.completedWorkouts, locale)}</legend>
         <div className="max-w-xs">
-          <Segmented name="completedWorkouts" required options={YES_NO} defaultValue={values.completedWorkouts} />
+          <Segmented name="completedWorkouts" required options={yesNo} defaultValue={values.completedWorkouts} />
         </div>
       </fieldset>
 
       <fieldset>
         <legend className={legend}>
-          Gym performance <span className={fieldHint}>(optional)</span>
+          {t.gymPerformance} <span className={fieldHint}>{t.optional}</span>
         </legend>
         <div className="max-w-md">
           <Segmented
             name="gymPerformance"
             defaultValue={values.gymPerformance}
-            options={Object.entries(GYM_PERFORMANCE).map(([value, label]) => ({ value, label }))}
+            options={(Object.keys(GYM_PERFORMANCE) as (keyof typeof GYM_PERFORMANCE)[]).map((value) => ({
+              value,
+              label: labels.gymPerformance[value],
+            }))}
           />
         </div>
       </fieldset>
 
       <fieldset className="flex flex-col gap-4">
-        <legend className={legend}>How did it go? (1 = bad, 5 = great)</legend>
-        {Object.entries(RATINGS).map(([name, label]) => (
+        <legend className={legend}>{t.howDidItGo}</legend>
+        {(Object.keys(RATINGS) as RatingField[]).map((name) => (
           <fieldset key={name} className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4">
-            <legend className="float-left text-sm font-medium sm:w-24">{label}</legend>
+            <legend className="float-left text-sm font-medium sm:w-24">{labels.ratings[name]}</legend>
             <div className="max-w-sm flex-1">
               <Segmented
                 name={name}
@@ -114,10 +126,10 @@ export function CheckInForm({
 
       {askCycle && (
         <fieldset>
-          <legend className={legend}>{CYCLE_QUESTION}?</legend>
-          <p className={`${fieldHint} mb-2`}>It can change your weight, energy and performance.</p>
+          <legend className={legend}>{asQuestion(labels.cycleQuestion, locale)}</legend>
+          <p className={`${fieldHint} mb-2`}>{t.cycleHint}</p>
           <div className="max-w-xs">
-            <Segmented name="menstruating" required options={YES_NO} defaultValue={values.menstruating} />
+            <Segmented name="menstruating" required options={yesNo} defaultValue={values.menstruating} />
           </div>
         </fieldset>
       )}
@@ -130,28 +142,28 @@ export function CheckInForm({
             name="discomfort"
             defaultChecked={values.discomfort === "on"}
             className="size-4 accent-[var(--accent)]" />
-          I had some discomfort or pain
+          {t.hadDiscomfort}
         </label>
         <label className={`${labelClass} hidden group-has-[input[name=discomfort]:checked]:flex`}>
-          Discomfort details
+          {t.discomfortDetails}
           <input
             name="discomfortNotes"
             maxLength={CHECK_IN_LIMITS.discomfortNotes}
             defaultValue={values.discomfortNotes}
-            placeholder="Where and when"
+            placeholder={t.discomfortPlaceholder}
             className={input}
           />
         </label>
       </div>
 
       <label className={labelClass}>
-        Notes
+        {t.notes}
         <textarea
           name="notes"
           rows={3}
           maxLength={CHECK_IN_LIMITS.notes}
           defaultValue={values.notes}
-          placeholder="Anything your nutritionist should know"
+          placeholder={t.notesPlaceholder}
           className={textarea}
         />
       </label>
@@ -169,9 +181,18 @@ export function CheckInForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending} className={`${buttonPrimary} self-start`}>
-        {pending ? "Sending…" : "Send check-in"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button type="submit" disabled={pending} className={buttonPrimary}>
+          <ButtonLabel pending={pending} pendingText={t.sending}>
+            {t.send}
+          </ButtonLabel>
+        </button>
+        {cancelHref && (
+          <Link href={cancelHref} scroll={false} className={buttonSecondary}>
+            {t.cancel}
+          </Link>
+        )}
+      </div>
     </form>
   );
 }

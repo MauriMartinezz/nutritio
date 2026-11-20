@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { useMessages } from "@/lib/i18n/client";
 import {
   buttonPrimary,
   callout,
@@ -10,17 +11,11 @@ import {
   label as labelClass,
   textarea,
 } from "@/modules/ui/classes";
-import { Segmented } from "@/modules/ui/components/segmented";
+import { useActionToast } from "@/modules/ui/components/action-feedback";
+import { ButtonLabel } from "@/modules/ui/components/spinner";
 import { saveClientPreferences, type SaveClientPreferencesState } from "../actions";
-import {
-  COOKING_STYLES,
-  COOKING_STYLE_LABELS,
-  MEDICAL_FLAGS,
-  PREFERENCE_FLAGS,
-  PREFERENCE_LIMITS,
-  SEX_LABELS,
-  type ClientPreferences,
-} from "../preferences";
+import { preferenceLabels, preferencesFormMessages } from "../messages";
+import { COOKING_STYLES, PREFERENCE_LIMITS, type ClientPreferences } from "../preferences";
 
 function Checkboxes({
   flags,
@@ -52,31 +47,19 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
     {},
   );
   const problems = state.problems ?? {};
+  const t = useMessages(preferencesFormMessages);
+  const labels = useMessages(preferenceLabels);
+  useActionToast(state, (next) => (next.saved ? { text: t.saved } : null));
 
   return (
     <form action={formAction} className={`${card} w-full gap-6`}>
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold">I am a</legend>
-        <div className="max-w-xs">
-          <Segmented
-            name="sex"
-            required
-            defaultValue={preferences?.sex}
-            options={Object.entries(SEX_LABELS).map(([value, label]) => ({ value, label }))}
-          />
-        </div>
-        <p className="text-xs text-secondary">
-          Women and men have different needs; your nutritionist may also ask about your menstrual cycle.
-        </p>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold">Diet</legend>
-        <Checkboxes flags={PREFERENCE_FLAGS} values={preferences} />
+        <legend className="mb-1 text-sm font-semibold">{t.diet}</legend>
+        <Checkboxes flags={labels.flags} values={preferences} />
       </fieldset>
 
       <label className={labelClass}>
-        Cooking style
+        {t.cookingStyle}
         <select
           name="cookingStyle"
           defaultValue={preferences?.cookingStyle ?? "NO_PREFERENCE"}
@@ -84,45 +67,45 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
         >
           {COOKING_STYLES.map((style) => (
             <option key={style} value={style}>
-              {COOKING_STYLE_LABELS[style]}
+              {labels.cookingStyles[style]}
             </option>
           ))}
         </select>
       </label>
 
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm font-semibold">Health</legend>
-        <Checkboxes flags={MEDICAL_FLAGS} values={preferences} />
+        <legend className="mb-1 text-sm font-semibold">{t.health}</legend>
+        <Checkboxes flags={labels.medical} values={preferences} />
       </fieldset>
 
       <label className={labelClass}>
-        Intolerances
+        {labels.texts.intolerances}
         <input
           name="intolerances"
           maxLength={PREFERENCE_LIMITS.intolerances}
           defaultValue={preferences?.intolerances ?? ""}
-          placeholder="e.g. lactose, walnuts"
+          placeholder={t.intolerancesPlaceholder}
           className={input}
         />
       </label>
       <label className={labelClass}>
-        Other conditions
+        {labels.texts.otherConditions}
         <input
           name="otherConditions"
           maxLength={PREFERENCE_LIMITS.otherConditions}
           defaultValue={preferences?.otherConditions ?? ""}
-          placeholder="Anything else your nutritionist should know"
+          placeholder={t.otherConditionsPlaceholder}
           className={input}
         />
       </label>
       <label className={labelClass}>
-        Notes
+        {labels.texts.notes}
         <textarea
           name="notes"
           rows={4}
           maxLength={PREFERENCE_LIMITS.notes}
           defaultValue={preferences?.notes ?? ""}
-          placeholder="Foods you dislike, schedule, goals…"
+          placeholder={t.notesPlaceholder}
           className={textarea}
         />
       </label>
@@ -136,7 +119,7 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
       )}
       {state.saved && (
         <p role="status" className={formSuccess}>
-          Preferences saved.
+          {t.saved}
         </p>
       )}
 
@@ -145,7 +128,9 @@ export function PreferencesForm({ preferences }: { preferences: ClientPreference
         disabled={pending}
         className={`${buttonPrimary} self-start`}
       >
-        {pending ? "Saving…" : "Save preferences"}
+        <ButtonLabel pending={pending} pendingText={t.saving}>
+          {t.save}
+        </ButtonLabel>
       </button>
     </form>
   );

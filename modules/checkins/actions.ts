@@ -2,11 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getActionLocale } from "@/lib/i18n/server";
 import { prisma } from "@/lib/prisma";
 import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
 import { requireRole } from "@/modules/identity/dal";
 import { setFlash } from "@/modules/ui/set-flash";
+import { checkInMessages } from "./messages";
 import {
   CheckInRuleError,
   InvalidCheckInError,
@@ -20,7 +22,7 @@ import {
 export async function setCheckInFrequency(clientId: string, formData: FormData) {
   // Approved nutritionist with an accepted link to this client (404 otherwise).
   const { nutritionist } = await requireClientAccess(clientId);
-  const checkInEveryDays = parseFrequency(formData.get("checkInEveryDays"));
+  const checkInEveryDays = parseFrequency(formData.get("checkInEveryDays"), await getActionLocale());
 
   // Only the caller's own link; the nutritionist id never comes from the browser.
   await prisma.nutritionistClient.updateMany({
@@ -30,6 +32,7 @@ export async function setCheckInFrequency(clientId: string, formData: FormData) 
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/check-ins");
+  await setFlash("frequency-saved");
 }
 
 /** The nutritionist turns the menstrual cycle question on or off for a client who is a woman. */
@@ -48,6 +51,7 @@ export async function setCycleQuestion(clientId: string, formData: FormData) {
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/check-ins");
+  await setFlash(askCycle ? "cycle-question-on" : "cycle-question-off");
 }
 
 /** The nutritionist adds a body measurement to a client's check-ins, or removes it. */
@@ -81,6 +85,7 @@ export async function setRequestedMeasurement(clientId: string, formData: FormDa
 
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/check-ins");
+  await setFlash(adding ? "measurement-added" : "measurement-removed");
 }
 
 export type SubmitCheckInState = {
@@ -107,6 +112,7 @@ function sentValues(formData: FormData): Record<string, string> {
 
 export async function submitCheckIn(_previous: SubmitCheckInState, formData: FormData): Promise<SubmitCheckInState> {
   const client = await requireRole("CLIENT");
+  const locale = await getActionLocale();
   const linkId = String(formData.get("linkId") ?? "");
 
   // The link id comes from the browser: it must be one of the caller's own links.
@@ -126,13 +132,14 @@ export async function submitCheckIn(_previous: SubmitCheckInState, formData: For
   const active =
     link?.status === "ACCEPTED" &&
     hasActiveAccess({ ...link, amount: link.accessAmount, unit: link.accessUnit }, new Date());
-  if (!active) return { error: "You can't send check-ins to this nutritionist" };
+  if (!active) return { error: checkInMessages[locale].cantSend };
 
   let checkIn;
   try {
     checkIn = parseCheckIn(Object.fromEntries(formData), {
       askCycle: asksCycle(link.askCycle, link.client.preferences?.sex ?? null),
       measurements: link.measurements.map((row) => row.site),
+      locale,
     });
   } catch (error) {
     if (error instanceof InvalidCheckInError) return { problems: error.problems, values: sentValues(formData) };

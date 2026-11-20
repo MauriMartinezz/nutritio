@@ -14,7 +14,7 @@ const profile = {
   dni: "30123456",
   licenseNumber: "MN 1234",
   birthDate: "1990-05-20",
-  phone: "+54 11 5555-1234",
+  phone: "+54 11 5555 1234",
   specialty: "Sports nutrition",
 };
 const parsedProfile = { ...profile, birthDate: new Date("1990-05-20T00:00:00.000Z") };
@@ -77,4 +77,11 @@ test("profile updates through the auth API cannot touch role or verification sta
   for (const field of ["dni", "licenseNumber", "birthDate", "phone", "specialty"]) {
     assert.throws(() => assertNoPrivilegedChanges({ [field]: "x" }), PrivilegedFieldChangeError);
   }
+});
+
+test("a nutritionist's invalid profile is reported in the sign-up language", () => {
+  assert.throws(
+    () => prepareNewUser({ role: "NUTRITIONIST", ...profile, dni: "12" }, today, "es"),
+    { name: "InvalidProfileError", message: "El DNI tiene que estar entre 1.000.000 y 999.999.999" },
+  );
 });

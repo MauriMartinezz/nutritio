@@ -7,11 +7,16 @@ import {
   figure,
   h1,
   h2,
-  link,
   list as listClass,
   muted,
 } from "@/modules/ui/classes";
+import type { Locale } from "@/lib/i18n/negotiate";
+import { formatNumber } from "@/lib/i18n/format";
+import { getLocale, getMessages } from "@/lib/i18n/server";
+import { navMessages } from "@/modules/identity/nav-messages";
+import { Breadcrumbs, type BreadcrumbItem } from "@/modules/ui/components/breadcrumbs";
 import { getMyPlan, getPlanForEditor, type PlanView } from "../dal";
+import { planMessages } from "../messages";
 import {
   PlanRuleError,
   SHOPPING_PERIODS,
@@ -20,12 +25,6 @@ import {
   shoppingList,
   type ShoppingPeriod,
 } from "../rules";
-
-const PERIOD_LABELS: Record<ShoppingPeriod, string> = {
-  weekly: "Weekly",
-  biweekly: "Biweekly",
-  monthly: "Monthly",
-};
 
 type Props = {
   params: Promise<{ planId: string }>;
@@ -44,50 +43,78 @@ async function readPeriod(searchParams: Props["searchParams"]): Promise<Shopping
 /** The client's shopping list for one of their visible plans. Render inside <Suspense>. */
 export async function MyShoppingList({ params, searchParams }: Props) {
   const { planId } = await params;
-  const plan = await getMyPlan(planId);
+  const locale = await getLocale();
+  const plan = await getMyPlan(planId, locale);
   if (!plan) notFound();
   const period = await readPeriod(searchParams);
   return (
-    <ShoppingListView plan={plan} period={period} path={`/my-plans/${plan.id}/shopping-list`} back="/my-plans" />
+    <ShoppingListView
+      plan={plan}
+      period={period}
+      locale={locale}
+      path={`/my-plans/${plan.id}/shopping-list`}
+      trail={[
+        { label: navMessages[locale].myPlans, href: "/my-plans" },
+        // The client sees a plan in full on their nutritionist's page.
+        { label: plan.name, href: `/nutritionists/${plan.nutritionist.id}#plan` },
+      ]}
+    />
   );
 }
 
 /** The nutritionist's shopping list for a plan they can edit. Render inside <Suspense>. */
 export async function PlanShoppingList({ params, searchParams }: Props) {
   const { planId } = await params;
-  const plan = await getPlanForEditor(planId);
+  const locale = await getLocale();
+  const plan = await getPlanForEditor(planId, locale);
   if (!plan) notFound();
   const period = await readPeriod(searchParams);
   return (
-    <ShoppingListView plan={plan} period={period} path={`/plans/${plan.id}/shopping-list`} back={`/plans/${plan.id}`} />
+    <ShoppingListView
+      plan={plan}
+      period={period}
+      locale={locale}
+      path={`/plans/${plan.id}/shopping-list`}
+      trail={[
+        ...(plan.client
+          ? [
+              { label: navMessages[locale].myClients, href: "/clients" },
+              { label: plan.client.name, href: `/clients/${plan.client.id}` },
+            ]
+          : [{ label: navMessages[locale].planTemplates, href: "/plans" }]),
+        { label: plan.name, href: `/plans/${plan.id}` },
+      ]}
+    />
   );
 }
 
-function ShoppingListView({
+async function ShoppingListView({
   plan,
   period,
+  locale,
   path,
-  back,
+  trail,
 }: {
   plan: PlanView;
   period: ShoppingPeriod;
+  locale: Locale;
   path: string;
-  back: string;
+  /** Breadcrumb items above the list; the list itself is appended as the current page. */
+  trail: BreadcrumbItem[];
 }) {
+  const t = await getMessages(planMessages);
   const list = shoppingList(plan.meals, period);
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <Link href={back} className={`${link} self-start text-sm`}>
-          ← Back to the plan
-        </Link>
-        <h1 className={h1}>Shopping list</h1>
+        <Breadcrumbs items={[...trail, { label: t.shoppingList }]} />
+        <h1 className={h1}>{t.shoppingList}</h1>
         <p className={muted}>
-          {plan.name} · <span className="font-mono font-medium tabular-nums">{list.days}</span> days, one serving of each
-          meal per day
+          {plan.name} · <span className="font-mono font-medium tabular-nums">{formatNumber(list.days, locale)}</span>
+          {t.listSummary}
         </p>
       </header>
-      <nav aria-label="Shopping list period" className="flex flex-wrap gap-2">
+      <nav aria-label={t.listPeriod} className="flex flex-wrap gap-2">
         {SHOPPING_PERIODS.map((option) => (
           <Link
             key={option}
@@ -95,20 +122,20 @@ function ShoppingListView({
             aria-current={option === period ? "page" : undefined}
             className={option === period ? buttonPrimary : buttonSecondary}
           >
-            {PERIOD_LABELS[option]}
+            {t.periods[option]}
           </Link>
         ))}
       </nav>
       <section className={card}>
-        <h2 className={h2}>{PERIOD_LABELS[period]} quantities</h2>
+        <h2 className={h2}>{t.quantities[period]}</h2>
         {list.items.length === 0 ? (
-          <p className={muted}>This plan has no foods yet.</p>
+          <p className={muted}>{t.noPlanFoods}</p>
         ) : (
           <ul className={`${listClass} text-sm`}>
             {list.items.map((item) => (
               <li key={item.foodId} className="flex min-h-11 items-center justify-between gap-4 py-2">
                 <span className="font-medium">{item.label}</span>
-                <span className={`${figure} shrink-0`}>{formatShoppingGrams(item.grams)}</span>
+                <span className={`${figure} shrink-0`}>{formatShoppingGrams(item.grams, locale)}</span>
               </li>
             ))}
           </ul>
@@ -116,7 +143,7 @@ function ShoppingListView({
       </section>
       {list.extras.length > 0 && (
         <section className={card}>
-          <h2 className={h2}>Also buy (extras)</h2>
+          <h2 className={h2}>{t.alsoBuy}</h2>
           <ul className={`${listClass} text-sm`}>
             {list.extras.map((extra) => (
               <li key={extra.text} className="whitespace-pre-line py-2">

@@ -4,6 +4,7 @@ import {
   DEFAULT_MEALS,
   PlanRuleError,
   canEditPlan,
+  macroSplit,
   copyPlanForClient,
   dailyTotals,
   itemTotals,
@@ -12,6 +13,9 @@ import {
   parseReorder,
   parseServings,
   formatShoppingGrams,
+  parsePlanEdits,
+  parsePlanIntent,
+  PlanEditsError,
   parseShoppingPeriod,
   shoppingList,
   perServing,
@@ -280,4 +284,84 @@ test("foldSearchTerm lowercases and drops accents so 'limon' matches 'Limón'", 
   assert.equal(foldSearchTerm("Limón"), "limon");
   assert.equal(foldSearchTerm("  ÑOQUIS de Calabaza "), "noquis de calabaza");
   assert.equal(foldSearchTerm("pingüino"), "pinguino");
+});
+
+test("macroSplit: share of the day's calories from protein, carbs and fat", () => {
+  // 150 g P = 600 kcal, 200 g C = 800 kcal, 67 g F = 603 kcal → 2003 kcal from macros.
+  assert.deepEqual(macroSplit({ kcal: 2000, proteinG: 150, carbsG: 200, fatG: 67, incomplete: false }), {
+    proteinPct: 30,
+    carbsPct: 40,
+    fatPct: 30,
+  });
+  assert.equal(macroSplit({ kcal: 0, proteinG: 0, carbsG: 0, fatG: 0, incomplete: false }), null);
+});
+
+test("plan parsers speak Spanish when asked", () => {
+  assert.throws(() => parseGrams("0", "es"), { name: "PlanRuleError", message: "Los gramos tienen que estar entre 1 y 2000" });
+  assert.throws(() => parsePlanName(" "), { message: "Plan name is required (max 120 characters)" });
+});
+
+test("shopping quantities use a decimal comma in Spanish", () => {
+  assert.equal(formatShoppingGrams(1750, "es"), "1,8 kg");
+  assert.equal(formatShoppingGrams(999, "es"), "999 g");
+});
+
+const editIds = { meals: ["m1", "m2"], items: ["i1"] };
+
+test("plan edits: the single save reads the plan, every meal and every item of the form", () => {
+  const edits = parsePlanEdits(
+    {
+      name: " Cutting ",
+      notes: "",
+      "meal.m1.name": " Desayuno ",
+      "meal.m1.servings": "2",
+      "meal.m1.extras": " lettuce ",
+      "item.i1.grams": "150",
+      "item.i1.note": "",
+      "meal.zz.name": "ignored: not in this plan",
+      q: "unrelated",
+    },
+    editIds,
+  );
+  assert.deepEqual(edits, {
+    name: "Cutting",
+    notes: null,
+    meals: [{ id: "m1", name: "Desayuno", servings: 2, extras: "lettuce" }],
+    items: [{ id: "i1", grams: 150, note: null }],
+  });
+});
+
+test("plan edits: every invalid field is reported at once, by field name", () => {
+  assert.throws(
+    () =>
+      parsePlanEdits(
+        { name: "", notes: "", "meal.m1.name": "Lunch", "meal.m1.servings": "0", "meal.m1.extras": "", "item.i1.grams": "abc", "item.i1.note": "" },
+        editIds,
+        "es",
+      ),
+    (error: unknown) => {
+      assert.ok(error instanceof PlanEditsError);
+      assert.deepEqual(error.problems, {
+        name: "El nombre del plan es obligatorio (máximo 120 caracteres)",
+        "meal.m1.servings": "Las porciones tienen que estar entre 1 y 20",
+        "item.i1.grams": "Los gramos tienen que ser un número entero",
+      });
+      return true;
+    },
+  );
+});
+
+test("plan intent: the clicked button says what to do after saving", () => {
+  assert.deepEqual(parsePlanIntent(undefined), { kind: "save" });
+  assert.deepEqual(parsePlanIntent("save"), { kind: "save" });
+  assert.deepEqual(parsePlanIntent("addMeal"), { kind: "addMeal" });
+  assert.deepEqual(parsePlanIntent("delete"), { kind: "delete" });
+  assert.deepEqual(parsePlanIntent("removeMeal:m1"), { kind: "removeMeal", mealId: "m1" });
+  assert.deepEqual(parsePlanIntent("search:m1"), { kind: "search", mealId: "m1" });
+  assert.deepEqual(parsePlanIntent("removeItem:i1"), { kind: "removeItem", itemId: "i1" });
+  assert.deepEqual(parsePlanIntent("toggle:i1"), { kind: "toggle", itemId: "i1" });
+  assert.deepEqual(parsePlanIntent("addItem:m1:42"), { kind: "addItem", mealId: "m1", foodId: 42 });
+  for (const bad of ["", "nope", "removeMeal:", "addItem:m1:x", "addItem:m1", "toggle:a:b"]) {
+    assert.throws(() => parsePlanIntent(bad), PlanRuleError, bad);
+  }
 });

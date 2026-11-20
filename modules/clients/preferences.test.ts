@@ -2,9 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   InvalidClientPreferencesError,
+  InvalidSexError,
   describePreferences,
   parseClientPreferences,
+  parseSex,
   type ClientPreferences,
+  type SavedClientPreferences,
 } from "./preferences";
 
 function problemsOf(input: Record<string, unknown>) {
@@ -17,7 +20,7 @@ function problemsOf(input: Record<string, unknown>) {
   assert.fail("expected an InvalidClientPreferencesError");
 }
 
-const none: ClientPreferences = {
+const noneSaved: SavedClientPreferences = {
   lowCarb: false,
   vegan: false,
   vegetarian: false,
@@ -30,9 +33,8 @@ const none: ClientPreferences = {
   intolerances: null,
   otherConditions: null,
   notes: null,
-  sex: null,
 };
-const woman = { ...none, sex: "FEMALE" } as const;
+const none: ClientPreferences = { ...noneSaved, sex: null };
 
 test("checked checkboxes arrive as 'on' and become true; text is trimmed", () => {
   assert.deepEqual(
@@ -49,7 +51,6 @@ test("checked checkboxes arrive as 'on' and become true; text is trimmed", () =>
       intolerances: " lactose, walnuts ",
       otherConditions: " asthma ",
       notes: " Trains at night ",
-      sex: "FEMALE",
     }),
     {
       lowCarb: true,
@@ -64,32 +65,38 @@ test("checked checkboxes arrive as 'on' and become true; text is trimmed", () =>
       intolerances: "lactose, walnuts",
       otherConditions: "asthma",
       notes: "Trains at night",
-      sex: "FEMALE",
     },
   );
 });
 
 test("missing checkboxes are false, missing cooking style is NO_PREFERENCE, empty text is null", () => {
-  assert.deepEqual(parseClientPreferences({ intolerances: "  ", otherConditions: "", notes: " ", sex: "FEMALE" }), woman);
-  assert.deepEqual(parseClientPreferences({ sex: "FEMALE" }), woman);
+  assert.deepEqual(parseClientPreferences({ intolerances: "  ", otherConditions: "", notes: " " }), noneSaved);
+  assert.deepEqual(parseClientPreferences({}), noneSaved);
+});
+
+test("preferences no longer carry sex: it is edited from the account card", () => {
+  assert.equal("sex" in parseClientPreferences({ sex: "FEMALE" }), false);
+  assert.deepEqual(parseClientPreferences({ sex: "OTHER" }), noneSaved);
 });
 
 test("sex is required: woman or man", () => {
-  assert.equal(parseClientPreferences({ sex: "MALE" }).sex, "MALE");
-  assert.deepEqual(problemsOf({}), { sex: "Choose woman or man" });
-  assert.deepEqual(problemsOf({ sex: "OTHER" }), { sex: "Choose woman or man" });
+  assert.equal(parseSex("FEMALE"), "FEMALE");
+  assert.equal(parseSex(" MALE "), "MALE");
+  for (const value of [undefined, "", "OTHER"]) {
+    assert.throws(() => parseSex(value), (error) => error instanceof InvalidSexError && error.message === "Choose woman or man");
+  }
 });
 
 test("cooking style accepts ELABORATE and rejects unknown values", () => {
-  assert.equal(parseClientPreferences({ cookingStyle: "ELABORATE", sex: "MALE" }).cookingStyle, "ELABORATE");
-  assert.deepEqual(Object.keys(problemsOf({ cookingStyle: "GOURMET", sex: "MALE" })), ["cookingStyle"]);
+  assert.equal(parseClientPreferences({ cookingStyle: "ELABORATE" }).cookingStyle, "ELABORATE");
+  assert.deepEqual(Object.keys(problemsOf({ cookingStyle: "GOURMET" })), ["cookingStyle"]);
 });
 
 test("text fields over their limits are rejected", () => {
-  assert.deepEqual(Object.keys(problemsOf({ intolerances: "x".repeat(501), sex: "MALE" })), ["intolerances"]);
-  assert.deepEqual(Object.keys(problemsOf({ otherConditions: "x".repeat(501), sex: "MALE" })), ["otherConditions"]);
-  assert.deepEqual(Object.keys(problemsOf({ notes: "x".repeat(1001), sex: "MALE" })), ["notes"]);
-  assert.equal(parseClientPreferences({ notes: "x".repeat(1000), sex: "MALE" }).notes?.length, 1000);
+  assert.deepEqual(Object.keys(problemsOf({ intolerances: "x".repeat(501) })), ["intolerances"]);
+  assert.deepEqual(Object.keys(problemsOf({ otherConditions: "x".repeat(501) })), ["otherConditions"]);
+  assert.deepEqual(Object.keys(problemsOf({ notes: "x".repeat(1001) })), ["notes"]);
+  assert.equal(parseClientPreferences({ notes: "x".repeat(1000) }).notes?.length, 1000);
 });
 
 test("reports every invalid field at once", () => {
@@ -102,7 +109,7 @@ test("reports every invalid field at once", () => {
         notes: "x".repeat(1001),
       }),
     ).sort(),
-    ["cookingStyle", "intolerances", "notes", "otherConditions", "sex"],
+    ["cookingStyle", "intolerances", "notes", "otherConditions"],
   );
 });
 
@@ -140,4 +147,28 @@ test("describePreferences lists readable labels in a stable order", () => {
 
 test("describePreferences returns nothing when no preference is set", () => {
   assert.deepEqual(describePreferences(none), []);
+});
+
+test("parseClientPreferences reports problems in Spanish", () => {
+  try {
+    parseClientPreferences({ cookingStyle: "NOPE", notes: "x".repeat(1001) }, "es");
+    assert.fail("expected an InvalidClientPreferencesError");
+  } catch (error) {
+    assert.ok(error instanceof InvalidClientPreferencesError);
+    assert.deepEqual(error.problems, {
+      notes: "Notas: como máximo 1000 caracteres",
+      cookingStyle: "Elegí comidas simples, elaboradas o sin preferencia",
+    });
+  }
+});
+
+test("parseSex explains the choice in Spanish", () => {
+  assert.throws(() => parseSex("", "es"), (error) => error instanceof InvalidSexError && error.message === "Elegí mujer u hombre");
+});
+
+test("describePreferences lists Spanish labels", () => {
+  assert.deepEqual(
+    describePreferences({ ...none, sex: "FEMALE", vegan: true, cookingStyle: "BASIC", celiac: true, intolerances: "lactosa" }, "es"),
+    ["Mujer", "Vegano", "Comidas simples", "Celiaquía", "Intolerancia a: lactosa"],
+  );
 });

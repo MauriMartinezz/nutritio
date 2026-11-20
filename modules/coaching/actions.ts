@@ -4,11 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getActionLocale, getActionMessages } from "@/lib/i18n/server";
 import { requireRole } from "@/modules/identity/dal";
-import { addPeriod, effectiveAccessUntil, parsePeriod, renewAccess, type AccessPeriod } from "./access";
+import { addPeriod, effectiveAccessUntil, renewAccess, type AccessPeriod } from "./access";
 import type { FlashKey } from "@/modules/ui/flash";
 import { setFlash } from "@/modules/ui/set-flash";
-import { parsePeriodChoice, parseRosterFilter, rosterHref } from "./roster";
+import { coachingErrors } from "./messages";
+import { parseAutoRenew, parsePeriodChoice, parseRosterFilter, renewReturnHref, rosterHref } from "./roster";
 import {
   LinkRuleError,
   decideLinkRequest,
@@ -19,12 +21,14 @@ import {
 /** A client asks to work with an approved nutritionist. */
 export async function requestNutritionist(nutritionistId: string) {
   const client = await requireRole("CLIENT");
+  const locale = await getActionLocale();
+  const t = coachingErrors[locale];
 
   const nutritionist = await prisma.user.findUnique({
     where: { id: nutritionistId },
     select: { role: true, nutritionistStatus: true },
   });
-  if (!nutritionist) throw new LinkRuleError("This nutritionist is not available");
+  if (!nutritionist) throw new LinkRuleError(t.nutritionistUnavailable);
 
   const pair = { nutritionistId, clientId: client.id };
   const existing = await prisma.nutritionistClient.findUnique({
@@ -32,13 +36,13 @@ export async function requestNutritionist(nutritionistId: string) {
     select: { status: true },
   });
 
-  if (decideLinkRequest(nutritionist, existing) === "CREATE") {
+  if (decideLinkRequest(nutritionist, existing, locale) === "CREATE") {
     try {
       await prisma.nutritionistClient.create({ data: pair });
     } catch (error) {
       // Unique (nutritionist, client): a concurrent request already created it.
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        throw new LinkRuleError("Request already sent");
+        throw new LinkRuleError(t.requestAlreadySent);
       }
       throw error;
     }
@@ -47,24 +51,27 @@ export async function requestNutritionist(nutritionistId: string) {
       where: { ...pair, status: "REJECTED" },
       data: { status: "PENDING", requestedAt: new Date(), respondedAt: null },
     });
-    if (count === 0) throw new LinkRuleError("Request already sent");
+    if (count === 0) throw new LinkRuleError(t.requestAlreadySent);
   }
 
   revalidatePath("/nutritionists");
   revalidatePath(`/nutritionists/${nutritionistId}`);
+  await setFlash("nutritionist-requested");
 }
 
 async function respond(linkId: string, response: LinkResponse, period?: AccessPeriod) {
   const nutritionist = await requireRole("NUTRITIONIST");
+  const locale = await getActionLocale();
+  const t = coachingErrors[locale];
 
   // Scoped to the signed-in nutritionist: nobody can answer someone else's request.
   const link = await prisma.nutritionistClient.findFirst({
     where: { id: linkId, nutritionistId: nutritionist.id },
     select: { status: true },
   });
-  if (!link) throw new LinkRuleError("Request not found");
+  if (!link) throw new LinkRuleError(t.requestNotFound);
 
-  const status = respondToLinkRequest(nutritionist.nutritionistStatus, link, response);
+  const status = respondToLinkRequest(nutritionist.nutritionistStatus, link, response, locale);
   const now = new Date();
   const { count } = await prisma.nutritionistClient.updateMany({
     where: { id: linkId, nutritionistId: nutritionist.id, status: "PENDING" },
@@ -81,7 +88,7 @@ async function respond(linkId: string, response: LinkResponse, period?: AccessPe
         }),
     },
   });
-  if (count === 0) throw new LinkRuleError("Only pending requests can be answered");
+  if (count === 0) throw new LinkRuleError(t.onlyPending);
 
   revalidatePath("/clients");
   revalidatePath("/");
@@ -89,7 +96,7 @@ async function respond(linkId: string, response: LinkResponse, period?: AccessPe
 
 /** Accepts a request, granting access for the period in the form (a preset, or amount + unit). */
 export async function acceptClientRequest(linkId: string, formData: FormData) {
-  await respond(linkId, "ACCEPT", parsePeriodChoice(Object.fromEntries(formData)));
+  await respond(linkId, "ACCEPT", parsePeriodChoice(Object.fromEntries(formData), await getActionLocale()));
   await backToRoster(formData, "client-accepted");
 }
 
@@ -108,44 +115,52 @@ async function backToRoster(formData: FormData, flash: FlashKey): Promise<never>
 /** An accepted link of the signed-in approved nutritionist, or an error. */
 async function requireOwnAcceptedLink(linkId: string) {
   const nutritionist = await requireRole("NUTRITIONIST");
+  const t = await getActionMessages(coachingErrors);
   if (nutritionist.nutritionistStatus !== "APPROVED") {
-    throw new LinkRuleError("Your profile must be verified to manage access");
+    throw new LinkRuleError(t.verifyToManage);
   }
   const link = await prisma.nutritionistClient.findFirst({
     where: { id: linkId, nutritionistId: nutritionist.id, status: "ACCEPTED" },
-    select: { id: true, accessUntil: true, autoRenew: true, accessAmount: true, accessUnit: true },
+    select: { id: true, clientId: true, accessUntil: true, autoRenew: true, accessAmount: true, accessUnit: true },
   });
-  if (!link) throw new LinkRuleError("Client not found");
+  if (!link) throw new LinkRuleError(t.clientNotFound);
   return { ...link, amount: link.accessAmount, unit: link.accessUnit };
 }
 
-/** Quick renew: extends access by the chosen period (a preset, or amount + unit). */
+/**
+ * Quick renew: extends access by the chosen period (a preset, or amount + unit),
+ * then returns where it was opened: the client's page or the clients table.
+ */
 export async function renewClientAccess(linkId: string, formData: FormData) {
   const link = await requireOwnAcceptedLink(linkId);
-  const period = parsePeriodChoice(Object.fromEntries(formData));
+  const period = parsePeriodChoice(Object.fromEntries(formData), await getActionLocale());
   await prisma.nutritionistClient.update({
     where: { id: link.id },
     data: { accessUntil: renewAccess(link, period, new Date()) },
   });
   revalidatePath("/clients", "layout");
   revalidatePath("/");
-  await backToRoster(formData, "access-renewed");
+  await setFlash("access-renewed");
+  // Built from the link's own client and a known filter, never from a URL sent by the browser.
+  redirect(renewReturnHref({ returnTo: formData.get("returnTo"), filter: formData.get("filter") }, link.clientId));
 }
 
-/** Turns automatic renewal on or off and sets its period (also the renewal default). */
+/**
+ * Turns automatic renewal on (with its period, also the renewal default) or off.
+ * Off ignores the period fields and keeps the stored period.
+ */
 export async function setAutoRenew(linkId: string, formData: FormData) {
   const link = await requireOwnAcceptedLink(linkId);
-  const period = parsePeriod(formData.get("amount"), formData.get("unit"));
-  const autoRenew = formData.get("autoRenew") === "on";
+  const choice = parseAutoRenew(Object.fromEntries(formData), await getActionLocale());
   await prisma.nutritionistClient.update({
     where: { id: link.id },
     data: {
       // Keep any period already earned by auto-renewal before changing the settings.
       accessUntil: effectiveAccessUntil(link, new Date()),
-      autoRenew,
-      accessAmount: period.amount,
-      accessUnit: period.unit,
+      autoRenew: choice.autoRenew,
+      ...(choice.autoRenew && { accessAmount: choice.period.amount, accessUnit: choice.period.unit }),
     },
   });
   revalidatePath("/clients", "layout");
+  await setFlash("auto-renew-saved");
 }

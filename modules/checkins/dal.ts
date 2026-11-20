@@ -211,6 +211,7 @@ export async function getClientCheckInSummary(): Promise<ClientCheckInSummary[]>
 
 export type ClientHomeLink = CheckInScheduleView & {
   linkId: string;
+  nutritionistId: string;
   nutritionistName: string;
   /** End of access in force (auto-renew applied); null if never granted. */
   accessUntil: Date | null;
@@ -238,7 +239,7 @@ export async function getClientHome(): Promise<{ now: Date; links: ClientHomeLin
       accessUntil: true,
       autoRenew: true,
       checkInEveryDays: true,
-      nutritionist: { select: { name: true } },
+      nutritionist: { select: { id: true, name: true } },
       checkIns: { select: { createdAt: true, weightKg: true }, orderBy: { createdAt: "desc" } },
     },
     orderBy: { respondedAt: "asc" },
@@ -257,6 +258,7 @@ export async function getClientHome(): Promise<{ now: Date; links: ClientHomeLin
       );
       return {
         linkId: link.id,
+        nutritionistId: link.nutritionist.id,
         nutritionistName: link.nutritionist.name,
         accessUntil: effectiveAccessUntil(access, now),
         accessExpired: accessState(access, now) === "EXPIRED",
@@ -267,5 +269,38 @@ export async function getClientHome(): Promise<{ now: Date; links: ClientHomeLin
         weightSeries: weights.reverse(),
       };
     }),
+  };
+}
+
+export type OwnCheckInDetail = CheckInView & {
+  nutritionistName: string;
+  /** Weight of the check-in sent before this one to the same nutritionist; null for the first. */
+  previousWeightKg: number | null;
+};
+
+/**
+ * One check-in of the signed-in client, whatever the state of the link (it is
+ * their own health data). Null when it isn't theirs or doesn't exist.
+ */
+export async function getOwnCheckIn(checkInId: string): Promise<OwnCheckInDetail | null> {
+  const client = await requireRole("CLIENT");
+
+  // The id comes from the URL: only a check-in on one of the caller's own links.
+  const row = await prisma.checkIn.findFirst({
+    where: { id: checkInId, link: { clientId: client.id } },
+    select: { ...CHECK_IN_SELECT, linkId: true, link: { select: { nutritionist: { select: { name: true } } } } },
+  });
+  if (!row) return null;
+
+  const { linkId, link, ...view } = row;
+  const previous = await prisma.checkIn.findFirst({
+    where: { linkId, createdAt: { lt: row.createdAt } },
+    orderBy: { createdAt: "desc" },
+    select: { weightKg: true },
+  });
+  return {
+    ...toView(view),
+    nutritionistName: link.nutritionist.name,
+    previousWeightKg: previous?.weightKg.toNumber() ?? null,
   };
 }

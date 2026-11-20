@@ -1,42 +1,39 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { prisma } from "@/lib/prisma";
+import { getMessages } from "@/lib/i18n/server";
 import { PendingActions } from "@/modules/meetings/components/pending-actions-badge";
+import { OpenRequestsBadge } from "@/modules/support/components/open-requests-badge";
 import { getCurrentUser, type CurrentUser } from "../dal";
+import { navSections, type NavSection } from "../nav";
+import { navMessages, roleMessages } from "../nav-messages";
 import { NavLinks, ProfileLink, type NavItem } from "./nav-links";
 
-const ROLE_LABELS = {
-  ADMIN: "Administrator",
-  NUTRITIONIST: "Nutritionist",
-  CLIENT: "Client",
-} as const;
+type NavText = (typeof navMessages)["en"];
 
-function navItems(user: CurrentUser | null): NavItem[] {
-  if (!user) {
-    return [
-      { href: "/", label: "Home" },
-      { href: "/sign-in", label: "Sign in" },
-      { href: "/sign-up", label: "Create an account" },
-    ];
-  }
-  const items: NavItem[] = [{ href: "/", label: "Home" }];
-  if (user.role === "CLIENT") {
-    items.push(
-      { href: "/my-plans", label: "My meal plans" },
-      { href: "/check-ins", label: "Check-ins" },
-      { href: "/activities", label: "Activities" },
-      { href: "/meetings", label: "Meetings" },
-      { href: "/nutritionists", label: "Find a nutritionist" },
-    );
-  }
-  if (user.nutritionistStatus === "APPROVED") {
-    items.push(
-      { href: "/clients", label: "My clients", badge: <PendingActions /> },
-      { href: "/plans", label: "Plan templates" },
-    );
-  }
-  if (user.role === "ADMIN") {
-    items.push({ href: "/admin", label: "Nutritionists" });
-  }
-  return items;
+const SECTIONS: Record<NavSection, { href: string; label: (t: NavText) => string; badge?: ReactNode }> = {
+  home: { href: "/", label: (t) => t.home },
+  myPlans: { href: "/my-plans", label: (t) => t.myPlans },
+  checkIns: { href: "/check-ins", label: (t) => t.checkIns },
+  activities: { href: "/activities", label: (t) => t.activities },
+  meetings: { href: "/meetings", label: (t) => t.meetings },
+  findNutritionist: { href: "/nutritionists", label: (t) => t.findNutritionist },
+  myClients: { href: "/clients", label: (t) => t.myClients, badge: <PendingActions /> },
+  planTemplates: { href: "/plans", label: (t) => t.planTemplates },
+  nutritionists: { href: "/admin", label: (t) => t.nutritionists },
+  users: { href: "/admin/users", label: (t) => t.users },
+  requests: { href: "/admin/requests", label: (t) => t.requests, badge: <OpenRequestsBadge /> },
+  contact: { href: "/contact", label: (t) => t.contact },
+};
+
+async function navItems(user: CurrentUser, t: NavText): Promise<NavItem[]> {
+  const hadNutritionist =
+    user.role === "CLIENT" &&
+    (await prisma.nutritionistClient.count({ where: { clientId: user.id, status: "ACCEPTED" } })) > 0;
+  return navSections(user, { hadNutritionist }).map((section) => {
+    const { href, label, badge } = SECTIONS[section];
+    return { href, label: label(t), badge };
+  });
 }
 
 function initials(name: string) {
@@ -60,19 +57,23 @@ export function Brand() {
   );
 }
 
-/** Role-based navigation. Reads the session: render inside <Suspense>. */
+/**
+ * Role-based sidebar, only for signed-in people: the landing and the sign-in
+ * pages have no app to navigate. Reads the session: render inside <Suspense>.
+ */
 export async function AppNav() {
   const user = await getCurrentUser();
+  if (!user) return null;
+  const t = await getMessages(navMessages);
+  const roles = await getMessages(roleMessages);
   return (
-    <>
-      <NavLinks items={navItems(user)} />
-      {user && (
-        <ProfileLink
-          name={user.name}
-          initials={initials(user.name)}
-          roleLabel={ROLE_LABELS[user.role]}
-        />
-      )}
-    </>
+    <nav
+      aria-label={t.mainNav}
+      className="relative flex flex-col gap-4 border-b border-line bg-surface px-4 py-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:gap-8 md:border-r md:border-b-0 md:px-[18px] md:py-7"
+    >
+      <Brand />
+      <NavLinks items={await navItems(user, t)} />
+      <ProfileLink name={user.name} initials={initials(user.name)} roleLabel={roles[user.role]} />
+    </nav>
   );
 }

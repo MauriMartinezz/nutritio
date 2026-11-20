@@ -18,8 +18,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useMessages } from "@/lib/i18n/client";
 import { callout } from "@/modules/ui/classes";
 import { reorderMeals } from "../actions";
+import { planMessages } from "../messages";
 
 type SortableMeal = { id: string; name: string; card: ReactNode };
 
@@ -29,6 +31,7 @@ type SortableMeal = { id: string; name: string; card: ReactNode };
  * are rendered on the server and passed in.
  */
 export function SortableMeals({ planId, meals }: { planId: string; meals: SortableMeal[] }) {
+  const t = useMessages(planMessages);
   const [order, setOptimisticOrder] = useOptimistic(meals.map((meal) => meal.id));
   const [error, setError] = useState<string | null>(null);
   const sensors = useSensors(
@@ -47,7 +50,7 @@ export function SortableMeals({ planId, meals }: { planId: string; meals: Sortab
         await reorderMeals(planId, next);
       } catch {
         // The optimistic order reverts on its own when the transition ends.
-        setError("Could not save the new order. Please try again.");
+        setError(t.reorderFailed);
       }
     });
   }
@@ -79,6 +82,7 @@ export function SortableMeals({ planId, meals }: { planId: string; meals: Sortab
 }
 
 function SortableMealCard({ meal }: { meal: SortableMeal }) {
+  const t = useMessages(planMessages);
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: meal.id });
 
@@ -95,7 +99,7 @@ function SortableMealCard({ meal }: { meal: SortableMeal }) {
         ref={setActivatorNodeRef}
         {...attributes}
         {...listeners}
-        aria-label={`Drag to reorder ${meal.name}`}
+        aria-label={t.dragToReorder(meal.name)}
         className="-ml-2 flex h-11 w-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-control text-lg leading-none text-tertiary hover:bg-surface-muted hover:text-ink active:cursor-grabbing"
       >
         ⠿

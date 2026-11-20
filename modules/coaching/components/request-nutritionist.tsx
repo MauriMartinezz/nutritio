@@ -1,17 +1,32 @@
+import { getMessages } from "@/lib/i18n/server";
 import { badge, buttonPrimary, muted } from "@/modules/ui/classes";
+import { FlashNotice } from "@/modules/ui/components/action-feedback";
 import { requestNutritionist } from "../actions";
 import type { DirectoryNutritionist } from "../directory-dal";
+import { coachingMessages } from "../messages";
+import { SubmitButton } from "./submit-button";
 
 /** The client's link status with a nutritionist, or the button to ask to work together. */
-export function RequestNutritionist({ nutritionist }: { nutritionist: DirectoryNutritionist }) {
+export async function RequestNutritionist({ nutritionist }: { nutritionist: DirectoryNutritionist }) {
+  const t = await getMessages(coachingMessages);
   const status = nutritionist.linkStatus;
-  if (status === "ACCEPTED") return <span className={badge("success")}>Working together</span>;
-  if (status === "PENDING") return <span className={badge("warning")}>Request sent</span>;
+  // The form is replaced by the "request sent" badge, so the notice is shown from outside it.
+  if (status === "ACCEPTED") return <span className={badge("success")}>{t.workingTogether}</span>;
+  if (status === "PENDING") {
+    return (
+      <>
+        <span className={badge("warning")}>{t.requestSent}</span>
+        <FlashNotice />
+      </>
+    );
+  }
 
   return (
     <form action={requestNutritionist.bind(null, nutritionist.id)} className="flex flex-wrap items-center gap-3">
-      {status === "REJECTED" && <span className={muted}>Previous request declined</span>}
-      <button className={buttonPrimary}>{status === "REJECTED" ? "Request again" : "Request to work together"}</button>
+      {status === "REJECTED" && <span className={muted}>{t.previousDeclined}</span>}
+      <SubmitButton className={buttonPrimary}>
+        {status === "REJECTED" ? t.requestAgain : t.requestToWorkTogether}
+      </SubmitButton>
     </form>
   );
 }

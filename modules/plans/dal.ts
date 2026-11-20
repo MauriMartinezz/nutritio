@@ -1,4 +1,5 @@
 import "server-only";
+import type { Locale } from "@/lib/i18n/negotiate";
 import { prisma } from "@/lib/prisma";
 import { hasActiveAccess } from "@/modules/coaching/access";
 import { requireClientAccess } from "@/modules/coaching/dal";
@@ -57,14 +58,19 @@ const FOOD_SELECT = {
   fatG: true,
 } as const;
 
-export function foodLabel(food: { nameEs: string | null; nameEn: string }) {
-  return food.nameEs ?? food.nameEn;
+/** A food's name in the reader's language: the curated Spanish name when there is one, else USDA's English. */
+export function foodLabel(food: { nameEs: string | null; nameEn: string }, locale: Locale = "es") {
+  return locale === "es" ? (food.nameEs ?? food.nameEn) : food.nameEn;
 }
+
+/** The cooking note is curated in Spanish only; English USDA names already describe it. */
+const preparationNote = (food: { preparationNoteEs: string | null }, locale: Locale) =>
+  locale === "es" ? food.preparationNoteEs : null;
 
 type PlanQuery = { id: string } & ({ nutritionistId: string } | { clientId: string });
 
 /** Loads a plan with meals, items and computed totals. The caller has already checked access. */
-async function loadPlan(where: PlanQuery) {
+async function loadPlan(where: PlanQuery, locale: Locale) {
   const plan = await prisma.mealPlan.findFirst({
     where,
     select: {
@@ -121,9 +127,9 @@ async function loadPlan(where: PlanQuery) {
         note: item.note,
         food: {
           id: item.food.id,
-          label: foodLabel(item.food),
+          label: foodLabel(item.food, locale),
           preparation: item.food.preparation,
-          preparationNote: item.food.preparationNoteEs,
+          preparationNote: preparationNote(item.food, locale),
         },
         toggle,
         totals: itemTotals(nutrients, item.grams),
@@ -157,10 +163,16 @@ async function loadPlan(where: PlanQuery) {
 export type PlanView = NonNullable<Awaited<ReturnType<typeof loadPlan>>>;
 
 /** A plan for the editor, or null when the nutritionist may not edit it. */
-export async function getPlanForEditor(planId: string) {
+export async function getPlanForEditor(planId: string, locale: Locale = "es") {
   const access = await findEditablePlan(planId);
   if (!access) return null;
-  return loadPlan({ id: planId, nutritionistId: access.nutritionist.id });
+  return loadPlan({ id: planId, nutritionistId: access.nutritionist.id }, locale);
+}
+
+/** Ids of a plan's meals and items: the only rows the editor's single save may update. */
+export async function planContentIds(planId: string) {
+  const meals = await prisma.meal.findMany({ where: { planId }, select: { id: true, items: { select: { id: true } } } });
+  return { meals: meals.map((meal) => meal.id), items: meals.flatMap((meal) => meal.items.map((item) => item.id)) };
 }
 
 /** Plans the signed-in nutritionist wrote for one of their accepted clients. 404 otherwise. */
@@ -192,7 +204,7 @@ const FOLDED_TO = "aaaaaeeeeiiiiooooouuuunc";
  * Catalog search: curated Spanish names first, then English USDA names.
  * Matching ignores case and accents ("limon" finds "Limón").
  */
-export async function searchFoods(query: string) {
+export async function searchFoods(query: string, locale: Locale = "es") {
   await requireRole("NUTRITIONIST");
   const term = foldSearchTerm(query.slice(0, 60));
   if (term.length < 2) return [];
@@ -220,9 +232,9 @@ export async function searchFoods(query: string) {
 
   return [...spanish, ...english].map((food) => ({
     id: food.id,
-    label: foodLabel(food),
+    label: foodLabel(food, locale),
     preparation: food.preparation,
-    preparationNote: food.preparationNoteEs,
+    preparationNote: preparationNote(food, locale),
     kcal: toNumber(food.kcal),
   }));
 }
@@ -231,7 +243,7 @@ export async function searchFoods(query: string) {
  * The client's own plans, newest first (S6), only from nutritionists whose link is
  * accepted and whose access has not expired. Also returns who the expired ones are.
  */
-export async function listMyPlans() {
+export async function listMyPlans(locale: Locale = "es") {
   const client = await requireRole("CLIENT");
   const { active, expired } = await myNutritionistAccess(client.id);
 
@@ -240,19 +252,32 @@ export async function listMyPlans() {
     select: { id: true },
     orderBy: { createdAt: "desc" },
   });
-  const loaded = await Promise.all(plans.map((plan) => loadPlan({ id: plan.id, clientId: client.id })));
+  const loaded = await Promise.all(plans.map((plan) => loadPlan({ id: plan.id, clientId: client.id }, locale)));
   return { plans: loaded.filter((plan): plan is PlanView => plan !== null), expired };
 }
 
+/**
+ * What the client has with one nutritionist: null without an accepted link,
+ * otherwise whether access expired and, while active, that nutritionist's plans.
+ */
+export async function getMyWorkWith(nutritionistId: string, locale: Locale = "es") {
+  const client = await requireRole("CLIENT");
+  const { active, expiredIds } = await myNutritionistAccess(client.id);
+  if (expiredIds.includes(nutritionistId)) return { expired: true, plans: [] as PlanView[] };
+  if (!active.includes(nutritionistId)) return null;
+  const { plans } = await listMyPlans(locale);
+  return { expired: false, plans: plans.filter((plan) => plan.nutritionist.id === nutritionistId) };
+}
+
 /** One of the client's own plans under the same visibility rule as listMyPlans, else null. */
-export async function getMyPlan(planId: string) {
+export async function getMyPlan(planId: string, locale: Locale = "es") {
   const client = await requireRole("CLIENT");
   const { active } = await myNutritionistAccess(client.id);
   const visible = await prisma.mealPlan.findFirst({
     where: { id: planId, clientId: client.id, nutritionistId: { in: active } },
     select: { id: true },
   });
-  return visible ? loadPlan({ id: visible.id, clientId: client.id }) : null;
+  return visible ? loadPlan({ id: visible.id, clientId: client.id }, locale) : null;
 }
 
 /** Nutritionists the client has an accepted link with, split by whether access is still active. */
@@ -272,6 +297,8 @@ async function myNutritionistAccess(clientId: string) {
   const isActive = (link: (typeof links)[number]) =>
     hasActiveAccess({ ...link, amount: link.accessAmount, unit: link.accessUnit }, now);
   const active = links.filter(isActive).map((link) => link.nutritionistId);
-  const expired = links.filter((link) => !isActive(link)).map((link) => link.nutritionist.name);
-  return { active, expired };
+  const expiredLinks = links.filter((link) => !isActive(link));
+  const expired = expiredLinks.map((link) => link.nutritionist.name);
+  const expiredIds = expiredLinks.map((link) => link.nutritionistId);
+  return { active, expired, expiredIds };
 }

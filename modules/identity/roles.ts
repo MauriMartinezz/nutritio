@@ -1,3 +1,4 @@
+import type { Locale } from "@/lib/i18n/negotiate";
 // Identity domain rules: roles and nutritionist verification at sign-up.
 // Pure functions, no framework imports, so they can be unit tested.
 import {
@@ -52,6 +53,7 @@ function isSelfAssignableRole(value: unknown): value is SelfAssignableRole {
 export function prepareNewUser(
   input: Record<string, unknown>,
   today: Date = new Date(),
+  locale: Locale = "en",
 ):
   | { role: "CLIENT"; nutritionistStatus: null }
   | ({ role: "NUTRITIONIST"; nutritionistStatus: "PENDING" } & NutritionistProfile) {
@@ -66,7 +68,7 @@ export function prepareNewUser(
     return { role, nutritionistStatus: null };
   }
 
-  return { role, nutritionistStatus: "PENDING", ...parseNutritionistProfile(input, today) };
+  return { role, nutritionistStatus: "PENDING", ...parseNutritionistProfile(input, today, locale) };
 }
 
 /** Rejects user updates (coming from the auth API) that touch privileged fields. */
